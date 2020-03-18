@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29905.134
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MogmogServer", "MogmogServer\MogmogServer.csproj", "{C745AF8C-026C-4508-A339-F43692A3FC68}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataExporter", "DataExporter\DataExporter.csproj", "{2A58D5C3-F526-49C7-BC45-15C8BF12EE39}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{5A70BE7A-EEE5-47B1-9C2F-C766D7955601}"
@@ -14,7 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github", "Github", "{5A70BE
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mogmog", "Mogmog\Mogmog.csproj", "{A74A765E-14D3-45D1-B1C3-2364EAA4C3BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mogmog", "Mogmog\Mogmog.csproj", "{A74A765E-14D3-45D1-B1C3-2364EAA4C3BE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mogmog.Server", "Mogmog.Server\Mogmog.Server.csproj", "{619B5033-0926-4C5E-B99B-19F5F62F822E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,10 +22,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C745AF8C-026C-4508-A339-F43692A3FC68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C745AF8C-026C-4508-A339-F43692A3FC68}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C745AF8C-026C-4508-A339-F43692A3FC68}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C745AF8C-026C-4508-A339-F43692A3FC68}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2A58D5C3-F526-49C7-BC45-15C8BF12EE39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2A58D5C3-F526-49C7-BC45-15C8BF12EE39}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A58D5C3-F526-49C7-BC45-15C8BF12EE39}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -34,6 +30,10 @@ Global
 		{A74A765E-14D3-45D1-B1C3-2364EAA4C3BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A74A765E-14D3-45D1-B1C3-2364EAA4C3BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A74A765E-14D3-45D1-B1C3-2364EAA4C3BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{619B5033-0926-4C5E-B99B-19F5F62F822E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{619B5033-0926-4C5E-B99B-19F5F62F822E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{619B5033-0926-4C5E-B99B-19F5F62F822E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{619B5033-0926-4C5E-B99B-19F5F62F822E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
