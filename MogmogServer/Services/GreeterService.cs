@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 
-namespace Mogmog
+namespace MogmogServer
 {
     public class GreeterService : Greeter.GreeterBase
     {

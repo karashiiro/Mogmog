@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option csharp_namespace = "Mogmog";
+option csharp_namespace = "MogmogServer";
 
 package greet;
 
