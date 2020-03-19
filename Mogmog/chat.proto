@@ -13,7 +13,7 @@ service ChatService {
  * easier to deal with. The client can provide an ID, and the server will return a world name.
  */
 message ChatMessage {
-	uint64 Id = 1;
+    uint64 Id = 1;
     string Content = 2;
     string Author = 3;
     uint64 AuthorId = 4;
