@@ -1,13 +1,13 @@
 ﻿using Grpc.Core;
-using Mogmog.Server.Protos;
+using Mogmog.Protos;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Client = Grpc.Core.IServerStreamWriter<Mogmog.Server.Protos.ChatMessage>;
-using static Mogmog.Server.Protos.Chat;
+using Client = Grpc.Core.IServerStreamWriter<Mogmog.Protos.ChatMessage>;
+using static Mogmog.Protos.ChatService;
 
 namespace Mogmog.Server.Services
 {
-    public class ChatService : ChatBase
+    public class ChatService : ChatServiceBase
     {
         private readonly GameDataService _gameDataService;
 

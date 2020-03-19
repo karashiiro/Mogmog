@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-option csharp_namespace = "Mogmog.Server.Protos";
+option csharp_namespace = "Mogmog.Protos";
 
 package chat;
 
-service Chat {
+service ChatService {
     rpc Chat (stream ChatMessage) returns (stream ChatMessage);
 }
 
