@@ -1,0 +1,89 @@
+﻿using Discord;
+using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using System;
+using System.Threading.Tasks;
+
+namespace Mogmog.Discord
+{
+    public class Program
+    {
+        static void Main(string[] args) => new Program().MainAsync(args).GetAwaiter().GetResult();
+
+        async Task MainAsync(string[] _)
+        {
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+                .CreateLogger();
+
+            var disConfig = new DiscordSocketConfig
+            {
+                AlwaysDownloadUsers = true,
+                LargeThreshold = 250,
+                MessageCacheSize = 100,
+            };
+
+            // Initialize the ASP.NET service provider and freeze this Task indefinitely.
+            using var services = ConfigureServices(disConfig);
+
+            var client = services.GetRequiredService<DiscordSocketClient>();
+            client.Log += LogAsync;
+            client.MessageReceived += MessageReceivedAsync;
+
+            await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN"));
+            await client.StartAsync();
+            try
+            {
+                foreach (SocketGuild guild in client.Guilds)
+                {
+                    foreach (SocketTextChannel channel in guild.TextChannels)
+                    {
+                        channel.GetMessagesAsync();
+                    }
+                }
+            } catch {};
+
+            await Task.Delay(-1);
+        }
+
+        static async Task MessageReceivedAsync(SocketMessage message)
+        {
+            if (message.Channel.Id != ulong.Parse(Environment.GetEnvironmentVariable("MOGMOG_RELAY_CHANNEL"))) return;
+        }
+
+        static Task LogAsync(LogMessage message)
+        {
+            switch (message.Severity)
+            {
+                case LogSeverity.Critical:
+                    Log.Error(message.ToString());
+                    break;
+                case LogSeverity.Error:
+                    Log.Error(message.ToString());
+                    break;
+                case LogSeverity.Warning:
+                    Log.Warning(message.ToString());
+                    break;
+                case LogSeverity.Info:
+                    Log.Information(message.ToString());
+                    break;
+                case LogSeverity.Verbose:
+                    Log.Verbose(message.ToString());
+                    break;
+                case LogSeverity.Debug:
+                    Log.Debug(message.ToString());
+                    break;
+            }
+            return Task.CompletedTask;
+        }
+
+        static ServiceProvider ConfigureServices(DiscordSocketConfig disConfig)
+        {
+            return new ServiceCollection()
+                .AddSingleton(new DiscordSocketClient(disConfig))
+                .BuildServiceProvider();
+        }
+    }
+}

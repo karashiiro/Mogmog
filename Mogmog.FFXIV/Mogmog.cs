@@ -1,34 +1,27 @@
 ﻿using Dalamud.Game.Chat;
 using Dalamud.Game.Command;
 using Dalamud.Plugin;
-using Grpc.Core;
-using Grpc.Net.Client;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
-using static Mogmog.Protos.ChatService;
+using System.Text.RegularExpressions;
 
 namespace Mogmog.FFXIV
 {
+    static class MogmogRegexes
+    {
+        public static readonly Regex DigitsOnly = new Regex(@"\d+", RegexOptions.Compiled);
+    }
+
     public class Mogmog : IDalamudPlugin
     {
         public string Name => "Mogmog";
 
-        private const string command1 = "/global";
-        private const string command2 = "/gl";
-
-        private const string hostname = "https://localhost:5001"; // Temporary, use Imgui
-
-        private AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
-        private ChatServiceClient client;
         private DalamudPluginInterface dalamud;
-        private GrpcChannel channel;
         private MogmogConfiguration config;
-
-        private Task runningTask;
+        private MogmogConnectionManager connectionManager;
 
         private string CharacterSearch { get => $"https://xivapi.com/character/search?name={this.dalamud.ClientState.LocalPlayer.Name}&server={this.dalamud.ClientState.LocalPlayer.HomeWorld.Name}"; }
         private string avatar;
@@ -37,33 +30,25 @@ namespace Mogmog.FFXIV
         {
             this.dalamud = dalamud;
             this.config = dalamud.GetPluginConfig() as MogmogConfiguration ?? new MogmogConfiguration();
+            this.config.Hostnames.Add("https://localhost:5001"); // Temporary, use Imgui
+            this.connectionManager = new MogmogConnectionManager(this.config, this.dalamud.CommandManager, this)
+            {
+                MessageRecievedDelegate = MessageReceived,
+            };
 
-            dalamud.CommandManager.AddHandler(command1, OnMessageCommandInfo());
-            dalamud.CommandManager.AddHandler(command2, OnMessageCommandInfo());
-
-            this.channel = GrpcChannel.ForAddress(hostname);
-            this.client = new ChatServiceClient(this.channel);
-            this.chatStream = this.client.Chat();
+            for (int i = 0; i < this.config.Hostnames.Count; i++)
+            {
+                dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo());
+                dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo());
+            }
 
             this.avatar = JObject.Parse((new HttpClient()).GetStringAsync(new Uri(CharacterSearch)).Result)["Results"][0]["Avatar"].ToObject<string>();
-
-            this.runningTask = ChatLoop();
         }
 
-        private async Task ChatLoop()
+        private void MessageSend(string command, string message)
         {
-            while (true)
-            {
-                if (await this.chatStream.ResponseStream.MoveNext())
-                {
-                    MessageReceive(this.chatStream.ResponseStream.Current);
-                }
-            }
-        }
-
-        private void MessageSend(string _, string message)
-        {
-            this.chatStream.RequestStream.WriteAsync(new ChatMessage
+            int channelId = int.Parse(MogmogRegexes.DigitsOnly.Match(command).Value);
+            var chatMessage = new ChatMessage
             {
                 Id = 0,
                 Content = message,
@@ -72,21 +57,22 @@ namespace Mogmog.FFXIV
                 Avatar = this.avatar,
                 World = null,
                 WorldId = this.dalamud.ClientState.LocalPlayer.HomeWorld.Id
-            });
+            };
+            this.connectionManager.MessageSend(chatMessage, channelId);
         }
 
-        private void MessageReceive(ChatMessage message)
+        private void MessageReceived(ChatMessage message, int channelId)
         {
             this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
             {
                 Name = message.Author + " (" + message.World + ")", // todo: use CW icon
-                MessageBytes = Encoding.UTF8.GetBytes(message.Content),
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]" + message.Content),
                 Type = XivChatType.Notice,
             });
             this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
         }
 
-        private CommandInfo OnMessageCommandInfo()
+        public CommandInfo OnMessageCommandInfo()
         {
             return new CommandInfo(MessageSend)
             {
@@ -97,13 +83,13 @@ namespace Mogmog.FFXIV
 
         public void Dispose()
         {
-            this.runningTask.Dispose();
+            this.connectionManager.Dispose();
 
-            this.chatStream.Dispose();
-            this.channel.Dispose();
-
-            this.dalamud.CommandManager.RemoveHandler(command1);
-            this.dalamud.CommandManager.RemoveHandler(command2);
+            for (int i = 0; i < this.config.Hostnames.Count; i++)
+            {
+                dalamud.CommandManager.RemoveHandler($"/global{i}");
+                dalamud.CommandManager.RemoveHandler($"/gl{i}");
+            }
 
             this.dalamud.SavePluginConfig(this.config);
 

@@ -1,4 +1,4 @@
-﻿namespace Mogmog.Models
+﻿namespace Mogmog
 {
     // Not limited to these, just PR more if you need to.
     public enum PseudoWorld

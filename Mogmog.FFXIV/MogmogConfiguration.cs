@@ -1,5 +1,6 @@
 ﻿using Dalamud.Configuration;
 using System;
+using System.Collections.Generic;
 
 namespace Mogmog.FFXIV
 {
@@ -8,6 +9,11 @@ namespace Mogmog.FFXIV
     {
         public int Version { get; set; }
 
-        public string Hostname;
+        public IList<string> Hostnames;
+
+        public MogmogConfiguration()
+        {
+            Hostnames = new List<string>();
+        }
     }
 }
