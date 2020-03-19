@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Mogmog.Services;
+using Mogmog.Server.Services;
 
-namespace MogmogServer
+namespace Mogmog.Server
 {
     public class Startup
     {
@@ -14,8 +14,7 @@ namespace MogmogServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
-            services.AddSingleton<GameDataService>()
-                    .AddSingleton<ChatService>();
+            services.AddSingleton<GameDataService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -30,7 +29,7 @@ namespace MogmogServer
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGrpcService<GreeterService>();
+                endpoints.MapGrpcService<ChatService>();
 
                 endpoints.MapGet("/", async context =>
                 {
