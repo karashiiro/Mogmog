@@ -42,7 +42,7 @@ namespace Mogmog.FFXIV
                 dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo());
             }
 
-            this.avatar = JObject.Parse((new HttpClient()).GetStringAsync(new Uri(CharacterSearch)).Result)["Results"][0]["Avatar"].ToObject<string>();
+            this.avatar = JObject.Parse(new HttpClient().GetStringAsync(new Uri(CharacterSearch)).Result)["Results"][0]["Avatar"].ToObject<string>();
         }
 
         private void MessageSend(string command, string message)
