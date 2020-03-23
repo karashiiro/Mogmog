@@ -43,7 +43,8 @@ namespace Mogmog.FFXIV
                     this.channels.Add(null);
                     this.clients.Add(null);
                     this.chatStreams.Add(null);
-                } else
+                }
+                else
                 {
                     var channel = GrpcChannel.ForAddress(hostname);
                     var client = new ChatServiceClient(channel);
@@ -71,18 +72,23 @@ namespace Mogmog.FFXIV
             this.clients.Add(client);
             this.chatStreams.Add(chatStream);
 
-            this.commandManager.AddHandler($"/global{i}", this.parent.OnMessageCommandInfo());
-            this.commandManager.AddHandler($"/gl{i}", this.parent.OnMessageCommandInfo());
+            this.commandManager.AddHandler($"/global{i + 1}", this.parent.OnMessageCommandInfo());
+            this.commandManager.AddHandler($"/gl{i + 1}", this.parent.OnMessageCommandInfo());
         }
 
         public void RemoveHost(string hostname)
         {
             int i = this.config.Hostnames.IndexOf(hostname);
             this.config.Hostnames[i] = string.Empty;
+
             this.chatStreams[i].Dispose();
             this.chatStreams[i] = null;
+
             this.channels[i].Dispose();
             this.channels[i] = null;
+
+            this.commandManager.RemoveHandler($"/global{i + 1}");
+            this.commandManager.RemoveHandler($"/gl{i + 1}");
         }
 
         public void MessageSend(ChatMessage message, int channelId)

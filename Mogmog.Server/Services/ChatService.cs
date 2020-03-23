@@ -1,11 +1,11 @@
 ﻿using Grpc.Core;
 using Mogmog.Protos;
 using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Client = Grpc.Core.IServerStreamWriter<Mogmog.Protos.ChatMessage>;
 using static Mogmog.Protos.ChatService;
-using System;
 
 namespace Mogmog.Server.Services
 {

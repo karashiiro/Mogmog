@@ -29,14 +29,14 @@ namespace Mogmog.FFXIV
         public void Initialize(DalamudPluginInterface dalamud)
         {
             this.dalamud = dalamud;
-            this.config = dalamud.GetPluginConfig() as MogmogConfiguration ?? new MogmogConfiguration();
+            this.config = /*dalamud.GetPluginConfig() as MogmogConfiguration ?? */new MogmogConfiguration();
             this.config.Hostnames.Add("https://localhost:5001"); // Temporary, use Imgui
             this.connectionManager = new MogmogConnectionManager(this.config, this.dalamud.CommandManager, this)
             {
                 MessageRecievedDelegate = MessageReceived,
             };
 
-            for (int i = 0; i < this.config.Hostnames.Count; i++)
+            for (int i = 1; i <= this.config.Hostnames.Count; i++)
             {
                 dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo());
                 dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo());
@@ -48,6 +48,13 @@ namespace Mogmog.FFXIV
         private void MessageSend(string command, string message)
         {
             int channelId = int.Parse(MogmogRegexes.DigitsOnly.Match(command).Value);
+            this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
+            {
+                Name = this.dalamud.ClientState.LocalPlayer.Name + " (" + this.dalamud.ClientState.LocalPlayer.HomeWorld.Name + ")", // todo: use CW icon
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]" + message),
+                Type = XivChatType.Notice,
+            });
+            this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
             var chatMessage = new ChatMessage
             {
                 Id = 0,
@@ -56,7 +63,7 @@ namespace Mogmog.FFXIV
                 AuthorId = this.dalamud.ClientState.LocalContentId,
                 Avatar = this.avatar,
                 World = null,
-                WorldId = this.dalamud.ClientState.LocalPlayer.HomeWorld.Id
+                WorldId = this.dalamud.ClientState.LocalPlayer.HomeWorld.Id,
             };
             this.connectionManager.MessageSend(chatMessage, channelId);
         }
@@ -91,7 +98,7 @@ namespace Mogmog.FFXIV
                 dalamud.CommandManager.RemoveHandler($"/gl{i}");
             }
 
-            this.dalamud.SavePluginConfig(this.config);
+            /*this.dalamud.SavePluginConfig(this.config);*/
 
             this.dalamud.Dispose();
         }
