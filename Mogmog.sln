@@ -18,7 +18,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mogmog.FFXIV", "Mogmog.FFXI
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mogmog", "Mogmog\Mogmog.csproj", "{A5A50C5A-0AA1-4CF9-B429-069936924B9A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mogmog.Discord", "Mogmog.Discord\Mogmog.Discord.csproj", "{8091D524-699F-4596-A282-A04324A0924C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mogmog.Discord", "Mogmog.Discord\Mogmog.Discord.csproj", "{8091D524-699F-4596-A282-A04324A0924C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0A0BE81D-2527-4127-B588-B4300DA7F385}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

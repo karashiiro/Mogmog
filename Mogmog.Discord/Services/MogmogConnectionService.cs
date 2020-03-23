@@ -68,8 +68,8 @@ namespace Mogmog.Discord.Services
 
         public async Task GrpcMessageReceivedAsync(ChatMessage chatMessage)
         {
-            /*if (chatMessage.WorldId == (int)PseudoWorld.Discord)
-                return;*/
+            if (chatMessage.WorldId == (int)PseudoWorld.Discord)
+                return;
             string rawMessage = $"[{chatMessage.Author}] {chatMessage.Content}";
             await (RelayChannel as ITextChannel).SendMessageAsync(rawMessage);
         }

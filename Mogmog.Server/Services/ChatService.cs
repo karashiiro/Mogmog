@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Client = Grpc.Core.IServerStreamWriter<Mogmog.Protos.ChatMessage>;
 using static Mogmog.Protos.ChatService;
+using System;
 
 namespace Mogmog.Server.Services
 {
@@ -31,6 +32,11 @@ namespace Mogmog.Server.Services
 
         public override async Task Chat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
         {
+            if (requestStream == null)
+                throw new ArgumentNullException(nameof(requestStream));
+            if (responseStream == null)
+                throw new ArgumentNullException(nameof(responseStream));
+
             _clients.Add(responseStream);
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
             while (await requestStream.MoveNext())
