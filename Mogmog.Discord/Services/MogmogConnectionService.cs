@@ -12,11 +12,11 @@ namespace Mogmog.Discord.Services
 {
     public class MogmogConnectionService
     {
-        private const string hostname = "http://localhost:5001";
+        private const string hostname = "https://localhost:5001";
 
         public readonly DiscordSocketClient _client;
 
-        private readonly SocketGuildChannel _relayChannel;
+        private SocketGuildChannel RelayChannel { get => _client.GetChannel(ulong.Parse(Environment.GetEnvironmentVariable("MOGMOG_RELAY_CHANNEL"))) as SocketGuildChannel; }
 
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> _chatStream;
         private readonly ChatServiceClient _chatClient;
@@ -27,9 +27,7 @@ namespace Mogmog.Discord.Services
         public MogmogConnectionService(DiscordSocketClient client)
         {
             _client = client;
-
-            _relayChannel = _client.GetChannel(ulong.Parse(Environment.GetEnvironmentVariable("MOGMOG_RELAY_CHANNEL"))) as SocketGuildChannel;
-
+            
             _channel = GrpcChannel.ForAddress(hostname);
             _chatClient = new ChatServiceClient(_channel);
             _chatStream = _chatClient.Chat();
@@ -39,7 +37,8 @@ namespace Mogmog.Discord.Services
 
         public async Task DiscordMessageReceivedAsync(SocketMessage rawMessage)
         {
-            if (rawMessage.Channel.Id != _relayChannel.Id) return;
+            if (!(rawMessage.Channel is SocketGuildChannel)) return;
+            if ((rawMessage.Channel as SocketGuildChannel).Id != RelayChannel.Id) return;
             if (rawMessage.Author.Id == _client.CurrentUser.Id) return;
 
             Log.Information("({Author}) {Message}", rawMessage.Author.ToString(), rawMessage.Content);
@@ -51,7 +50,7 @@ namespace Mogmog.Discord.Services
                 Author = rawMessage.Author.ToString(),
                 AuthorId = rawMessage.Author.Id,
                 Avatar = rawMessage.Author.GetAvatarUrl(),
-                World = null,
+                World = string.Empty,
                 WorldId = (int)PseudoWorld.Discord
             };
 
@@ -61,7 +60,7 @@ namespace Mogmog.Discord.Services
         public async Task GrpcMessageReceivedAsync(ChatMessage chatMessage)
         {
             string rawMessage = $"[{chatMessage.Author}] {chatMessage.Content}";
-            await (_relayChannel as ITextChannel).SendMessageAsync(rawMessage);
+            await (RelayChannel as ITextChannel).SendMessageAsync(rawMessage);
         }
 
         private async Task ChatLoop()
