@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using Mogmog.Discord.Services;
 using Serilog;
 using System;
 using System.Threading.Tasks;
@@ -29,8 +30,9 @@ namespace Mogmog.Discord
             using var services = ConfigureServices(disConfig);
 
             var client = services.GetRequiredService<DiscordSocketClient>();
+            var mogmog = services.GetRequiredService<MogmogConnectionService>();
             client.Log += LogAsync;
-            client.MessageReceived += MessageReceivedAsync;
+            client.MessageReceived += mogmog.DiscordMessageReceivedAsync;
 
             await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_BOT_TOKEN"));
             await client.StartAsync();
@@ -46,11 +48,6 @@ namespace Mogmog.Discord
             } catch {};
 
             await Task.Delay(-1);
-        }
-
-        static async Task MessageReceivedAsync(SocketMessage message)
-        {
-            if (message.Channel.Id != ulong.Parse(Environment.GetEnvironmentVariable("MOGMOG_RELAY_CHANNEL"))) return;
         }
 
         static Task LogAsync(LogMessage message)
@@ -83,6 +80,7 @@ namespace Mogmog.Discord
         {
             return new ServiceCollection()
                 .AddSingleton(new DiscordSocketClient(disConfig))
+                .AddSingleton<MogmogConnectionService>()
                 .BuildServiceProvider();
         }
     }

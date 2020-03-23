@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Client = Grpc.Core.IServerStreamWriter<Mogmog.Protos.ChatMessage>;
 using static Mogmog.Protos.ChatService;
+using System;
 
 namespace Mogmog.Server.Services
 {
@@ -35,6 +36,7 @@ namespace Mogmog.Server.Services
             {
                 var nextMessage = requestStream.Current;
                 nextMessage.World = _gameDataService.Worlds[nextMessage.WorldId];
+                Console.WriteLine(nextMessage.Author + " " + nextMessage.Content);
                 _messageQueue.Enqueue(nextMessage);
             }
         }
