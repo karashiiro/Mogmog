@@ -10,7 +10,7 @@ using static Mogmog.Protos.ChatService;
 
 namespace Mogmog.Discord.Services
 {
-    public class MogmogConnectionService
+    public class MogmogConnectionService : IDisposable
     {
         private const string hostname = "https://localhost:5001";
 
@@ -34,6 +34,15 @@ namespace Mogmog.Discord.Services
 
             _runningTask = ChatLoop();
         }
+
+        public void Dispose()
+        {
+            _runningTask.Dispose();
+            _chatStream.RequestStream.CompleteAsync().Wait();
+            _channel.Dispose();
+        }
+
+        public bool IsActive() => _runningTask.Status == TaskStatus.Running;
 
         public async Task DiscordMessageReceivedAsync(SocketMessage rawMessage)
         {
@@ -59,18 +68,17 @@ namespace Mogmog.Discord.Services
 
         public async Task GrpcMessageReceivedAsync(ChatMessage chatMessage)
         {
+            /*if (chatMessage.WorldId == (int)PseudoWorld.Discord)
+                return;*/
             string rawMessage = $"[{chatMessage.Author}] {chatMessage.Content}";
             await (RelayChannel as ITextChannel).SendMessageAsync(rawMessage);
         }
 
         private async Task ChatLoop()
         {
-            while (true)
+            while (await _chatStream.ResponseStream.MoveNext())
             {
-                if (await _chatStream.ResponseStream.MoveNext())
-                {
-                    await GrpcMessageReceivedAsync(_chatStream.ResponseStream.Current);
-                }
+                await GrpcMessageReceivedAsync(_chatStream.ResponseStream.Current);
             }
         }
     }

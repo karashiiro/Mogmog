@@ -1,10 +1,10 @@
 ﻿using Grpc.Core;
 using Mogmog.Protos;
+using Serilog;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Client = Grpc.Core.IServerStreamWriter<Mogmog.Protos.ChatMessage>;
 using static Mogmog.Protos.ChatService;
-using System;
 
 namespace Mogmog.Server.Services
 {
@@ -20,7 +20,7 @@ namespace Mogmog.Server.Services
         public ChatService(GameDataService gameDataService)
         {
             _gameDataService = gameDataService;
-
+            
             _clients = new List<Client>();
             _messageQueue = new Queue<ChatMessage>();
 
@@ -32,11 +32,12 @@ namespace Mogmog.Server.Services
         public override async Task Chat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
         {
             _clients.Add(responseStream);
+            Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
             while (await requestStream.MoveNext())
             {
                 var nextMessage = requestStream.Current;
                 nextMessage.World = _gameDataService.Worlds[nextMessage.WorldId];
-                Console.WriteLine(nextMessage.Author + " " + nextMessage.Content);
+                Log.Information("({Author}) {Content}", nextMessage.Author, nextMessage.Content);
                 _messageQueue.Enqueue(nextMessage);
             }
         }
@@ -46,7 +47,10 @@ namespace Mogmog.Server.Services
             while (true)
             {
                 if (_messageQueue.Count == 0)
+                {
+                    await Task.Delay(50);
                     continue;
+                }
                 var nextMessage = _messageQueue.Dequeue();
                 foreach (Client client in _clients)
                 {
