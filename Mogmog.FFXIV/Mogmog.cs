@@ -10,9 +10,13 @@ using System.Text.RegularExpressions;
 
 namespace Mogmog.FFXIV
 {
-    static class MogmogRegexes
+    static class MogmogResources
     {
         public static readonly Regex DigitsOnly = new Regex(@"\d+", RegexOptions.Compiled);
+
+        public static readonly string CrossWorldIcon = Encoding.UTF8.GetString(new byte[] {
+            0x02, 0x12, 0x02, 0x59, 0x03
+        });
     }
 
     public class Mogmog : IDalamudPlugin
@@ -47,10 +51,10 @@ namespace Mogmog.FFXIV
 
         private void MessageSend(string command, string message)
         {
-            int channelId = int.Parse(MogmogRegexes.DigitsOnly.Match(command).Value);
+            int channelId = int.Parse(MogmogResources.DigitsOnly.Match(command).Value);
             this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
             {
-                Name = this.dalamud.ClientState.LocalPlayer.Name + " (" + this.dalamud.ClientState.LocalPlayer.HomeWorld.Name + ")", // todo: use CW icon
+                Name = "(" + this.dalamud.ClientState.LocalPlayer.Name + " " + MogmogResources.CrossWorldIcon + " " + this.dalamud.ClientState.LocalPlayer.HomeWorld.Name + ")",
                 MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]" + message),
                 Type = XivChatType.Notice,
             });
@@ -72,7 +76,7 @@ namespace Mogmog.FFXIV
         {
             this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
             {
-                Name = message.Author + " (" + message.World + ")", // todo: use CW icon
+                Name = "(" + message.Author + " " + MogmogResources.CrossWorldIcon + " " + message.World + ")",
                 MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]" + message.Content),
                 Type = XivChatType.Notice,
             });
