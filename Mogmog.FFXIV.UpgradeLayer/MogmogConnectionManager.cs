@@ -1,5 +1,4 @@
-﻿using Dalamud.Game.Command;
-using Grpc.Core;
+﻿using Grpc.Core;
 using Grpc.Net.Client;
 using Mogmog.Protos;
 using System;
@@ -15,26 +14,20 @@ namespace Mogmog.FFXIV
         private readonly IList<ChatServiceClient> clients;
         private readonly IList<GrpcChannel> channels;
 
-        private readonly CommandManager commandManager;
         private readonly MogmogConfiguration config;
 
-        private readonly Mogmog parent;
-
-        public delegate void MessageRecievedCallback(ChatMessage message, int channelId);
-        public MessageRecievedCallback MessageRecievedDelegate;
+        public delegate void MessageReceivedCallback(ChatMessage message, int channelId);
+        public MessageReceivedCallback MessageReceivedDelegate;
 
         private readonly Task runningTask;
 
-        public MogmogConnectionManager(MogmogConfiguration config, CommandManager commandManager, Mogmog parent)
+        public MogmogConnectionManager(MogmogConfiguration config)
         {
             this.chatStreams = new List<AsyncDuplexStreamingCall<ChatMessage, ChatMessage>>();
             this.clients = new List<ChatServiceClient>();
             this.channels = new List<GrpcChannel>();
 
             this.config = config;
-            this.commandManager = commandManager;
-
-            this.parent = parent;
 
             foreach (string hostname in config.Hostnames)
             {
@@ -62,7 +55,6 @@ namespace Mogmog.FFXIV
         public void AddHost(string hostname)
         {
             this.config.Hostnames.Add(hostname);
-            int i = this.config.Hostnames.IndexOf(hostname);
 
             var channel = GrpcChannel.ForAddress(hostname);
             var client = new ChatServiceClient(channel);
@@ -71,9 +63,6 @@ namespace Mogmog.FFXIV
             this.channels.Add(channel);
             this.clients.Add(client);
             this.chatStreams.Add(chatStream);
-
-            this.commandManager.AddHandler($"/global{i + 1}", this.parent.OnMessageCommandInfo());
-            this.commandManager.AddHandler($"/gl{i + 1}", this.parent.OnMessageCommandInfo());
         }
 
         public void RemoveHost(string hostname)
@@ -86,9 +75,6 @@ namespace Mogmog.FFXIV
 
             this.channels[i].Dispose();
             this.channels[i] = null;
-
-            this.commandManager.RemoveHandler($"/global{i + 1}");
-            this.commandManager.RemoveHandler($"/gl{i + 1}");
         }
 
         public void MessageSend(ChatMessage message, int channelId)
@@ -108,7 +94,7 @@ namespace Mogmog.FFXIV
                         continue;
                     if (await this.chatStreams[i].ResponseStream.MoveNext())
                     {
-                        MessageRecievedDelegate(this.chatStreams[i].ResponseStream.Current, i);
+                        MessageReceivedDelegate(this.chatStreams[i].ResponseStream.Current, i);
                     }
                 }
             }

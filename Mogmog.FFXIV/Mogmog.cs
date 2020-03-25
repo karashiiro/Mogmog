@@ -25,9 +25,9 @@ namespace Mogmog.FFXIV
 
         private DalamudPluginInterface dalamud;
         private MogmogConfiguration config;
-        private MogmogConnectionManager connectionManager;
+        private MogmogInteropConnectionManager connectionManager;
 
-        private string CharacterSearch { get => $"https://xivapi.com/character/search?name={this.dalamud.ClientState.LocalPlayer.Name}&server={this.dalamud.ClientState.LocalPlayer.HomeWorld.Name}"; }
+        private string CharacterSearch { get => $"https://xivapi.com/character/search?name={this.dalamud.ClientState.LocalPlayer.Name}&server={this.dalamud.ClientState.LocalPlayer.HomeWorld.GameData.Name}"; }
         private string avatar;
 
         public void Initialize(DalamudPluginInterface dalamud)
@@ -35,16 +35,15 @@ namespace Mogmog.FFXIV
             this.dalamud = dalamud;
             this.config = /*dalamud.GetPluginConfig() as MogmogConfiguration ?? */new MogmogConfiguration();
             this.config.Hostnames.Add("https://localhost:5001"); // Temporary, use Imgui
-            this.connectionManager = new MogmogConnectionManager(this.config, this.dalamud.CommandManager, this)
-            {
-                MessageRecievedDelegate = MessageReceived,
-            };
-
+            this.connectionManager = new MogmogInteropConnectionManager(this.config);
+            
             for (int i = 1; i <= this.config.Hostnames.Count; i++)
             {
                 dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo());
                 dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo());
             }
+
+            this.connectionManager.MessageReceivedDelegate = MessageReceived;
 
             this.avatar = JObject.Parse(new HttpClient().GetStringAsync(new Uri(CharacterSearch)).Result)["Results"][0]["Avatar"].ToObject<string>();
         }
@@ -54,7 +53,7 @@ namespace Mogmog.FFXIV
             int channelId = int.Parse(MogmogResources.DigitsOnly.Match(command).Value);
             this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
             {
-                Name = "(" + this.dalamud.ClientState.LocalPlayer.Name + " " + MogmogResources.CrossWorldIcon + " " + this.dalamud.ClientState.LocalPlayer.HomeWorld.Name + ")",
+                Name = "(" + this.dalamud.ClientState.LocalPlayer.Name + " " + MogmogResources.CrossWorldIcon + " " + this.dalamud.ClientState.LocalPlayer.HomeWorld.GameData.Name + ")",
                 MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]" + message),
                 Type = XivChatType.Notice,
             });

@@ -2,3 +2,15 @@
 
 # CA2007: Consider calling ConfigureAwait on the awaited task
 dotnet_diagnostic.CA2007.severity = none
+
+# IDE0003: Remove qualification
+dotnet_style_qualification_for_event = false:none
+
+# IDE0003: Remove qualification
+dotnet_style_qualification_for_field = false:none
+
+# IDE0003: Remove qualification
+dotnet_style_qualification_for_method = false:none
+
+# IDE0003: Remove qualification
+dotnet_style_qualification_for_property = false:none
