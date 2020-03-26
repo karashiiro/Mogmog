@@ -6,7 +6,9 @@ namespace Mogmog.FFXIV.UpgradeLayer
 {
     class Program
     {
-        static async void Main(string[] args)
+        static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
+
+        static async Task MainAsync(string[] args)
         {
             var config = JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
             var connectionManager = new MogmogConnectionManager(config)

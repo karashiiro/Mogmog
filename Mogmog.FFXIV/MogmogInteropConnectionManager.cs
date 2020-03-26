@@ -21,7 +21,7 @@ namespace Mogmog.FFXIV
         {
             this.config = config;
             var serializedConfig = JsonConvert.SerializeObject(this.config);
-            this.upgradeLayer = Process.Start(Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe"), serializedConfig);
+            //this.upgradeLayer = Process.Start(Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe"), serializedConfig);
 
             this.runningTask = MessageReceiveLoop();
         }

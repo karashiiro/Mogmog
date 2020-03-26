@@ -10,9 +10,9 @@ namespace Mogmog.Discord
 {
     public class Program
     {
-        static void Main(string[] args) => new Program().MainAsync(args).GetAwaiter().GetResult();
+        static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
 
-        async Task MainAsync(string[] _)
+        static async Task MainAsync(string[] _)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
@@ -46,6 +46,8 @@ namespace Mogmog.Discord
                     }
                 }
             } catch {};
+
+            AppDomain.CurrentDomain.ProcessExit += (sender, args) => ProcessExit(services);
 
             await Task.Delay(-1);
         }
@@ -82,6 +84,11 @@ namespace Mogmog.Discord
                 .AddSingleton(new DiscordSocketClient(disConfig))
                 .AddSingleton<MogmogConnectionService>()
                 .BuildServiceProvider();
+        }
+
+        static void ProcessExit(ServiceProvider services)
+        {
+            services.Dispose();
         }
     }
 }

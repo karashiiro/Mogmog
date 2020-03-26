@@ -37,9 +37,8 @@ namespace Mogmog.Discord.Services
 
         public void Dispose()
         {
-            _runningTask.Dispose();
             _chatStream.RequestStream.CompleteAsync().Wait();
-            _channel.Dispose();
+            _channel.ShutdownAsync().Wait();
         }
 
         public bool IsActive() => _runningTask.Status == TaskStatus.Running;
@@ -47,16 +46,20 @@ namespace Mogmog.Discord.Services
         public async Task DiscordMessageReceivedAsync(SocketMessage rawMessage)
         {
             if (!(rawMessage.Channel is SocketGuildChannel)) return;
-            if ((rawMessage.Channel as SocketGuildChannel).Id != RelayChannel.Id) return;
+            var guildChannel = rawMessage.Channel as SocketGuildChannel;
+
+            if (guildChannel.Id != RelayChannel.Id) return;
             if (rawMessage.Author.Id == _client.CurrentUser.Id) return;
 
-            Log.Information("({Author}) {Message}", rawMessage.Author.ToString(), rawMessage.Content);
+            var memberName = guildChannel.Guild.GetUser(rawMessage.Author.Id).Nickname ?? rawMessage.Author.ToString();
+
+            Log.Information("({Author}) {Message}", memberName, rawMessage.Content);
 
             var chatMessage = new ChatMessage
             {
                 Id = rawMessage.Id,
                 Content = rawMessage.Content,
-                Author = rawMessage.Author.ToString(),
+                Author = memberName,
                 AuthorId = rawMessage.Author.Id,
                 Avatar = rawMessage.Author.GetAvatarUrl(),
                 World = string.Empty,
@@ -68,10 +71,17 @@ namespace Mogmog.Discord.Services
 
         public async Task GrpcMessageReceivedAsync(ChatMessage chatMessage)
         {
-            if (chatMessage.WorldId == (int)PseudoWorld.Discord)
-                return;
-            string rawMessage = $"[{chatMessage.Author}] {chatMessage.Content}";
-            await (RelayChannel as ITextChannel).SendMessageAsync(rawMessage);
+            /*if (chatMessage.WorldId == (int)PseudoWorld.Discord)
+                return;*/
+            var messageAuthor = new EmbedAuthorBuilder()
+                .WithName($"({chatMessage.World}) {chatMessage.Author}")
+                .WithIconUrl(chatMessage.Avatar);
+            var messageEmbed = new EmbedBuilder()
+                .WithAuthor(messageAuthor)
+                .WithDescription(chatMessage.Content)
+                .WithColor(Color.Gold)
+                .Build();
+            await (RelayChannel as ITextChannel).SendMessageAsync(embed: messageEmbed);
         }
 
         private async Task ChatLoop()
