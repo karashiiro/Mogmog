@@ -15,20 +15,26 @@ namespace Mogmog.FFXIV
 
         private readonly MogmogConfiguration config;
         private readonly Process upgradeLayer;
-        private readonly Task runningTask;
+        private Task runningTask;
+        private bool taskActive;
 
         public MogmogInteropConnectionManager(MogmogConfiguration config)
         {
             this.config = config;
             var serializedConfig = JsonConvert.SerializeObject(this.config);
             //this.upgradeLayer = Process.Start(Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe"), serializedConfig);
+            this.taskActive = false;
+        }
 
+        public void Start()
+        {
+            this.taskActive = true;
             this.runningTask = MessageReceiveLoop();
         }
 
         private Task MessageReceiveLoop()
         {
-            while (true)
+            while (this.taskActive)
             {
                 // Scan for something
                 ChatMessage message = new ChatMessage();
@@ -37,6 +43,7 @@ namespace Mogmog.FFXIV
                 if (true)
                     MessageReceivedDelegate(message, channelId);
             }
+            return Task.CompletedTask;
         }
 
         public void MessageSend(ChatMessage message, int channelId)
@@ -53,8 +60,8 @@ namespace Mogmog.FFXIV
             {
                 if (disposing)
                 {
-                    this.runningTask.Dispose();
-                    this.upgradeLayer.Dispose();
+                    this.taskActive = false;
+                    //this.upgradeLayer.Dispose();
                 }
 
                 disposedValue = true;

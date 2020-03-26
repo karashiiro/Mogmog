@@ -27,7 +27,6 @@ namespace Mogmog.FFXIV
         private MogmogConfiguration config;
         private MogmogInteropConnectionManager connectionManager;
 
-        private string CharacterSearch { get => $"https://xivapi.com/character/search?name={this.dalamud.ClientState.LocalPlayer.Name}&server={this.dalamud.ClientState.LocalPlayer.HomeWorld.GameData.Name}"; }
         private string avatar;
 
         public void Initialize(DalamudPluginInterface dalamud)
@@ -44,12 +43,14 @@ namespace Mogmog.FFXIV
             }
 
             this.connectionManager.MessageReceivedDelegate = MessageReceived;
-
-            this.avatar = JObject.Parse(new HttpClient().GetStringAsync(new Uri(CharacterSearch)).Result)["Results"][0]["Avatar"].ToObject<string>();
+            //this.connectionManager.Start();
         }
 
         private void MessageSend(string command, string message)
         {
+            if (this.avatar == null)
+                LoadAvatar();
+
             int channelId = int.Parse(MogmogResources.DigitsOnly.Match(command).Value);
             this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
             {
@@ -69,6 +70,12 @@ namespace Mogmog.FFXIV
                 WorldId = this.dalamud.ClientState.LocalPlayer.HomeWorld.Id,
             };
             this.connectionManager.MessageSend(chatMessage, channelId);
+        }
+
+        private void LoadAvatar()
+        {
+            var uri = new Uri($"https://xivapi.com/character/search?name={this.dalamud.ClientState.LocalPlayer.Name}&server={this.dalamud.ClientState.LocalPlayer.HomeWorld.GameData.Name}");
+            this.avatar = JObject.Parse(new HttpClient().GetStringAsync(uri).Result)["Results"][0]["Avatar"].ToObject<string>();
         }
 
         private void MessageReceived(ChatMessage message, int channelId)
