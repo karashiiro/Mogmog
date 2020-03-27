@@ -16,7 +16,9 @@ namespace Mogmog.Server
 #pragma warning restore CA1822 // Mark members as static
         {
             services.AddGrpc();
-            services.AddSingleton<GameDataService>();
+            services
+                .AddSingleton<GameDataService>()
+                .AddSingleton<MogmogTransmissionService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -33,7 +35,7 @@ namespace Mogmog.Server
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGrpcService<ChatService>();
+                endpoints.MapGrpcService<MogmogConnectionService>();
 
                 endpoints.MapGet("/", async context =>
                 {

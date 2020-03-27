@@ -32,6 +32,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         MessageReceivedDelegate = MessageReceived
                     };
                     this.connections.Add(connection);
+                    connection.Start();
                 }
             }
         }
@@ -50,6 +51,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     MessageReceivedDelegate = MessageReceived
                 };
                 this.connections.Insert(ni, connection);
+                connection.Start();
             }
             else
             {
@@ -59,6 +61,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     MessageReceivedDelegate = MessageReceived
                 };
                 this.connections.Add(connection);
+                connection.Start();
             }
         }
 

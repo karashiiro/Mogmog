@@ -55,8 +55,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
         {
             while (this.taskActive)
             {
+                Console.WriteLine("boop1");
                 if (!await this.chatStream.ResponseStream.MoveNext())
                     continue;
+                Console.WriteLine("boop2");
                 MessageReceivedDelegate(chatStream.ResponseStream.Current, this.channelId);
             }
         }

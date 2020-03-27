@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="MogmogConnection.cs~RFf6d553c.TMP" />
+    <None Remove="Program.cs~RFf10afd4.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" Version="2.27.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
