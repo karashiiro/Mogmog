@@ -49,8 +49,12 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         static void MessageReceived(ChatMessage message, int channelId)
         {
-            // Send the message back to the caller.
-            Console.WriteLine($"({message.Author}) {message.Content}");
+            var interopMessage = new ChatMessageInterop
+            {
+                Message = message,
+                ChannelId = channelId,
+            };
+            Console.WriteLine(JsonConvert.SerializeObject(interopMessage));
         }
     }
 

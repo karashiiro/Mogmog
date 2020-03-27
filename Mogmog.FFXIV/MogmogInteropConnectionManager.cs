@@ -18,7 +18,7 @@ namespace Mogmog.FFXIV
         public MogmogInteropConnectionManager(MogmogConfiguration config)
         {
             this.config = config;
-            var serializedConfig = JsonConvert.SerializeObject(this.config);
+            var serializedConfig = JsonConvert.SerializeObject(this.config).Replace("\"", "\\\"");
             this.upgradeLayer = Process.Start(Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe"), serializedConfig);
             this.upgradeLayer.OutputDataReceived += UpgradeLayerMessageReceived;
         }
