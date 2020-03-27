@@ -1,5 +1,6 @@
 ﻿using Mogmog.Protos;
 using Newtonsoft.Json;
+using System;
 using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV.UpgradeLayer
@@ -20,7 +21,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         static void MessageReceived(ChatMessage message, int channelId)
         {
-            //
+            // Send the message back to the caller.
+            Console.WriteLine($"({message.Author}) {message.Content}");
         }
     }
 }

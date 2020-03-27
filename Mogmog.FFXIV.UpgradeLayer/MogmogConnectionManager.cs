@@ -1,31 +1,21 @@
-﻿using Grpc.Core;
-using Grpc.Net.Client;
-using Mogmog.Protos;
+﻿using Mogmog.Protos;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using static Mogmog.Protos.ChatService;
 
-namespace Mogmog.FFXIV
+namespace Mogmog.FFXIV.UpgradeLayer
 {
     public class MogmogConnectionManager : IDisposable
     {
-        private readonly IList<AsyncDuplexStreamingCall<ChatMessage, ChatMessage>> chatStreams;
-        private readonly IList<ChatServiceClient> clients;
-        private readonly IList<GrpcChannel> channels;
+        private readonly IList<MogmogConnection> connections;
 
         private readonly MogmogConfiguration config;
 
         public delegate void MessageReceivedCallback(ChatMessage message, int channelId);
         public MessageReceivedCallback MessageReceivedDelegate;
 
-        private readonly Task runningTask;
-
         public MogmogConnectionManager(MogmogConfiguration config)
         {
-            this.chatStreams = new List<AsyncDuplexStreamingCall<ChatMessage, ChatMessage>>();
-            this.clients = new List<ChatServiceClient>();
-            this.channels = new List<GrpcChannel>();
+            this.connections = new List<MogmogConnection>();
 
             this.config = config;
 
@@ -33,82 +23,74 @@ namespace Mogmog.FFXIV
             {
                 if (string.IsNullOrEmpty(hostname))
                 {
-                    this.channels.Add(null);
-                    this.clients.Add(null);
-                    this.chatStreams.Add(null);
+                    this.connections.Add(null);
                 }
                 else
                 {
-                    var channel = GrpcChannel.ForAddress(hostname);
-                    var client = new ChatServiceClient(channel);
-                    var chatStream = client.Chat();
-
-                    this.channels.Add(channel);
-                    this.clients.Add(client);
-                    this.chatStreams.Add(chatStream);
+                    var connection = new MogmogConnection(hostname, this.connections.Count)
+                    {
+                        MessageReceivedDelegate = MessageReceived
+                    };
+                    this.connections.Add(connection);
                 }
             }
-
-            this.runningTask = ChatLoop();
         }
 
         public void AddHost(string hostname)
         {
-            this.config.Hostnames.Add(hostname);
+            int ni = this.config.Hostnames.IndexOf(null);
+            if (ni != -1)
+            {
+                this.config.Hostnames.Remove(null);
+                this.config.Hostnames.Insert(ni, hostname);
+                this.connections.Remove(null);
 
-            var channel = GrpcChannel.ForAddress(hostname);
-            var client = new ChatServiceClient(channel);
-            var chatStream = client.Chat();
-
-            this.channels.Add(channel);
-            this.clients.Add(client);
-            this.chatStreams.Add(chatStream);
+                var connection = new MogmogConnection(hostname, ni)
+                {
+                    MessageReceivedDelegate = MessageReceived
+                };
+                this.connections.Insert(ni, connection);
+            }
+            else
+            {
+                this.config.Hostnames.Add(hostname);
+                var connection = new MogmogConnection(hostname, this.connections.Count)
+                {
+                    MessageReceivedDelegate = MessageReceived
+                };
+                this.connections.Add(connection);
+            }
         }
 
         public void RemoveHost(string hostname)
         {
             int i = this.config.Hostnames.IndexOf(hostname);
-            this.config.Hostnames[i] = string.Empty;
-
-            this.chatStreams[i].Dispose();
-            this.chatStreams[i] = null;
-
-            this.channels[i].Dispose();
-            this.channels[i] = null;
+            if (i == -1)
+                return;
+            this.config.Hostnames.RemoveAt(i);
+            this.config.Hostnames.Insert(i, null);
+            this.connections.RemoveAt(i);
+            this.connections.Insert(i, null);
         }
 
         public void MessageSend(ChatMessage message, int channelId)
         {
-            if (this.chatStreams[channelId] == null)
+            if (this.connections[channelId] == null) // Shouldn't happen but might, should return an error message
                 return;
-            this.chatStreams[channelId].RequestStream.WriteAsync(message);
+            this.connections[channelId].SendMessage(message);
         }
 
-        private async Task ChatLoop()
+        public void MessageReceived(ChatMessage message, int channelId)
         {
-            while (true)
-            {
-                for (int i = 0; i < this.chatStreams.Count; i++)
-                {
-                    if (this.chatStreams[i] == null)
-                        continue;
-                    if (await this.chatStreams[i].ResponseStream.MoveNext())
-                    {
-                        MessageReceivedDelegate(this.chatStreams[i].ResponseStream.Current, i);
-                    }
-                }
-            }
+            MessageReceivedDelegate(message, channelId);
         }
 
         public void Dispose()
         {
-            for (int i = 0; i < this.chatStreams.Count; i++)
+            foreach (var connection in this.connections)
             {
-                this.chatStreams[i].Dispose();
-                this.channels[i].Dispose();
+                connection.Dispose();
             }
-
-            this.runningTask.Dispose();
         }
     }
 }

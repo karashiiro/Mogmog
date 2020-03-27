@@ -22,7 +22,6 @@
   <ItemGroup>
     <Reference Include="Dalamud">
       <HintPath>..\..\Dalamud\Dalamud\bin\Debug\Dalamud.dll</HintPath>
-      <Private>false</Private>
     </Reference>
   </ItemGroup>
 
