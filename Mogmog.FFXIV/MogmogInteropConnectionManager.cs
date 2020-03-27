@@ -4,7 +4,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV
 {
@@ -15,40 +14,49 @@ namespace Mogmog.FFXIV
 
         private readonly MogmogConfiguration config;
         private readonly Process upgradeLayer;
-        private Task runningTask;
-        private bool taskActive;
 
         public MogmogInteropConnectionManager(MogmogConfiguration config)
         {
             this.config = config;
             var serializedConfig = JsonConvert.SerializeObject(this.config);
-            //this.upgradeLayer = Process.Start(Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe"), serializedConfig);
-            this.taskActive = false;
-        }
-
-        public void Start()
-        {
-            this.taskActive = true;
-            this.runningTask = MessageReceiveLoop();
-        }
-
-        private Task MessageReceiveLoop()
-        {
-            while (this.taskActive)
-            {
-                // Scan for something
-                ChatMessage message = new ChatMessage();
-                int channelId = 0;
-
-                if (true)
-                    MessageReceivedDelegate(message, channelId);
-            }
-            return Task.CompletedTask;
+            this.upgradeLayer = Process.Start(Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe"), serializedConfig);
+            this.upgradeLayer.OutputDataReceived += UpgradeLayerMessageReceived;
         }
 
         public void MessageSend(ChatMessage message, int channelId)
         {
-            // Interface with the upgrade layer
+            var pack = new ChatMessageInterop
+            {
+                Message = message,
+                ChannelId = channelId,
+            };
+            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+        }
+
+        public void AddHost(string hostname)
+        {
+            var pack = new AddHostInterop
+            {
+                HostAdd = hostname,
+            };
+            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+        }
+
+        public void RemoveHost(string hostname)
+        {
+            var pack = new RemoveHostInterop
+            {
+                HostRemove = hostname,
+            };
+            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+        }
+
+        private void UpgradeLayerMessageReceived(object sender, DataReceivedEventArgs e)
+        {
+            var messageInterop = JsonConvert.DeserializeObject<ChatMessageInterop>(e.Data);
+            var message = messageInterop.Message;
+            var channelId = messageInterop.ChannelId;
+            MessageReceivedDelegate(message, channelId);
         }
 
         #region IDisposable Support
@@ -60,8 +68,7 @@ namespace Mogmog.FFXIV
             {
                 if (disposing)
                 {
-                    this.taskActive = false;
-                    //this.upgradeLayer.Dispose();
+                    this.upgradeLayer.Dispose();
                 }
 
                 disposedValue = true;
@@ -73,5 +80,21 @@ namespace Mogmog.FFXIV
             Dispose(true);
         }
         #endregion
+    }
+
+    struct ChatMessageInterop
+    {
+        public ChatMessage Message;
+        public int ChannelId;
+    }
+
+    struct AddHostInterop
+    {
+        public string HostAdd;
+    }
+
+    struct RemoveHostInterop
+    {
+        public string HostRemove;
     }
 }

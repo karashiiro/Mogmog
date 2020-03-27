@@ -43,7 +43,6 @@ namespace Mogmog.FFXIV
             }
 
             this.connectionManager.MessageReceivedDelegate = MessageReceived;
-            //this.connectionManager.Start();
         }
 
         private void MessageSend(string command, string message)

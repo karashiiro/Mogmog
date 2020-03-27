@@ -83,7 +83,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.connections[channelId].SendMessage(message);
         }
 
-        public void MessageReceived(ChatMessage message, int channelId)
+        private void MessageReceived(ChatMessage message, int channelId)
         {
             MessageReceivedDelegate(message, channelId);
         }
