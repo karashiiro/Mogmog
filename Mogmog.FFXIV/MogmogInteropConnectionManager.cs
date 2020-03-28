@@ -33,7 +33,7 @@ namespace Mogmog.FFXIV
             this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
         }
 
-        public void AddHost(string hostname)
+        public void AddHost(string command, string hostname)
         {
             var pack = new GenericInterop
             {
@@ -43,7 +43,7 @@ namespace Mogmog.FFXIV
             this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
         }
 
-        public void RemoveHost(string hostname)
+        public void RemoveHost(string command, string hostname)
         {
             var pack = new GenericInterop
             {
@@ -53,7 +53,7 @@ namespace Mogmog.FFXIV
             this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
         }
 
-        public void ShowWindow()
+        public void ShowWindow(string command, string args)
         {
             var pack = new GenericInterop
             {
@@ -63,7 +63,7 @@ namespace Mogmog.FFXIV
             this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
         }
 
-        public void HideWindow()
+        public void HideWindow(string command, string args)
         {
             var pack = new GenericInterop
             {

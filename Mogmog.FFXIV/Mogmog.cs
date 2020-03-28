@@ -41,6 +41,26 @@ namespace Mogmog.FFXIV
                 dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo());
                 dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo());
             }
+            dalamud.CommandManager.AddHandler("/mgmgconnect", new CommandInfo(this.connectionManager.AddHost)
+            {
+                HelpMessage = "Connect to a Mogmog server using its address.",
+                ShowInHelp = true,
+            });
+            dalamud.CommandManager.AddHandler("/mgmgdisconnect", new CommandInfo(this.connectionManager.RemoveHost)
+            {
+                HelpMessage = "Disconnect from a Mogmog server using its address.",
+                ShowInHelp = true,
+            });
+            dalamud.CommandManager.AddHandler("/mgmgshow", new CommandInfo(this.connectionManager.ShowWindow)
+            {
+                HelpMessage = "Show the Mogmog console window.",
+                ShowInHelp = true,
+            });
+            dalamud.CommandManager.AddHandler("/mgmghide", new CommandInfo(this.connectionManager.HideWindow)
+            {
+                HelpMessage = "Hide the Mogmog console window.",
+                ShowInHelp = true,
+            });
 
             this.connectionManager.MessageReceivedDelegate = MessageReceived;
         }
