@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.Chat;
 using Dalamud.Game.Command;
+using Dalamud.Game.Internal.Gui;
 using Dalamud.Plugin;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
@@ -23,6 +24,7 @@ namespace Mogmog.FFXIV
     {
         public string Name => "Mogmog";
 
+        private ChatGui chat;
         private DalamudPluginInterface dalamud;
         private MogmogConfiguration config;
         private MogmogInteropConnectionManager connectionManager;
@@ -32,6 +34,7 @@ namespace Mogmog.FFXIV
         public void Initialize(DalamudPluginInterface dalamud)
         {
             this.dalamud = dalamud;
+            this.chat = this.dalamud.Framework.Gui.Chat;
             this.config = /*dalamud.GetPluginConfig() as MogmogConfiguration ?? */new MogmogConfiguration();
             this.config.Hostnames.Add("https://localhost:5001"); // Temporary, use Imgui
             this.connectionManager = new MogmogInteropConnectionManager(this.config);
@@ -41,22 +44,22 @@ namespace Mogmog.FFXIV
                 dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo());
                 dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo());
             }
-            dalamud.CommandManager.AddHandler("/mgmgconnect", new CommandInfo(this.connectionManager.AddHost)
+            dalamud.CommandManager.AddHandler("/mgmgconnect", new CommandInfo(AddHost)
             {
                 HelpMessage = "Connect to a Mogmog server using its address.",
                 ShowInHelp = true,
             });
-            dalamud.CommandManager.AddHandler("/mgmgdisconnect", new CommandInfo(this.connectionManager.RemoveHost)
+            dalamud.CommandManager.AddHandler("/mgmgdisconnect", new CommandInfo(RemoveHost)
             {
                 HelpMessage = "Disconnect from a Mogmog server using its address.",
                 ShowInHelp = true,
             });
-            dalamud.CommandManager.AddHandler("/mgmgshow", new CommandInfo(this.connectionManager.ShowWindow)
+            dalamud.CommandManager.AddHandler("/mgmgshow", new CommandInfo(ShowWindow)
             {
                 HelpMessage = "Show the Mogmog console window.",
                 ShowInHelp = true,
             });
-            dalamud.CommandManager.AddHandler("/mgmghide", new CommandInfo(this.connectionManager.HideWindow)
+            dalamud.CommandManager.AddHandler("/mgmghide", new CommandInfo(HideWindow)
             {
                 HelpMessage = "Hide the Mogmog console window.",
                 ShowInHelp = true,
@@ -71,13 +74,13 @@ namespace Mogmog.FFXIV
                 LoadAvatar();
 
             int channelId = int.Parse(MogmogResources.DigitsOnly.Match(command).Value);
-            this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
+            this.chat.PrintChat(new XivChatEntry
             {
                 Name = "(" + this.dalamud.ClientState.LocalPlayer.Name + " " + MogmogResources.CrossWorldIcon + " " + this.dalamud.ClientState.LocalPlayer.HomeWorld.GameData.Name + ")",
                 MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]" + message),
                 Type = XivChatType.Notice,
             });
-            this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
+            this.chat.UpdateQueue(this.dalamud.Framework);
             var chatMessage = new ChatMessage
             {
                 Id = 0,
@@ -108,7 +111,41 @@ namespace Mogmog.FFXIV
             this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
         }
 
-        public CommandInfo OnMessageCommandInfo()
+        private void AddHost(string command, string args)
+        {
+            this.connectionManager.AddHost(args);
+            Echo($"Added connection {args}");
+        }
+
+        private void RemoveHost(string command, string args)
+        {
+            this.connectionManager.RemoveHost(args);
+            Echo($"Removed connection {args}");
+        }
+
+        private void ShowWindow(string command, string args)
+        {
+            this.connectionManager.ShowWindow();
+            Echo("Window shown.");
+        }
+
+        private void HideWindow(string command, string args)
+        {
+            this.connectionManager.HideWindow();
+            Echo("Window hidden.");
+        }
+
+        private void Echo(string message)
+        {
+            this.chat.PrintChat(new XivChatEntry
+            {
+                MessageBytes = Encoding.UTF8.GetBytes(message),
+                Type = XivChatType.Echo,
+            });
+            this.chat.UpdateQueue(this.dalamud.Framework);
+        }
+
+        private CommandInfo OnMessageCommandInfo()
         {
             return new CommandInfo(MessageSend)
             {
