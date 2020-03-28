@@ -35,18 +35,40 @@ namespace Mogmog.FFXIV
 
         public void AddHost(string hostname)
         {
-            var pack = new AddHostInterop
+            var pack = new GenericInterop
             {
-                HostAdd = hostname,
+                Command = "AddHost",
+                Arg = hostname,
             };
             this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
         }
 
         public void RemoveHost(string hostname)
         {
-            var pack = new RemoveHostInterop
+            var pack = new GenericInterop
             {
-                HostRemove = hostname,
+                Command = "RemoveHost",
+                Arg = hostname,
+            };
+            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+        }
+
+        public void ShowWindow()
+        {
+            var pack = new GenericInterop
+            {
+                Command = "ShowWindow",
+                Arg = string.Empty,
+            };
+            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+        }
+
+        public void HideWindow()
+        {
+            var pack = new GenericInterop
+            {
+                Command = "HideWindow",
+                Arg = string.Empty,
             };
             this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
         }
@@ -68,6 +90,7 @@ namespace Mogmog.FFXIV
             {
                 if (disposing)
                 {
+                    this.upgradeLayer.Kill();
                     this.upgradeLayer.Dispose();
                 }
 
@@ -88,13 +111,9 @@ namespace Mogmog.FFXIV
         public int ChannelId;
     }
 
-    struct AddHostInterop
+    struct GenericInterop
     {
-        public string HostAdd;
-    }
-
-    struct RemoveHostInterop
-    {
-        public string HostRemove;
+        public string Command;
+        public string Arg;
     }
 }
