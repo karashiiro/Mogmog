@@ -1,10 +1,12 @@
 ﻿using Mogmog.Protos;
 using Newtonsoft.Json;
+using PeanutButter.SimpleHTTPServer;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Reflection;
-using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Mogmog.FFXIV
 {
@@ -13,28 +15,34 @@ namespace Mogmog.FFXIV
         public delegate void MessageReceivedCallback(ChatMessage message, int channelId);
         public MessageReceivedCallback MessageReceivedDelegate;
 
-        public delegate void ErrorReceivedCallback(string error);
-        public ErrorReceivedCallback ErrorReceivedDelegate;
-
+        private readonly HttpClient client;
+        private readonly HttpServer server;
         private readonly MogmogConfiguration config;
         private readonly Process upgradeLayer;
+        private readonly Uri localhost;
 
-        public MogmogInteropConnectionManager(MogmogConfiguration config)
+        public MogmogInteropConnectionManager(MogmogConfiguration config, HttpClient client)
         {
+            this.client = client;
+            this.server = new HttpServer();
+
+            this.server.AddJsonDocumentHandler(UpgradeLayerMessageReceived);
+
+            this.localhost = new Uri($"http://localhost:{this.server.Port}");
+
             this.config = config;
+
             var filePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe");
             var serializedConfig = JsonConvert.SerializeObject(this.config).Replace("\"", "\\\"");
-            var startInfo = new ProcessStartInfo(filePath, serializedConfig)
+            var args = new string[] { serializedConfig, this.server.Port.ToString() };
+            // Redirect standard input so the child process crashes when the game closes if the plugin isn't disposed of properly.
+            var startInfo = new ProcessStartInfo(filePath, string.Join(" ", args))
             {
                 CreateNoWindow = true,
-                RedirectStandardError = true,
                 RedirectStandardInput = true,
-                RedirectStandardOutput = true,
                 UseShellExecute = false,
             };
             this.upgradeLayer = Process.Start(startInfo);
-            this.upgradeLayer.ErrorDataReceived += UpgradeLayerErrorReceived;
-            this.upgradeLayer.OutputDataReceived += UpgradeLayerMessageReceived;
         }
 
         public void MessageSend(ChatMessage message, int channelId)
@@ -44,7 +52,7 @@ namespace Mogmog.FFXIV
                 Message = message,
                 ChannelId = channelId,
             };
-            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+            SendToUpgradeLayer(JsonConvert.SerializeObject(pack));
         }
 
         public void AddHost(string hostname)
@@ -54,7 +62,7 @@ namespace Mogmog.FFXIV
                 Command = "AddHost",
                 Arg = hostname,
             };
-            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+            SendToUpgradeLayer(JsonConvert.SerializeObject(pack));
         }
 
         public void RemoveHost(string hostname)
@@ -64,20 +72,25 @@ namespace Mogmog.FFXIV
                 Command = "RemoveHost",
                 Arg = hostname,
             };
-            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+            SendToUpgradeLayer(JsonConvert.SerializeObject(pack));
         }
 
-        private void UpgradeLayerErrorReceived(object sender, DataReceivedEventArgs e)
+        private byte[] UpgradeLayerMessageReceived(HttpProcessor processor, Stream stream)
         {
-            ErrorReceivedDelegate(e.Data);
+            using (var memoryStream = new MemoryStream())
+            {
+                stream.CopyTo(memoryStream);
+                var messageInterop = JsonConvert.DeserializeObject<ChatMessageInterop>(Encoding.UTF8.GetString(memoryStream.GetBuffer()));
+                var message = messageInterop.Message;
+                var channelId = messageInterop.ChannelId;
+                MessageReceivedDelegate(message, channelId);
+                return new byte[0];
+            }
         }
 
-        private void UpgradeLayerMessageReceived(object sender, DataReceivedEventArgs e)
+        private void SendToUpgradeLayer(string message)
         {
-            var messageInterop = JsonConvert.DeserializeObject<ChatMessageInterop>(e.Data);
-            var message = messageInterop.Message;
-            var channelId = messageInterop.ChannelId;
-            MessageReceivedDelegate(message, channelId);
+            this.client.PostAsync(localhost, new ByteArrayContent(Encoding.UTF8.GetBytes(message)));
         }
 
         #region IDisposable Support
@@ -91,6 +104,9 @@ namespace Mogmog.FFXIV
                 {
                     this.upgradeLayer.Kill();
                     this.upgradeLayer.Dispose();
+
+                    this.server.Stop();
+                    this.server.Dispose();
                 }
 
                 disposedValue = true;

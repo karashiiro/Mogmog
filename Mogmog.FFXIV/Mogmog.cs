@@ -23,6 +23,7 @@ namespace Mogmog.FFXIV
         public string Name => "Mogmog";
 
         private DalamudPluginInterface dalamud;
+        private HttpClient http;
         private MogmogConfiguration config;
         private MogmogInteropConnectionManager connectionManager;
 
@@ -32,11 +33,11 @@ namespace Mogmog.FFXIV
         public void Initialize(DalamudPluginInterface dalamud)
         {
             this.dalamud = dalamud;
+            this.http = new HttpClient();
             this.config = /*dalamud.GetPluginConfig() as MogmogConfiguration ?? */new MogmogConfiguration();
             this.config.Hostnames.Add("https://localhost:5001"); // Temporary, use Imgui
-            this.connectionManager = new MogmogInteropConnectionManager(this.config)
+            this.connectionManager = new MogmogInteropConnectionManager(this.config, this.http)
             {
-                ErrorReceivedDelegate = ErrorReceived,
                 MessageReceivedDelegate = MessageReceived,
             };
             
@@ -96,20 +97,14 @@ namespace Mogmog.FFXIV
             var worldName = player.HomeWorld.GameData.Name;
             var uri = new Uri($"https://xivapi.com/character/search?name={charaName}&server={worldName}");
             // On the one hand, it's a waste of resources to have more than one HttpClient, but on the other Dalamud doesn't provide one and it's literally only used in this one function.
-            var http = new HttpClient();
             try
             {
-                var res = await http.GetStringAsync(uri);
+                var res = await this.http.GetStringAsync(uri);
                 this.avatar = JObject.Parse(res)["Results"][0]["Avatar"].ToObject<string>();
             }
             catch {} // If XIVAPI is down or broken, whatever
             this.lastPlayerName = player.Name;
-            dalamud.Log("Player avatar is located at {Uri}.", this.avatar ?? string.Empty);
-        }
-
-        private void ErrorReceived(string error)
-        {
-            this.dalamud.LogError(error);
+            dalamud.Log("Player avatar is located at {Uri}.", this.avatar ?? "undefined");
         }
 
         private void MessageReceived(ChatMessage message, int channelId)
@@ -146,6 +141,8 @@ namespace Mogmog.FFXIV
         public void Dispose()
         {
             this.connectionManager.Dispose();
+
+            this.http.Dispose();
 
             for (int i = 0; i < this.config.Hostnames.Count; i++)
             {
