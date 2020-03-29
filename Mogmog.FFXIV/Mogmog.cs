@@ -97,10 +97,14 @@ namespace Mogmog.FFXIV
             var uri = new Uri($"https://xivapi.com/character/search?name={charaName}&server={worldName}");
             // On the one hand, it's a waste of resources to have more than one HttpClient, but on the other Dalamud doesn't provide one and it's literally only used in this one function.
             var http = new HttpClient();
-            var res = await http.GetStringAsync(uri);
-            this.avatar = JObject.Parse(res)["Results"][0]["Avatar"].ToObject<string>();
+            try
+            {
+                var res = await http.GetStringAsync(uri);
+                this.avatar = JObject.Parse(res)["Results"][0]["Avatar"].ToObject<string>();
+            }
+            catch {} // If XIVAPI is down or broken, whatever
             this.lastPlayerName = player.Name;
-            dalamud.Log("Player avatar is located at {Uri}.", this.avatar);
+            dalamud.Log("Player avatar is located at {Uri}.", this.avatar ?? string.Empty);
         }
 
         private void ErrorReceived(string error)
