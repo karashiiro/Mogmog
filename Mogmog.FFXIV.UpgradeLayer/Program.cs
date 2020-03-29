@@ -1,8 +1,6 @@
 ﻿using Mogmog.Protos;
 using Newtonsoft.Json;
 using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV.UpgradeLayer
@@ -15,9 +13,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         static async Task MainAsync(string[] args)
         {
-            var hwnd = Process.GetCurrentProcess().MainWindowHandle;
-            //ShowWindow(hwnd, 0); // Hides the console window.
-            
             var config = JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
             connectionManager = new MogmogConnectionManager(config)
             {
@@ -48,12 +43,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         case "RemoveHost":
                             connectionManager.RemoveHost(genericInterop.Arg);
                             break;
-                        case "ShowWindow":
-                            ShowWindow(Process.GetCurrentProcess().MainWindowHandle, 5);
-                            break;
-                        case "HideWindow":
-                            ShowWindow(Process.GetCurrentProcess().MainWindowHandle, 0);
-                            break;
                     }
                 }
             }
@@ -68,9 +57,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
             };
             Console.WriteLine(JsonConvert.SerializeObject(interopMessage));
         }
-
-        [DllImport("user32")]
-        static extern bool ShowWindow(IntPtr hwnd, int nCmdShow);
     }
 
     struct ChatMessageInterop

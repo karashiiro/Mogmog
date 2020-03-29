@@ -1,21 +1,18 @@
 ﻿using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Actors.Types;
 using Dalamud.Game.Command;
-using Dalamud.Game.Internal.Gui;
 using Dalamud.Plugin;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV
 {
     static class MogmogResources
     {
-        public static readonly Regex DigitsOnly = new Regex(@"\d+", RegexOptions.Compiled);
-
         public static readonly string CrossWorldIcon = Encoding.UTF8.GetString(new byte[] {
             0x02, 0x12, 0x02, 0x59, 0x03
         });
@@ -25,22 +22,23 @@ namespace Mogmog.FFXIV
     {
         public string Name => "Mogmog";
 
-        private ChatGui chat;
         private DalamudPluginInterface dalamud;
         private MogmogConfiguration config;
         private MogmogInteropConnectionManager connectionManager;
-        private PlayerCharacter player;
 
         private string avatar;
+        private string lastPlayerName;
 
         public void Initialize(DalamudPluginInterface dalamud)
         {
             this.dalamud = dalamud;
-            this.chat = this.dalamud.Framework.Gui.Chat;
-            this.player = this.dalamud.ClientState.LocalPlayer;
             this.config = /*dalamud.GetPluginConfig() as MogmogConfiguration ?? */new MogmogConfiguration();
             this.config.Hostnames.Add("https://localhost:5001"); // Temporary, use Imgui
-            this.connectionManager = new MogmogInteropConnectionManager(this.config);
+            this.connectionManager = new MogmogInteropConnectionManager(this.config)
+            {
+                ErrorReceivedDelegate = ErrorReceived,
+                MessageReceivedDelegate = MessageReceived,
+            };
             
             for (int i = 1; i <= this.config.Hostnames.Count; i++)
             {
@@ -57,56 +55,64 @@ namespace Mogmog.FFXIV
                 HelpMessage = "Disconnect from a Mogmog server using its address.",
                 ShowInHelp = true,
             });
-            dalamud.CommandManager.AddHandler("/mgmgshow", new CommandInfo(ShowWindow)
-            {
-                HelpMessage = "Show the Mogmog console window.",
-                ShowInHelp = true,
-            });
-            dalamud.CommandManager.AddHandler("/mgmghide", new CommandInfo(HideWindow)
-            {
-                HelpMessage = "Hide the Mogmog console window.",
-                ShowInHelp = true,
-            });
-
-            this.connectionManager.MessageReceivedDelegate = MessageReceived;
         }
 
         private void MessageSend(string command, string message)
         {
-            if (this.avatar == null)
-                LoadAvatar();
+            _ = MessageSendAsync(command, message);
+        }
 
-            int channelId = int.Parse(MogmogResources.DigitsOnly.Match(command).Value);
-            this.chat.PrintChat(new XivChatEntry
+        private async Task MessageSendAsync(string command, string message)
+        {
+            var chat = this.dalamud.Framework.Gui.Chat;
+            var player = this.dalamud.ClientState.LocalPlayer;
+
+            // Handles switching characters
+            if (this.lastPlayerName == null || this.lastPlayerName != player.Name)
+                await LoadAvatar(player);
+            int channelId = int.Parse(command.Substring(command.StartsWith("/global") ? 7 : 3));
+            chat.PrintChat(new XivChatEntry
             {
-                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{this.player.Name}> {message}"),
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{player.Name}{MogmogResources.CrossWorldIcon}{player.HomeWorld.GameData.Name}> {message}"),
                 Type = XivChatType.Notice,
             });
-            this.chat.UpdateQueue(this.dalamud.Framework);
+            chat.UpdateQueue(this.dalamud.Framework);
             var chatMessage = new ChatMessage
             {
                 Id = 0,
                 Content = message,
-                Author = this.player.Name,
+                Author = player.Name,
                 AuthorId = this.dalamud.ClientState.LocalContentId,
                 Avatar = this.avatar,
                 World = string.Empty,
-                WorldId = this.player.HomeWorld.Id,
+                WorldId = player.HomeWorld.Id,
             };
             this.connectionManager.MessageSend(chatMessage, channelId);
         }
 
-        private void LoadAvatar()
+        private async Task LoadAvatar(PlayerCharacter player)
         {
-            var uri = new Uri($"https://xivapi.com/character/search?name={this.player.Name}&server={this.player.HomeWorld.GameData.Name}");
-            this.avatar = JObject.Parse(new HttpClient().GetStringAsync(uri).Result)["Results"][0]["Avatar"].ToObject<string>();
+            var charaName = player.Name;
+            var worldName = player.HomeWorld.GameData.Name;
+            var uri = new Uri($"https://xivapi.com/character/search?name={charaName}&server={worldName}");
+            // On the one hand, it's a waste of resources to have more than one HttpClient, but on the other Dalamud doesn't provide one and it's literally only used in this one function.
+            var http = new HttpClient();
+            var res = await http.GetStringAsync(uri);
+            this.avatar = JObject.Parse(res)["Results"][0]["Avatar"].ToObject<string>();
+            this.lastPlayerName = player.Name;
+            dalamud.Log("Player avatar is located at {Uri}.", this.avatar);
+        }
+
+        private void ErrorReceived(string error)
+        {
+            this.dalamud.LogError(error);
         }
 
         private void MessageReceived(ChatMessage message, int channelId)
         {
             this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
             {
-                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{message.Author}> {message.Content}"),
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{message.Author}{MogmogResources.CrossWorldIcon}{message.World}> {message.Content}"),
                 Type = XivChatType.Notice,
             });
             this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
@@ -115,25 +121,13 @@ namespace Mogmog.FFXIV
         private void AddHost(string command, string args)
         {
             this.connectionManager.AddHost(args);
-            this.chat.Print($"Added connection {args}");
+            this.dalamud.Framework.Gui.Chat.Print($"Added connection {args}");
         }
 
         private void RemoveHost(string command, string args)
         {
             this.connectionManager.RemoveHost(args);
-            this.chat.Print($"Removed connection {args}");
-        }
-
-        private void ShowWindow(string command, string args)
-        {
-            this.connectionManager.ShowWindow();
-            this.chat.Print("Window shown.");
-        }
-
-        private void HideWindow(string command, string args)
-        {
-            this.connectionManager.HideWindow();
-            this.chat.Print("Window hidden.");
+            this.dalamud.Framework.Gui.Chat.Print($"Removed connection {args}");
         }
 
         private CommandInfo OnMessageCommandInfo(int i, bool showInHelp = true)

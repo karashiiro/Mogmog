@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Mogmog.FFXIV
 {
@@ -12,14 +13,27 @@ namespace Mogmog.FFXIV
         public delegate void MessageReceivedCallback(ChatMessage message, int channelId);
         public MessageReceivedCallback MessageReceivedDelegate;
 
+        public delegate void ErrorReceivedCallback(string error);
+        public ErrorReceivedCallback ErrorReceivedDelegate;
+
         private readonly MogmogConfiguration config;
         private readonly Process upgradeLayer;
 
         public MogmogInteropConnectionManager(MogmogConfiguration config)
         {
             this.config = config;
+            var filePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe");
             var serializedConfig = JsonConvert.SerializeObject(this.config).Replace("\"", "\\\"");
-            this.upgradeLayer = Process.Start(Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe"), serializedConfig);
+            var startInfo = new ProcessStartInfo(filePath, serializedConfig)
+            {
+                CreateNoWindow = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+            };
+            this.upgradeLayer = Process.Start(startInfo);
+            this.upgradeLayer.ErrorDataReceived += UpgradeLayerErrorReceived;
             this.upgradeLayer.OutputDataReceived += UpgradeLayerMessageReceived;
         }
 
@@ -53,24 +67,9 @@ namespace Mogmog.FFXIV
             this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
         }
 
-        public void ShowWindow()
+        private void UpgradeLayerErrorReceived(object sender, DataReceivedEventArgs e)
         {
-            var pack = new GenericInterop
-            {
-                Command = "ShowWindow",
-                Arg = string.Empty,
-            };
-            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
-        }
-
-        public void HideWindow()
-        {
-            var pack = new GenericInterop
-            {
-                Command = "HideWindow",
-                Arg = string.Empty,
-            };
-            this.upgradeLayer.StandardInput.WriteLine(JsonConvert.SerializeObject(pack));
+            ErrorReceivedDelegate(e.Data);
         }
 
         private void UpgradeLayerMessageReceived(object sender, DataReceivedEventArgs e)
