@@ -43,6 +43,9 @@
     <Exec Command="del &quot;$(TargetDir)System.Memory.dll&quot;" />
     <Exec Command="del &quot;$(TargetDir)System.Numerics.Vectors.dll&quot;" />
     <Exec Command="del &quot;$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll&quot;" />
+    <Exec Command="rmdir /S /Q &quot;$(TargetDir)runtimes\linux&quot;" />
+    <Exec Command="rmdir /S /Q &quot;$(TargetDir)runtimes\osx&quot;" />
+    <Exec Command="rmdir /S /Q &quot;$(TargetDir)runtimes\unix&quot;" />
   </Target>
 
 </Project>

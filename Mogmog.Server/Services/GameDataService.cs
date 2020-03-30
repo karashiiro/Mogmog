@@ -19,7 +19,7 @@ namespace Mogmog.Server.Services
         /// </summary>
         private void InitializeWorldStore()
         {
-            var worldJson = File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "..", "Resources", "world.json"));
+            var worldJson = File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "world.json"));
             Worlds = JsonConvert.DeserializeObject<Dictionary<int, string>>(worldJson);
             // It's not very efficient to do this, but it is practical (and it only happens on startup).
             // We can treat the PseudoWorld enum as an extension to the Dictionary, making it easy to edit the world list with more client types.

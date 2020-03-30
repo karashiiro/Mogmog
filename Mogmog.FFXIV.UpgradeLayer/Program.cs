@@ -27,7 +27,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
             server.AddJsonDocumentHandler(ReadInput);
 
-            var config = new MogmogConfiguration() ?? JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
+            var config = JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
             connectionManager = new MogmogConnectionManager(config)
             {
                 MessageReceivedDelegate = MessageReceived

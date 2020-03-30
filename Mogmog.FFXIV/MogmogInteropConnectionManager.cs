@@ -102,7 +102,6 @@ namespace Mogmog.FFXIV
             {
                 if (disposing)
                 {
-                    this.upgradeLayer.Kill();
                     this.upgradeLayer.Dispose();
 
                     this.server.Stop();
