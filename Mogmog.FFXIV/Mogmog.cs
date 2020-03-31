@@ -145,7 +145,7 @@ namespace Mogmog.FFXIV
         {
             this.connectionManager.Dispose();
 
-            for (int i = 0; i < this.config.Hostnames.Count; i++)
+            for (int i = 1; i <= this.config.Hostnames.Count; i++)
             {
                 dalamud.CommandManager.RemoveHandler($"/global{i}");
                 dalamud.CommandManager.RemoveHandler($"/gl{i}");
