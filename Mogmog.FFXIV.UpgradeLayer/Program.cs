@@ -75,6 +75,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 ChannelId = channelId,
             };
             client.PostAsync(localhost, new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopMessage))));
+            Console.WriteLine("Responded.");
         }
     }
 
