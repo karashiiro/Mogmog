@@ -74,7 +74,7 @@ namespace Mogmog.FFXIV
             int channelId = int.Parse(command.Substring(command.StartsWith("/global") ? 7 : 3));
             chat.PrintChat(new XivChatEntry
             {
-                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{player.Name}{MogmogResources.CrossWorldIcon}{player.HomeWorld.GameData.Name}> {message}"),
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{player.Name}{MogmogResources.CrossWorldIcon}{player.HomeWorld.GameData.Name}> {message} *outbound"),
                 Type = XivChatType.Notice,
             });
             chat.UpdateQueue(this.dalamud.Framework);
@@ -99,19 +99,22 @@ namespace Mogmog.FFXIV
             // On the one hand, it's a waste of resources to have more than one HttpClient, but on the other Dalamud doesn't provide one and it's literally only used in this one function.
             try
             {
+                this.dalamud.Log("Making request to {Uri}", uri.OriginalString);
                 var res = await this.http.GetStringAsync(uri);
                 this.avatar = JObject.Parse(res)["Results"][0]["Avatar"].ToObject<string>();
             }
             catch {} // If XIVAPI is down or broken, whatever
             this.lastPlayerName = player.Name;
-            dalamud.Log("Player avatar is located at {Uri}.", this.avatar ?? "undefined");
+            this.dalamud.Log("Player avatar is located at {Uri}.", this.avatar ?? "undefined");
+            if (this.avatar == null)
+                this.avatar = string.Empty;
         }
 
         private void MessageReceived(ChatMessage message, int channelId)
         {
             this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
             {
-                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{message.Author}{MogmogResources.CrossWorldIcon}{message.World}> {message.Content}"),
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{message.Author}{MogmogResources.CrossWorldIcon}{message.World}> {message.Content} *inbound"),
                 Type = XivChatType.Notice,
             });
             this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
@@ -141,8 +144,6 @@ namespace Mogmog.FFXIV
         public void Dispose()
         {
             this.connectionManager.Dispose();
-
-            this.http.Dispose();
 
             for (int i = 0; i < this.config.Hostnames.Count; i++)
             {

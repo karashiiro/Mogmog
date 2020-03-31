@@ -17,8 +17,12 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.11.4" />
-    <PackageReference Include="Lumina" Version="1.1.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Lumina" Version="1.1.1">
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2">
+      <IncludeAssets>compile</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="PeanutButter.SimpleHTTPServer" Version="1.2.357" />
   </ItemGroup>
 
@@ -34,18 +38,10 @@
   </ItemGroup>
   
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="del &quot;$(TargetDir)IndexRange.dll&quot;" />
-    <Exec Command="del &quot;$(TargetDir)Lumina.dll&quot;" />
-    <Exec Command="del &quot;$(TargetDir)Newtonsoft.Json.dll&quot;" />
     <Exec Command="del &quot;$(TargetDir)System.Buffers.dll&quot;" />
-    <Exec Command="del &quot;$(TargetDir)System.ComponentModel.Annotations.dll&quot;" />
-    <Exec Command="del &quot;$(TargetDir)System.Drawing.Common.dll&quot;" />
     <Exec Command="del &quot;$(TargetDir)System.Memory.dll&quot;" />
     <Exec Command="del &quot;$(TargetDir)System.Numerics.Vectors.dll&quot;" />
     <Exec Command="del &quot;$(TargetDir)System.Runtime.CompilerServices.Unsafe.dll&quot;" />
-    <Exec Command="rmdir /S /Q &quot;$(TargetDir)runtimes\linux&quot;" />
-    <Exec Command="rmdir /S /Q &quot;$(TargetDir)runtimes\osx&quot;" />
-    <Exec Command="rmdir /S /Q &quot;$(TargetDir)runtimes\unix&quot;" />
   </Target>
 
 </Project>

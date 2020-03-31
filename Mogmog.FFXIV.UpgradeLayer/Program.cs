@@ -21,7 +21,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         static async Task MainAsync(string[] args)
         {
             client = new HttpClient();
-            server = new HttpServer(int.Parse(args[1]), true, (line) => {});
+            server = new HttpServer(int.Parse(args[1]) + 1, true, (line) => {});
 
             localhost = new Uri($"http://localhost:{args[1]}");
 
@@ -42,6 +42,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
             stream.CopyTo(memoryStream);
 
             string input = BitConverter.ToString(memoryStream.GetBuffer());
+
+            Console.WriteLine(input);
 
             try
             {
