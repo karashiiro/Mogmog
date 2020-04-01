@@ -77,7 +77,7 @@ namespace Mogmog.FFXIV
 
             chat.PrintChat(new XivChatEntry
             {
-                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{player.Name}{MogmogResources.CrossWorldIcon}{player.HomeWorld.GameData.Name}> {message} *outbound"),
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{player.Name}{MogmogResources.CrossWorldIcon}{player.HomeWorld.GameData.Name}> {message}"),
                 Type = XivChatType.Notice,
             });
             chat.UpdateQueue(this.dalamud.Framework);
@@ -91,9 +91,21 @@ namespace Mogmog.FFXIV
                 World = string.Empty,
                 WorldId = player.HomeWorld.Id,
             };
-            this.connectionManager.MessageSend(chatMessage, channelId);
+            this.connectionManager.MessageSend(chatMessage, channelId - 1);
         }
 
+        private void MessageReceived(object sender, MessageReceivedEventArgs e)
+        {
+            if (e.Message.AuthorId == this.dalamud.ClientState.LocalContentId)
+                return;
+            this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
+            {
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{e.ChannelId}]<{e.Message.Author}{MogmogResources.CrossWorldIcon}{e.Message.World}> {e.Message.Content}"),
+                Type = XivChatType.Notice,
+            });
+            this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
+        }
+        
         private async Task LoadAvatar(PlayerCharacter player)
         {
             var charaName = player.Name;
@@ -117,16 +129,6 @@ namespace Mogmog.FFXIV
                 this.avatar = string.Empty;
         }
 
-        private void MessageReceived(object sender, MessageReceivedEventArgs e)
-        {
-            this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
-            {
-                MessageBytes = Encoding.UTF8.GetBytes($"[GL{e.ChannelId}]<{e.Message.Author}{MogmogResources.CrossWorldIcon}{e.Message.World}> {e.Message.Content} *inbound"),
-                Type = XivChatType.Notice,
-            });
-            this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
-        }
-
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
@@ -140,6 +142,8 @@ namespace Mogmog.FFXIV
 
                     this.commandHandler.Dispose();
                     this.connectionManager.Dispose();
+
+                    this.http.Dispose();
 
                     /*this.dalamud.SavePluginConfig(this.config);*/
 

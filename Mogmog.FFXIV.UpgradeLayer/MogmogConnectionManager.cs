@@ -4,14 +4,20 @@ using System.Collections.Generic;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
+    public class MessageReceivedEventArgs : EventArgs
+    {
+        public ChatMessage Message { get; set; }
+        public int ChannelId { get; set; }
+    }
+
     public class MogmogConnectionManager : IDisposable
     {
         private readonly IList<MogmogConnection> connections;
 
         private readonly MogmogConfiguration config;
 
-        public delegate void MessageReceivedCallback(ChatMessage message, int channelId);
-        public MessageReceivedCallback MessageReceivedDelegate;
+        public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
+        public event MessageReceivedEventHandler MessageReceivedEvent;
 
         public MogmogConnectionManager(MogmogConfiguration config)
         {
@@ -78,6 +84,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public void MessageSend(ChatMessage message, int channelId)
         {
+            if (this.connections.Count <= channelId)
+                return;
+            if (channelId < 0)
+                return;
             if (this.connections[channelId] == null) // Shouldn't happen but might, should return an error message
                 return;
             this.connections[channelId].SendMessage(message);
@@ -85,7 +95,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         private void MessageReceived(ChatMessage message, int channelId)
         {
-            MessageReceivedDelegate(message, channelId);
+            MessageReceivedEvent(this, new MessageReceivedEventArgs { Message = message, ChannelId = channelId });
         }
 
         public void Dispose()

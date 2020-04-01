@@ -15,9 +15,11 @@ service ChatService {
 message ChatMessage {
     uint64 Id = 1;
     string Content = 2;
-    string Author = 3;
-    uint64 AuthorId = 4;
-    string Avatar = 5;
-    string World = 6;
-    int32 WorldId = 7;
+    string Author = 3; // The name of the author.
+    uint64 AuthorId = 4; // The message author's ID.
+    uint64 AuthorId2 = 5; // For things like the relay bot ID.
+    string Avatar = 6;
+    string World = 7; // This can be sent out as an empty string, see above.
+    int32 WorldId = 8;
+    int32 AdditionalFlags = 9; // An additional 32 booleans reserved for future use.
 }

@@ -61,6 +61,7 @@ namespace Mogmog.Discord.Services
                 Content = rawMessage.Content,
                 Author = memberName,
                 AuthorId = rawMessage.Author.Id,
+                AuthorId2 = _client.CurrentUser.Id,
                 Avatar = rawMessage.Author.GetAvatarUrl(),
                 World = string.Empty,
                 WorldId = (int)PseudoWorld.Discord
@@ -71,8 +72,9 @@ namespace Mogmog.Discord.Services
 
         public async Task GrpcMessageReceivedAsync(ChatMessage chatMessage)
         {
-            /*if (chatMessage.WorldId == (int)PseudoWorld.Discord)
-                return;*/
+            if (chatMessage.AuthorId2 == _client.CurrentUser.Id)
+                return;
+
             var messageAuthor = new EmbedAuthorBuilder()
                 .WithName($"({chatMessage.World}) {chatMessage.Author}")
                 .WithIconUrl(chatMessage.Avatar);

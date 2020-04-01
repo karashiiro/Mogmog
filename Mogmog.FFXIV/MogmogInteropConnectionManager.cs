@@ -9,6 +9,7 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV
 {
@@ -26,6 +27,7 @@ namespace Mogmog.FFXIV
         private readonly HttpClient client;
         private readonly HttpServer server;
         private readonly MogmogConfiguration config;
+        private readonly Process upgradeLayer;
         private readonly Uri localhost;
 
         public MogmogInteropConnectionManager(MogmogConfiguration config, HttpClient client)
@@ -35,7 +37,7 @@ namespace Mogmog.FFXIV
 
             this.server.AddJsonDocumentHandler(UpgradeLayerMessageReceived);
 
-            this.localhost = new Uri($"http://localhost:{this.server.Port}");
+            this.localhost = new Uri($"http://localhost:{this.server.Port + 1}");
 
             this.config = config;
 
@@ -49,22 +51,22 @@ namespace Mogmog.FFXIV
                 RedirectStandardInput = true,
                 UseShellExecute = false,
             };
-            Process.Start(startInfo);
+            this.upgradeLayer = Process.Start(startInfo);
         }
 
         public void MessageSend(ChatMessage message, int channelId)
         {
-            SendToUpgradeLayer(message, channelId);
+            _ = SendToUpgradeLayer(message, channelId);
         }
 
         public void AddHost(string hostname)
         {
-            SendToUpgradeLayer("AddHost", hostname);
+            _ = SendToUpgradeLayer("AddHost", hostname);
         }
 
         public void RemoveHost(string hostname)
         {
-            SendToUpgradeLayer("RemoveHost", hostname);
+            _ = SendToUpgradeLayer("RemoveHost", hostname);
         }
 
         #region Interop Interface Methods
@@ -81,7 +83,7 @@ namespace Mogmog.FFXIV
             return Array.Empty<byte>();
         }
 
-        private void SendToUpgradeLayer(string command, string arg)
+        private async Task SendToUpgradeLayer(string command, string arg)
         {
             var pack = new GenericInterop
             {
@@ -89,10 +91,10 @@ namespace Mogmog.FFXIV
                 Arg = arg,
             };
             using var messageBytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(pack)));
-            this.client.PostAsync(localhost, messageBytes);
+            await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid losing scope of the byte array.
         }
 
-        private void SendToUpgradeLayer(ChatMessage message, int channelId)
+        private async Task SendToUpgradeLayer(ChatMessage message, int channelId)
         {
             var pack = new ChatMessageInterop
             {
@@ -100,7 +102,7 @@ namespace Mogmog.FFXIV
                 ChannelId = channelId,
             };
             using var messageBytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(pack)));
-            this.client.PostAsync(localhost, messageBytes);
+            await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid losing scope of the byte array.
         }
         #endregion
 
@@ -115,6 +117,8 @@ namespace Mogmog.FFXIV
                 {
                     this.server.Stop();
                     this.server.Dispose();
+
+                    this.upgradeLayer.Kill();
                 }
 
                 disposedValue = true;

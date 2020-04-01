@@ -1,5 +1,6 @@
 ﻿using Mogmog.Protos;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PeanutButter.SimpleHTTPServer;
 using System;
 using System.IO;
@@ -21,17 +22,15 @@ namespace Mogmog.FFXIV.UpgradeLayer
         static async Task MainAsync(string[] args)
         {
             client = new HttpClient();
-            server = new HttpServer(int.Parse(args[1]) + 1, true, (line) => {});
+            server = new HttpServer(int.Parse(args[1]) + 1, true, (line) => { Console.WriteLine(line); });
 
             localhost = new Uri($"http://localhost:{args[1]}");
 
             server.AddJsonDocumentHandler(ReadInput);
 
             var config = JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
-            connectionManager = new MogmogConnectionManager(config)
-            {
-                MessageReceivedDelegate = MessageReceived
-            };
+            connectionManager = new MogmogConnectionManager(config);
+            connectionManager.MessageReceivedEvent += MessageReceived;
 
             await Task.Delay(-1);
         }
@@ -41,18 +40,19 @@ namespace Mogmog.FFXIV.UpgradeLayer
             using var memoryStream = new MemoryStream();
             stream.CopyTo(memoryStream);
 
-            string input = BitConverter.ToString(memoryStream.GetBuffer());
+            string input = Encoding.UTF8.GetString(memoryStream.GetBuffer());
 
             Console.WriteLine(input);
 
-            try
+            JToken message = JObject.Parse(input);
+            if (message["Message"] != null) // Jank but whatever, ripping all this out once Dalamud on .NET Core is released
             {
-                var message = JsonConvert.DeserializeObject<ChatMessageInterop>(input);
-                connectionManager.MessageSend(message.Message, message.ChannelId);
+                var chatMessage = message.ToObject<ChatMessageInterop>();
+                connectionManager.MessageSend(chatMessage.Message, chatMessage.ChannelId);
             }
-            catch
+            else
             {
-                var genericInterop = JsonConvert.DeserializeObject<GenericInterop>(input);
+                var genericInterop = message.ToObject<GenericInterop>();
                 switch (genericInterop.Command)
                 {
                     case "AddHost":
@@ -64,18 +64,23 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 }
             }
 
-            return new byte[0];
+            return Array.Empty<byte>();
         }
 
-        static void MessageReceived(ChatMessage message, int channelId)
+        static void MessageReceived(object sender, MessageReceivedEventArgs e)
+        {
+            _ = MessageReceivedAsync(e.Message, e.ChannelId);
+        }
+
+        static async Task MessageReceivedAsync(ChatMessage message, int channelId)
         {
             var interopMessage = new ChatMessageInterop
             {
                 Message = message,
                 ChannelId = channelId,
             };
-            client.PostAsync(localhost, new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopMessage))));
-            Console.WriteLine("Responded.");
+            Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
+            await client.PostAsync(localhost, new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopMessage))));
         }
     }
 

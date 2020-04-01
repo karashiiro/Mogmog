@@ -9,7 +9,7 @@ namespace Mogmog.FFXIV
     {
         public int Version { get; set; }
 
-        public IList<string> Hostnames;
+        public IList<string> Hostnames { get; private set; }
 
         public MogmogConfiguration()
         {
