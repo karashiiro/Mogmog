@@ -2,6 +2,7 @@
 using Grpc.Net.Client;
 using Mogmog.Protos;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using static Mogmog.Protos.ChatService;
 
@@ -19,7 +20,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         private int channelId;
 
         private Task runningTask;
-        private bool taskActive;
+        private CancellationTokenSource tokenSource;
 
         public MogmogConnection(string hostname, int channelId)
         {
@@ -42,18 +43,25 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public void Start()
         {
-            this.taskActive = true;
-            this.runningTask = ChatLoop();
+            this.tokenSource = new CancellationTokenSource();
+            this.runningTask = Task.WhenAny(ChatLoop(), Task.Run(() =>
+            {
+                while (true)
+                {
+                    this.tokenSource.Token.ThrowIfCancellationRequested();
+                }
+            }));
         }
 
-        public void Stop()
+        public async Task Stop()
         {
-            this.taskActive = false;
+            this.tokenSource.Cancel();
+            await this.runningTask;
         }
 
         private async Task ChatLoop()
         {
-            while (this.taskActive)
+            while (true)
             {
                 if (!await this.chatStream.ResponseStream.MoveNext())
                     continue;
@@ -70,7 +78,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             {
                 if (disposing)
                 {
-                    this.taskActive = false;
+                    Stop().Wait();
                     this.runningTask.Dispose();
                     this.chatStream.RequestStream.CompleteAsync().Wait();
                     this.chatStream.Dispose();
