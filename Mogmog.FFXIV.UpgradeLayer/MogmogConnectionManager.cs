@@ -1,6 +1,6 @@
 ﻿using Mogmog.Protos;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
@@ -12,7 +12,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
     public class MogmogConnectionManager : IDisposable
     {
-        private readonly IList<MogmogConnection> connections;
+        private readonly DisposableStrongIndexedList<MogmogConnection> connections;
 
         private readonly MogmogConfiguration config;
 
@@ -21,15 +21,14 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public MogmogConnectionManager(MogmogConfiguration config)
         {
-            this.connections = new List<MogmogConnection>();
-
             this.config = config;
+            this.connections = new DisposableStrongIndexedList<MogmogConnection>();
 
             foreach (string hostname in config.Hostnames)
             {
                 if (string.IsNullOrEmpty(hostname))
                 {
-                    this.connections.Add(null);
+                    this.connections.Append(null);
                 }
                 else
                 {
@@ -37,7 +36,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     {
                         MessageReceivedDelegate = MessageReceived
                     };
-                    this.connections.Add(connection);
+                    this.connections.Append(connection);
                     connection.Start();
                 }
             }
@@ -45,30 +44,15 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public void AddHost(string hostname)
         {
-            int ni = this.config.Hostnames.IndexOf(null);
-            if (ni != -1)
+            if (this.config.Hostnames.Contains(hostname))
+                return; // Should send back an error message or something eventually.
+            this.config.Hostnames.Add(hostname);
+            var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname))
             {
-                this.config.Hostnames.Remove(null);
-                this.config.Hostnames.Insert(ni, hostname);
-                this.connections.Remove(null);
-
-                var connection = new MogmogConnection(hostname, ni)
-                {
-                    MessageReceivedDelegate = MessageReceived
-                };
-                this.connections.Insert(ni, connection);
-                connection.Start();
-            }
-            else
-            {
-                this.config.Hostnames.Add(hostname);
-                var connection = new MogmogConnection(hostname, this.connections.Count)
-                {
-                    MessageReceivedDelegate = MessageReceived
-                };
-                this.connections.Add(connection);
-                connection.Start();
-            }
+                MessageReceivedDelegate = MessageReceived
+            };
+            connection.Start();
+            this.connections.Add(connection);
         }
 
         public void RemoveHost(string hostname)
@@ -77,9 +61,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             if (i == -1)
                 return;
             this.config.Hostnames.RemoveAt(i);
-            this.config.Hostnames.Insert(i, null);
             this.connections.RemoveAt(i);
-            this.connections.Insert(i, null);
         }
 
         public void MessageSend(ChatMessage message, int channelId)
@@ -100,10 +82,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public void Dispose()
         {
-            foreach (var connection in this.connections)
-            {
-                connection.Dispose();
-            }
+            this.connections.Dispose();
         }
     }
 }

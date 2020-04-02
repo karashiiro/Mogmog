@@ -37,7 +37,6 @@ namespace Mogmog.FFXIV
             this.dalamud = dalamud;
             this.http = new HttpClient();
             this.config = /*dalamud.GetPluginConfig() as MogmogConfiguration ?? */new MogmogConfiguration();
-            this.config.Hostnames.Add("https://localhost:5001"); // Temporary, use Imgui
             this.connectionManager = new MogmogInteropConnectionManager(this.config, this.http);
             this.connectionManager.MessageReceivedEvent += MessageReceived;
             this.commandHandler = new CommandHandler(this, this.config, this.dalamud);
