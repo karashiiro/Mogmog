@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Mogmog.FFXIV.Tests
+namespace Mogmog.Tests
 {
     public class TestDisposable : IDisposable
     {

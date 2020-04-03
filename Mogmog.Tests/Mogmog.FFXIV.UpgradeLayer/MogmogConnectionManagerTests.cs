@@ -1,18 +1,17 @@
-﻿using Mogmog.FFXIV.UpgradeLayer;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
-namespace Mogmog.FFXIV.Tests
+namespace Mogmog.FFXIV.UpgradeLayer
 {
     [TestFixture]
     public class MogmogConnectionManagerTests
     {
-        private UpgradeLayer.MogmogConfiguration config;
+        private MogmogConfiguration config;
         private MogmogConnectionManager connectionManager;
 
         [SetUp]
         public void Setup()
         {
-            config = new UpgradeLayer.MogmogConfiguration();
+            config = new MogmogConfiguration();
             connectionManager = new MogmogConnectionManager(config);
         }
 

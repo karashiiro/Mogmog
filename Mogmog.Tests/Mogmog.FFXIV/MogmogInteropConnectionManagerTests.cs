@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 
-namespace Mogmog.FFXIV.Tests
+namespace Mogmog.FFXIV
 {
     [TestFixture]
     public class MogmogInteropConnectionManagerTests
@@ -55,7 +55,7 @@ namespace Mogmog.FFXIV.Tests
     public class MogmogInteropConnectionManagerDisposeTest
     {
         [Test]
-        public void Dispose_KillsUpgradeLayer()
+        public void Dispose_ClosesUpgradeLayer()
         {
             var config = new MogmogConfiguration();
             var http = new HttpClient();

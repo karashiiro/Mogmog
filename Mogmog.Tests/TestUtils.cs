@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Mogmog.FFXIV.Tests
+namespace Mogmog.Tests
 {
     public static class TestUtils
     {

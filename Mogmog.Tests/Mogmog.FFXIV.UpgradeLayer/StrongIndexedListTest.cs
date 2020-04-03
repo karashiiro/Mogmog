@@ -1,8 +1,8 @@
-using Mogmog.FFXIV.UpgradeLayer;
+using Mogmog.Tests;
 using NUnit.Framework;
 using System;
 
-namespace Mogmog.FFXIV.Tests
+namespace Mogmog.FFXIV.UpgradeLayer
 {
     [TestFixture]
     public class StrongIndexedListTests
