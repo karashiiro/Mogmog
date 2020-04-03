@@ -36,7 +36,7 @@ jobs:
     - name: Build Dalamud .NET 4
       run: |
         cd "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\"
-         .\MSBuild.exe $Env:GITHUB_WORKSPACE\Dalamud\Dalamud.sln /t:Build /p:Configuration=Release /p:DefineConstants=XL_NOAUTOUPDATE
+         .\MSBuild.exe $Env:GITHUB_WORKSPACE\Dalamud\Dalamud.sln /t:Build /p:Configuration=Debug /p:DefineConstants=XL_NOAUTOUPDATE
     - name: Checkout Mogmog
       uses: actions/checkout@v2
       with:
