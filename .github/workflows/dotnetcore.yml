@@ -12,6 +12,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101
     - name: Set up directories
       run: mkdir Dalamud
          | mkdir Mogmog
@@ -21,18 +25,17 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: goaaats/Dalamud
+    - name: Install dependencies for Dalamud
+      run: dotnet restore
+    - name: Build Dalamud
+      run: dotnet build --configuration Release --no-restore
     - name: Change directory to Mogmog
       run: cd ../Mogmog
     - name: Checkout Mogmog
       uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.101
-    
-    - name: Install dependencies
+    - name: Install dependencies for Mogmog
       run: dotnet restore
-    - name: Build
+    - name: Build Mogmog
       run: dotnet build --configuration Release --no-restore
     - name: Test
       run: dotnet test --no-restore --verbosity normal
