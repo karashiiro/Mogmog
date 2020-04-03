@@ -17,29 +17,35 @@ jobs:
       with:
         dotnet-version: 3.1.101
     - name: Set up directories
-      run: mkdir Dalamud
-         | mkdir Mogmog
+      run: |
+        mkdir Dalamud
+        mkdir Mogmog
     - name: Checkout Dalamud
       uses: actions/checkout@v2
       with:
         repository: goaaats/Dalamud
         path: Dalamud
     - name: Install dependencies for Dalamud
-      run: cd Dalamud
-         | dotnet restore
+      run: |
+        cd Dalamud
+        dotnet restore
     - name: Build Dalamud
-      run: cd Dalamud
-         | dotnet build --configuration Release --no-restore
+      run: |
+        cd Dalamud
+        dotnet build --configuration Release --no-restore
     - name: Checkout Mogmog
       uses: actions/checkout@v2
       with:
         path: Mogmog
     - name: Install dependencies for Mogmog
-      run: cd Mogmog
-         | dotnet restore
+      run: |
+        cd Mogmog
+        dotnet restore
     - name: Build Mogmog
-      run: cd Mogmog
-         | dotnet build --configuration Release --no-restore
+      run: |
+        cd Mogmog
+        dotnet build --configuration Release --no-restore
     - name: Test
-      run: cd Mogmog
-         | dotnet test --no-restore --verbosity normal
+      run: |
+        cd Mogmog
+        dotnet test --no-restore --verbosity normal
