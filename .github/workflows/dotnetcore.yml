@@ -33,7 +33,7 @@ jobs:
     - name: Build Dalamud
       run: |
         cd Dalamud
-        dotnet build --configuration Release --no-restore
+        dotnet build --configuration Release --no-restore -f net472
     - name: Checkout Mogmog
       uses: actions/checkout@v2
       with:
