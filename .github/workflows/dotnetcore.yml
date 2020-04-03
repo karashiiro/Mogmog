@@ -15,6 +15,10 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.101
+    - name: Setup Nuget
+      uses: nuget/setup-nuget@v1
+      with:
+        nuget-version: 'latest'
     - name: Set up directories
       run: |
         mkdir Dalamud
@@ -28,7 +32,7 @@ jobs:
     - name: Install dependencies for Dalamud
       run: |
         cd Dalamud
-        dotnet restore
+        nuget restore Dalamud.sln
     - name: Build Dalamud .NET 4
       run: |
         cd "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\"
