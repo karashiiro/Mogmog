@@ -25,6 +25,7 @@ jobs:
       with:
         repository: goaaats/Dalamud
         path: Dalamud
+        submodules: recursive
     - name: Install dependencies for Dalamud
       run: |
         cd Dalamud
