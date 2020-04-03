@@ -1,7 +1,7 @@
 ﻿using Mogmog.Tests;
 using NUnit.Framework;
 
-namespace Mogmog.FFXIV.UpgradeLayer
+namespace Mogmog
 {
     [TestFixture]
     public class DisposableStrongIndexedListTests

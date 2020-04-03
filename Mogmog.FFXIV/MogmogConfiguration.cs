@@ -13,7 +13,7 @@ namespace Mogmog.FFXIV
 
         public MogmogConfiguration()
         {
-            Hostnames = new List<string>();
+            Hostnames = new StrongIndexedList<string>();
         }
     }
 }

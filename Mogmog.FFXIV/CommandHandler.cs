@@ -28,6 +28,18 @@ namespace Mogmog.FFXIV
             AddCommandHandlers();
         }
 
+        public void AddChatHandler(int i)
+        {
+            this.dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo(i));
+            this.dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo(i, false));
+        }
+
+        public void RemoveChatHandler(int i)
+        {
+            this.dalamud.CommandManager.RemoveHandler($"/global{i}");
+            this.dalamud.CommandManager.RemoveHandler($"/gl{i}");
+        }
+
         private CommandInfo OnMessageCommandInfo(int i, bool showInHelp = true)
         {
             return new CommandInfo(this.parent.MessageSend)

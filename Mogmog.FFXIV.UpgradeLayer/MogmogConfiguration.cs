@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
@@ -7,7 +8,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
     {
         public int Version { get; set; }
 
-        public StrongIndexedList<string> Hostnames;
+        public IList<string> Hostnames;
 
         public MogmogConfiguration()
         {

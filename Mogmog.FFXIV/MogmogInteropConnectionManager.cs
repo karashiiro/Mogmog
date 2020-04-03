@@ -61,11 +61,13 @@ namespace Mogmog.FFXIV
 
         public void AddHost(string hostname)
         {
+            this.config.Hostnames.Add(hostname);
             _ = SendToUpgradeLayer("AddHost", hostname);
         }
 
         public void RemoveHost(string hostname)
         {
+            this.config.Hostnames.Remove(hostname);
             _ = SendToUpgradeLayer("RemoveHost", hostname);
         }
 

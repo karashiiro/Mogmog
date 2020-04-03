@@ -32,11 +32,21 @@ namespace Mogmog.FFXIV
         private string avatar;
         private string lastPlayerName;
 
+        public Mogmog()
+        {
+            this.config = new MogmogConfiguration();
+        }
+
+        public Mogmog(MogmogConfiguration config)
+        {
+            this.config = config;
+        }
+
         public void Initialize(DalamudPluginInterface dalamud)
         {
             this.dalamud = dalamud;
             this.http = new HttpClient();
-            this.config = /*dalamud.GetPluginConfig() as MogmogConfiguration ?? */new MogmogConfiguration();
+            //this.config = dalamud.GetPluginConfig() as MogmogConfiguration;
             this.connectionManager = new MogmogInteropConnectionManager(this.config, this.http);
             this.connectionManager.MessageReceivedEvent += MessageReceived;
             this.commandHandler = new CommandHandler(this, this.config, this.dalamud);
@@ -46,12 +56,14 @@ namespace Mogmog.FFXIV
         public void AddHost(string command, string args)
         {
             this.connectionManager.AddHost(args);
+            this.commandHandler.AddChatHandler(this.config.Hostnames.IndexOf(args) + 1);
             this.dalamud.Framework.Gui.Chat.Print($"Added connection {args}");
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void RemoveHost(string command, string args)
         {
+            this.commandHandler.RemoveChatHandler(this.config.Hostnames.IndexOf(args) + 1);
             this.connectionManager.RemoveHost(args);
             this.dalamud.Framework.Gui.Chat.Print($"Removed connection {args}");
         }
