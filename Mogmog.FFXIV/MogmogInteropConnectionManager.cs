@@ -117,8 +117,8 @@ namespace Mogmog.FFXIV
                 {
                     this.server.Stop();
                     this.server.Dispose();
-
-                    this.upgradeLayer.Kill();
+                    
+                    this.upgradeLayer.WaitForExit();
                 }
 
                 disposedValue = true;

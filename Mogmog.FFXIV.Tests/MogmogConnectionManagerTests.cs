@@ -6,14 +6,20 @@ namespace Mogmog.FFXIV.Tests
     [TestFixture]
     public class MogmogConnectionManagerTests
     {
-        private MogmogConfiguration config;
+        private UpgradeLayer.MogmogConfiguration config;
         private MogmogConnectionManager connectionManager;
 
         [SetUp]
         public void Setup()
         {
-            config = new MogmogConfiguration();
+            config = new UpgradeLayer.MogmogConfiguration();
             connectionManager = new MogmogConnectionManager(config);
+        }
+
+        [TearDown]
+        public void Teardown()
+        {
+            connectionManager.Dispose();
         }
 
         [Test]

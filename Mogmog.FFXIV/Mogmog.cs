@@ -153,6 +153,7 @@ namespace Mogmog.FFXIV
             }
         }
 
+        [SuppressMessage("Usage", "CA1816:Dispose methods should call SuppressFinalize", Justification = "Class does not need to free unmanaged resources.")]
         public void Dispose()
         {
             Dispose(true);
