@@ -8,12 +8,12 @@ namespace Mogmog.FFXIV
     public class CommandHandler : IDisposable
     {
         private readonly DalamudPluginInterface dalamud;
-        private readonly Mogmog parent;
+        private readonly MogmogPlugin parent;
         private readonly MogmogConfiguration config;
 
         private readonly Dictionary<string, CommandInfo> commands;
 
-        public CommandHandler(Mogmog parent, MogmogConfiguration config, DalamudPluginInterface dalamud)
+        public CommandHandler(MogmogPlugin parent, MogmogConfiguration config, DalamudPluginInterface dalamud)
         {
             this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
             this.config = config ?? throw new ArgumentNullException(nameof(config));
@@ -21,8 +21,8 @@ namespace Mogmog.FFXIV
 
             this.commands = new Dictionary<string, CommandInfo>
             {
-                { "/mgmgconnect", new CommandInfo(this.parent.AddHost) { HelpMessage = "Connect to a Mogmog server using its address.", ShowInHelp = true, } },
-                { "/mgmgdisconnect", new CommandInfo(this.parent.RemoveHost) { HelpMessage = "Disconnect from a Mogmog server using its address.", ShowInHelp = true, } },
+                { "/mgaddhost", new CommandInfo(this.parent.AddHost) { HelpMessage = "Connect to a Mogmog server using its address.", ShowInHelp = true, } },
+                { "/mgremovehost", new CommandInfo(this.parent.RemoveHost) { HelpMessage = "Disconnect from a Mogmog server using its address.", ShowInHelp = true, } },
             };
 
             AddCommandHandlers();

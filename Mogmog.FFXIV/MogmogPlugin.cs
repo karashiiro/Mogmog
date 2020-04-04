@@ -19,7 +19,7 @@ namespace Mogmog.FFXIV
         });
     }
 
-    public class Mogmog : IDalamudPlugin
+    public class MogmogPlugin : IDalamudPlugin
     {
         public string Name => "Mogmog";
 
@@ -32,15 +32,17 @@ namespace Mogmog.FFXIV
         private string avatar;
         private string lastPlayerName;
 
-        public Mogmog()
+        #if DEBUG
+        public MogmogPlugin()
         {
             this.config = new MogmogConfiguration();
         }
 
-        public Mogmog(MogmogConfiguration config)
+        public MogmogPlugin(MogmogConfiguration config)
         {
             this.config = config;
         }
+        #endif
 
         public void Initialize(DalamudPluginInterface dalamud)
         {
@@ -165,7 +167,6 @@ namespace Mogmog.FFXIV
             }
         }
 
-        [SuppressMessage("Usage", "CA1816:Dispose methods should call SuppressFinalize", Justification = "Class does not need to free unmanaged resources.")]
         public void Dispose()
         {
             Dispose(true);

@@ -8,7 +8,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
     {
         public int Version { get; set; }
 
-        public IList<string> Hostnames;
+        public IList<string> Hostnames { get; }
 
         public MogmogConfiguration()
         {

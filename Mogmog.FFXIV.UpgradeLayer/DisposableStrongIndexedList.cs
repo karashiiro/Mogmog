@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
@@ -12,6 +11,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
     {
         public new void Remove(T value)
         {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
             value.Dispose();
             base.Remove(value);
         }

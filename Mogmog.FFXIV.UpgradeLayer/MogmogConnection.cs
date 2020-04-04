@@ -8,10 +8,16 @@ using static Mogmog.Protos.ChatService;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
+    public class MessageReceivedEventArgs : EventArgs
+    {
+        public ChatMessage Message { get; set; }
+        public int ChannelId { get; set; }
+    }
+
     public class MogmogConnection : IDisposable
     {
-        public delegate void MessageReceivedCallback(ChatMessage message, int channelId);
-        public MessageReceivedCallback MessageReceivedDelegate;
+        public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
+        public event MessageReceivedEventHandler MessageReceivedEvent;
 
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
         private readonly ChatServiceClient client;
@@ -65,7 +71,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
             {
                 if (!await this.chatStream.ResponseStream.MoveNext())
                     continue;
-                MessageReceivedDelegate(chatStream.ResponseStream.Current, this.channelId + 1);
+                MessageReceivedEvent(this, new MessageReceivedEventArgs {
+                    Message = chatStream.ResponseStream.Current,
+                    ChannelId = this.channelId + 1
+                });
             }
         }
 
@@ -80,6 +89,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 {
                     Stop().Wait();
                     this.runningTask.Dispose();
+                    this.tokenSource.Dispose();
                     this.chatStream.RequestStream.CompleteAsync().Wait();
                     this.chatStream.Dispose();
                     this.channel.ShutdownAsync().Wait();

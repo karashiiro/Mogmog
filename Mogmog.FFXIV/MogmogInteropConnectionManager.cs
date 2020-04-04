@@ -3,7 +3,6 @@ using Newtonsoft.Json;
 using PeanutButter.SimpleHTTPServer;
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
@@ -121,13 +120,13 @@ namespace Mogmog.FFXIV
                     this.server.Dispose();
                     
                     this.upgradeLayer.WaitForExit();
+                    this.upgradeLayer.Dispose();
                 }
 
                 disposedValue = true;
             }
         }
 
-        [SuppressMessage("Usage", "CA1816:Dispose methods should call SuppressFinalize", Justification = "Class does not need to free unmanaged resources.")]
         public void Dispose()
         {
             Dispose(true);

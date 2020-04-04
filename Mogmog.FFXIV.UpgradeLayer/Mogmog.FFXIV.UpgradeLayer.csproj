@@ -27,6 +27,10 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" Version="2.27.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.6">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="PeanutButter.SimpleHTTPServer" Version="1.2.357" />
   </ItemGroup>

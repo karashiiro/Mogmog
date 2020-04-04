@@ -14,3 +14,9 @@ dotnet_style_qualification_for_method = false:none
 
 # IDE0003: Remove qualification
 dotnet_style_qualification_for_property = false:none
+
+# CA1816: Dispose methods should call SuppressFinalize
+dotnet_diagnostic.CA1816.severity = none
+
+# CA1710: Identifiers should have correct suffix
+dotnet_diagnostic.CA1710.severity = none

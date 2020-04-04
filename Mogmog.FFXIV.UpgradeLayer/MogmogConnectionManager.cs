@@ -1,15 +1,10 @@
 ﻿using Mogmog.Protos;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
-    public class MessageReceivedEventArgs : EventArgs
-    {
-        public ChatMessage Message { get; set; }
-        public int ChannelId { get; set; }
-    }
-
     public class MogmogConnectionManager : IDisposable
     {
         private readonly DisposableStrongIndexedList<MogmogConnection> connections;
@@ -19,9 +14,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
         public event MessageReceivedEventHandler MessageReceivedEvent;
 
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Reference maintained in List.")]
         public MogmogConnectionManager(MogmogConfiguration config)
         {
-            this.config = config;
+            this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.connections = new DisposableStrongIndexedList<MogmogConnection>();
 
             foreach (string hostname in config.Hostnames)
@@ -32,10 +28,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 }
                 else
                 {
-                    var connection = new MogmogConnection(hostname, this.connections.Count)
-                    {
-                        MessageReceivedDelegate = MessageReceived
-                    };
+                    var connection = new MogmogConnection(hostname, this.connections.Count);
+                    connection.MessageReceivedEvent += MessageReceived;
                     this.connections.Append(connection);
                     connection.Start();
                 }
@@ -47,10 +41,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
             if (this.config.Hostnames.Contains(hostname))
                 return; // Should send back an error message or something eventually.
             this.config.Hostnames.Add(hostname);
-            var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname))
-            {
-                MessageReceivedDelegate = MessageReceived
-            };
+            var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
+            connection.MessageReceivedEvent += MessageReceived;
             connection.Start();
             this.connections.Add(connection);
         }
@@ -61,6 +53,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             if (i == -1)
                 return;
             this.config.Hostnames.RemoveAt(i);
+            this.connections[i].MessageReceivedEvent -= MessageReceived;
             this.connections.RemoveAt(i);
         }
 
@@ -75,14 +68,31 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.connections[channelId].SendMessage(message);
         }
 
-        private void MessageReceived(ChatMessage message, int channelId)
+        private void MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            MessageReceivedEvent(this, new MessageReceivedEventArgs { Message = message, ChannelId = channelId });
+            MessageReceivedEvent(sender, e);
+        }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    this.connections.Dispose();
+                }
+
+                disposedValue = true;
+            }
         }
 
         public void Dispose()
         {
-            this.connections.Dispose();
+            Dispose(true);
         }
+        #endregion
     }
 }

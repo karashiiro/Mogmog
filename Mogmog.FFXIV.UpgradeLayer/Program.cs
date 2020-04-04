@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PeanutButter.SimpleHTTPServer;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -22,7 +23,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         static async Task MainAsync(string[] args)
         {
             client = new HttpClient();
-            server = new HttpServer(int.Parse(args[1]) + 1, true, (line) => { Console.WriteLine(line); });
+            server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) => { Console.WriteLine(line); });
 
             localhost = new Uri($"http://localhost:{args[1]}");
 
@@ -80,7 +81,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 ChannelId = channelId,
             };
             Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
-            await client.PostAsync(localhost, new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopMessage))));
+            using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopMessage)));
+            await client.PostAsync(localhost, bytes);
         }
     }
 
@@ -90,9 +92,11 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public int ChannelId;
     }
 
+#pragma warning disable CS0649
     struct GenericInterop
     {
         public string Command;
         public string Arg;
     }
+#pragma warning restore CS0649
 }
