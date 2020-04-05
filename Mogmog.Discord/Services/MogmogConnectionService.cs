@@ -14,12 +14,11 @@ namespace Mogmog.Discord.Services
     {
         private const string hostname = "https://localhost:5001";
 
-        public readonly DiscordSocketClient _client;
+        private readonly DiscordSocketClient _client;
 
         private SocketGuildChannel RelayChannel { get => _client.GetChannel(ulong.Parse(Environment.GetEnvironmentVariable("MOGMOG_RELAY_CHANNEL"))) as SocketGuildChannel; }
 
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> _chatStream;
-        private readonly ChatServiceClient _chatClient;
         private readonly GrpcChannel _channel;
 
         private readonly Task _runningTask;
@@ -29,8 +28,8 @@ namespace Mogmog.Discord.Services
             _client = client;
             
             _channel = GrpcChannel.ForAddress(hostname);
-            _chatClient = new ChatServiceClient(_channel);
-            _chatStream = _chatClient.Chat();
+            var chatClient = new ChatServiceClient(_channel);
+            _chatStream = chatClient.Chat();
 
             _runningTask = ChatLoop();
         }
