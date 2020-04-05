@@ -34,7 +34,7 @@ namespace Mogmog.FFXIV
             this.client = client;
             this.server = new HttpServer();
 
-            this.server.AddJsonDocumentHandler(UpgradeLayerMessageReceived);
+            this.server.AddJsonDocumentHandler((processor, stream) => UpgradeLayerMessageReceived(stream));
 
             this.localhost = new Uri($"http://localhost:{this.server.Port + 1}");
 
@@ -64,7 +64,7 @@ namespace Mogmog.FFXIV
         }
 
         #region Interop Interface Methods
-        private byte[] UpgradeLayerMessageReceived(HttpProcessor processor, Stream stream)
+        private byte[] UpgradeLayerMessageReceived(Stream stream)
         {
             using var memoryStream = new MemoryStream();
             stream.CopyTo(memoryStream);

@@ -32,7 +32,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
             localhost = new Uri($"http://localhost:{args[1]}");
 
-            server.AddJsonDocumentHandler(ReadInput);
+            server.AddJsonDocumentHandler((processor, stream) => ReadInput(stream));
 
             var config = JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
             connectionManager = new MogmogConnectionManager(config);
@@ -41,7 +41,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             await Task.Delay(-1);
         }
 
-        static byte[] ReadInput(HttpProcessor processor, Stream stream)
+        static byte[] ReadInput(Stream stream)
         {
             using var memoryStream = new MemoryStream();
             stream.CopyTo(memoryStream);
@@ -70,7 +70,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         connectionManager.RemoveHost(genericInterop.Arg);
                         break;
                     default:
-                        break;
+                        throw new NotSupportedException();
                 }
             }
 

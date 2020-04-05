@@ -10,9 +10,9 @@ namespace Mogmog.Discord
 {
     public static class Program
     {
-        static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
+        static void Main() => MainAsync().GetAwaiter().GetResult();
 
-        static async Task MainAsync(string[] args)
+        static async Task MainAsync()
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
