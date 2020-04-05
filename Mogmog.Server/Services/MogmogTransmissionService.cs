@@ -1,6 +1,7 @@
 ﻿using Mogmog.Protos;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Mogmog.Server.Services
@@ -12,25 +13,41 @@ namespace Mogmog.Server.Services
 
         private readonly Queue<ChatMessage> _messageQueue;
 
-#pragma warning disable IDE0052 // Remove unread private members
-        private readonly Task _runningTask;
-#pragma warning restore IDE0052 // Remove unread private members
-        private bool _taskActive;
+        private Task _runningTask;
+        private CancellationTokenSource _tokenSource;
 
         public MogmogTransmissionService()
         {
             _messageQueue = new Queue<ChatMessage>();
-
-            _taskActive = true;
-            _runningTask = EventLoop();
+            Start();
         }
 
         public void Send(ChatMessage message)
             => _messageQueue.Enqueue(message);
 
+        public Task Start()
+        {
+            _tokenSource = new CancellationTokenSource();
+            _runningTask = Task.WhenAny(EventLoop(), Task.Run(() =>
+            {
+                while (true)
+                {
+                    _tokenSource.Token.ThrowIfCancellationRequested();
+                }
+            }));
+            
+            return Task.CompletedTask;
+        }
+
+        private async Task Stop()
+        {
+            _tokenSource.Cancel();
+            await _runningTask;
+        }
+
         private async Task EventLoop()
         {
-            while (_taskActive)
+            while (true)
             {
                 if (_messageQueue.Count == 0)
                 {
@@ -50,7 +67,9 @@ namespace Mogmog.Server.Services
             {
                 if (disposing)
                 {
-                    _taskActive = false;
+                    Stop().Wait();
+                    _runningTask.Dispose();
+                    _tokenSource.Dispose();
                 }
 
                 disposedValue = true;

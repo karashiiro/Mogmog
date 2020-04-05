@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
-    class Program
+    static class Program
     {
         static HttpClient client;
         static HttpServer server;
@@ -68,6 +68,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         break;
                     case "RemoveHost":
                         connectionManager.RemoveHost(genericInterop.Arg);
+                        break;
+                    default:
                         break;
                 }
             }
