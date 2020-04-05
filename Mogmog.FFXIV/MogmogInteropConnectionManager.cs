@@ -43,14 +43,7 @@ namespace Mogmog.FFXIV
             var filePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe");
             var serializedConfig = JsonConvert.SerializeObject(this.config).Replace("\"", "\\\"");
             var args = new string[] { serializedConfig, this.server.Port.ToString(CultureInfo.InvariantCulture) };
-            // Something about this makes the child process crash when the game closes if the plugin isn't disposed of properly, which is neat.
-            var startInfo = new ProcessStartInfo(filePath, string.Join(" ", args))
-            {
-                CreateNoWindow = true,
-                RedirectStandardInput = true,
-                UseShellExecute = false,
-            };
-            this.upgradeLayer = Process.Start(startInfo);
+            this.upgradeLayer = Process.Start(filePath, string.Join(" ", args));
         }
 
         public void MessageSend(ChatMessage message, int channelId)
