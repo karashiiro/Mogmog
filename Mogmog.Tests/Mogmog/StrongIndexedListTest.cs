@@ -18,7 +18,7 @@ namespace Mogmog
         [Test]
         public void Add_ShouldAddSequentially()
         {
-            string[] test = new string[] { "1", "2", "3", "4", "5" };
+            string[] test = { "1", "2", "3", "4", "5" };
             foreach (string t in test)
             {
                 list.Add(t);
@@ -29,14 +29,14 @@ namespace Mogmog
         [Test]
         public void Add_ShouldFillNull()
         {
-            string[] seed = new string[] { "1", "2", "3", "4", "5" };
+            string[] seed = { "1", "2", "3", "4", "5" };
             foreach (string s in seed)
             {
                 list.Add(s);
             }
             list.Remove("3");
             list.Add("6");
-            string[] expectedResult = new string[] { "1", "2", "6", "4", "5" };
+            string[] expectedResult = { "1", "2", "6", "4", "5" };
             Assert.IsTrue(expectedResult.ElementsEqual(list), "Expected {0}, got {1}.", string.Join(",", expectedResult), string.Join(",", list));
         }
 
@@ -48,7 +48,7 @@ namespace Mogmog
         [TestCase("5", false)] // This is at the end, so the list should be resized.
         public void Remove_ShouldReplaceWithNull(string value, bool shouldSucceed)
         {
-            string[] test = new string[] { "1", "2", "3", "4", "5" };
+            string[] test = { "1", "2", "3", "4", "5" };
             foreach (string t in test)
             {
                 list.Add(t);
@@ -62,12 +62,12 @@ namespace Mogmog
         [Test]
         public void Remove_ShouldResizeIfEndRemoved()
         {
-            string[] test = new string[] { "1", "2", "3", "4", "5" };
+            string[] test = { "1", "2", "3", "4", "5" };
             foreach (string t in test)
             {
                 list.Add(t);
             }
-            string[] expectedResult = new string[] { "1", "2", "3", "4" };
+            string[] expectedResult = { "1", "2", "3", "4" };
             list.Remove("5");
             Assert.IsTrue(expectedResult.ElementsEqual(list), "Expected {0}, got {1}.", string.Join(",", expectedResult), string.Join(",", list));
         }
@@ -80,7 +80,7 @@ namespace Mogmog
         [TestCase("5", false)] // This is at the end, so the list should be resized.
         public void RemoveAt_ShouldReplaceWithNull(string value, bool shouldSucceed)
         {
-            string[] test = new string[] { "1", "2", "3", "4", "5" };
+            string[] test = { "1", "2", "3", "4", "5" };
             foreach (string t in test)
             {
                 list.Add(t);
@@ -94,12 +94,12 @@ namespace Mogmog
         [Test]
         public void RemoveAt_ShouldResizeIfEndRemoved()
         {
-            string[] test = new string[] { "1", "2", "3", "4", "5" };
+            string[] test = { "1", "2", "3", "4", "5" };
             foreach (string t in test)
             {
                 list.Add(t);
             }
-            string[] expectedResult = new string[] { "1", "2", "3", "4" };
+            string[] expectedResult = { "1", "2", "3", "4" };
             list.RemoveAt(4);
             Assert.IsTrue(expectedResult.ElementsEqual(list), "Expected {0}, got {1}.", string.Join(",", expectedResult), string.Join(",", list));
         }

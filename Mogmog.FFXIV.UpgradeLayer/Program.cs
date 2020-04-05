@@ -43,8 +43,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
             string input = Encoding.UTF8.GetString(memoryStream.GetBuffer());
 
-            Console.WriteLine(input);
-
             JToken message = JObject.Parse(input);
             if (message["Message"] != null) // Jank but whatever, ripping all this out once Dalamud on .NET Core is released
             {

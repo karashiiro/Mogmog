@@ -8,7 +8,7 @@ using Cyalume = Lumina.Lumina;
 
 namespace DataExporter
 {
-    class Program
+    static class Program
     {
         static void Main(string[] args)
         {
