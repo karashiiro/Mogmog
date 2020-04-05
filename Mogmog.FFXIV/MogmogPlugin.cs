@@ -65,14 +65,18 @@ namespace Mogmog.FFXIV
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void RemoveHost(string command, string args)
         {
-            this.commandHandler.RemoveChatHandler(this.config.Hostnames.IndexOf(args) + 1);
+            if (int.TryParse(args, out int i))
+                this.commandHandler.RemoveChatHandler(i);
+            else
+                this.commandHandler.RemoveChatHandler(this.config.Hostnames.IndexOf(args) + 1);
             this.connectionManager.RemoveHost(args);
             this.dalamud.Framework.Gui.Chat.Print($"Removed connection {args}");
         }
 
-        [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "This will never be null.")]
         public void MessageSend(string command, string message)
         {
+            if (command == null)
+                throw new ArgumentNullException(nameof(command));
             _ = MessageSendAsync(command, message);
         }
 

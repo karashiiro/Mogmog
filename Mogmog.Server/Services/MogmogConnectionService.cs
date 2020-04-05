@@ -2,6 +2,7 @@
 using Mogmog.Protos;
 using Serilog;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using static Mogmog.Protos.ChatService;
 
@@ -14,7 +15,8 @@ namespace Mogmog.Server.Services
 
         private IServerStreamWriter<ChatMessage> _responseStream;
 
-        private bool _taskActive;
+        private Task _runningTask;
+        private CancellationTokenSource _tokenSource;
 
         public MogmogConnectionService(GameDataService gameDataService, MogmogTransmissionService transmitter)
         {
@@ -22,17 +24,31 @@ namespace Mogmog.Server.Services
             _transmitter = transmitter ?? throw new ArgumentNullException(nameof(transmitter));
 
             _transmitter.MessageSent += SendToClient;
-            _taskActive = true;
         }
 
-        public override async Task Chat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
+        public override Task Chat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
         {
             if (requestStream == null)
                 throw new ArgumentNullException(nameof(requestStream));
             _responseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
             
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
-            while (_taskActive)
+            
+            _tokenSource = new CancellationTokenSource();
+            _runningTask = Task.WhenAny(ChatLoop(requestStream), Task.Run(() =>
+            {
+                while (true)
+                {
+                    _tokenSource.Token.ThrowIfCancellationRequested();
+                }
+            }));
+            
+            return Task.CompletedTask;
+        }
+
+        private async Task ChatLoop(IAsyncStreamReader<ChatMessage> requestStream)
+        {
+            while (true)
             {
                 if (!await requestStream.MoveNext())
                     continue;
@@ -41,6 +57,12 @@ namespace Mogmog.Server.Services
                 Log.Information("({Author}) {Content}", nextMessage.Author, nextMessage.Content);
                 _transmitter.Send(nextMessage);
             }
+        }
+
+        private async Task Stop()
+        {
+            _tokenSource.Cancel();
+            await _runningTask;
         }
 
         public void SendToClient(object sender, MessageEventArgs e)
@@ -59,7 +81,9 @@ namespace Mogmog.Server.Services
             {
                 if (disposing)
                 {
-                    _taskActive = false;
+                    Stop().Wait();
+                    _runningTask.Dispose();
+                    _tokenSource.Dispose();
                     _transmitter.MessageSent -= SendToClient;
                 }
 

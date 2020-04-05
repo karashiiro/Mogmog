@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Grpc.Core.Testing" Version="2.27.0" />
     <PackageReference Include="nunit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.16.1">
       <PrivateAssets>all</PrivateAssets>
@@ -18,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Mogmog.FFXIV.UpgradeLayer\Mogmog.FFXIV.UpgradeLayer.csproj" />
     <ProjectReference Include="..\Mogmog.FFXIV\Mogmog.FFXIV.csproj" />
+    <ProjectReference Include="..\Mogmog.Server\Mogmog.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

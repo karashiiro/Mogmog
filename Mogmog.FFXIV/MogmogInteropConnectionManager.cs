@@ -46,7 +46,7 @@ namespace Mogmog.FFXIV
             // Something about this makes the child process crash when the game closes if the plugin isn't disposed of properly, which is neat.
             var startInfo = new ProcessStartInfo(filePath, string.Join(" ", args))
             {
-                //CreateNoWindow = true,
+                CreateNoWindow = true,
                 RedirectStandardInput = true,
                 UseShellExecute = false,
             };
