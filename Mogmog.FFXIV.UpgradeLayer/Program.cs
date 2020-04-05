@@ -23,7 +23,12 @@ namespace Mogmog.FFXIV.UpgradeLayer
         static async Task MainAsync(string[] args)
         {
             client = new HttpClient();
-            server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) => { Console.WriteLine(line); });
+            server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) =>
+            {
+                #if DEBUG
+                Console.WriteLine(line);
+                #endif
+            });
 
             localhost = new Uri($"http://localhost:{args[1]}");
 
@@ -42,6 +47,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
             stream.CopyTo(memoryStream);
 
             string input = Encoding.UTF8.GetString(memoryStream.GetBuffer());
+
+            #if DEBUG
+            Console.WriteLine(input);
+            #endif
 
             JToken message = JObject.Parse(input);
             if (message["Message"] != null) // Jank but whatever, ripping all this out once Dalamud on .NET Core is released
@@ -78,7 +87,9 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 Message = message,
                 ChannelId = channelId,
             };
+            #if DEBUG
             Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
+            #endif
             using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopMessage)));
             await client.PostAsync(localhost, bytes);
         }

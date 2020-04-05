@@ -23,11 +23,10 @@ namespace Mogmog.Tests
             return Task.CompletedTask;
         }
 
-        public Task ReturnOnWrite()
+        public async Task ReturnOnWrite()
         {
             while (!_written)
-                continue;
-            return Task.CompletedTask;
+                await Task.Delay(1);
         }
     }
 }

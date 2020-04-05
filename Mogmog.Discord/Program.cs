@@ -12,7 +12,7 @@ namespace Mogmog.Discord
     {
         static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
 
-        static async Task MainAsync(string[] _)
+        static async Task MainAsync(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
@@ -73,6 +73,9 @@ namespace Mogmog.Discord
                     break;
                 case LogSeverity.Debug:
                     Log.Debug(message.ToString());
+                    break;
+                default:
+                    Log.Verbose(message.ToString());
                     break;
             }
             return Task.CompletedTask;

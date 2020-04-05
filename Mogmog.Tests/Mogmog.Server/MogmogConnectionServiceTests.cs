@@ -13,7 +13,6 @@ namespace Mogmog.Server
     [TestFixture]
     public class MogmogConnectionServiceTests
     {
-        private GameDataService _gds;
         private MogmogTransmissionService _transmitter;
 
         private MogmogConnectionService _connection;
@@ -21,10 +20,10 @@ namespace Mogmog.Server
         [SetUp]
         public void Setup()
         {
-            _gds = new GameDataService();
+            var gds = new GameDataService();
             _transmitter = new MogmogTransmissionService();
 
-            _connection = new MogmogConnectionService(_gds, _transmitter);
+            _connection = new MogmogConnectionService(gds, _transmitter);
         }
 
         [TearDown]
