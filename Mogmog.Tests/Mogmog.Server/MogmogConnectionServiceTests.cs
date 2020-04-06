@@ -7,6 +7,7 @@ using Mogmog.Tests;
 using NUnit.Framework;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Mogmog.Server
 {
@@ -51,7 +52,7 @@ namespace Mogmog.Server
             var fakeServerCallContext = TestServerCallContext.Create("Chat", null, DateTime.UtcNow.AddHours(1), new Metadata(), CancellationToken.None, "127.0.0.1", null, null, (metadata) => TaskUtils.CompletedTask, () => new WriteOptions(), (writeOptions) => { });
             var fakeReader = new TestAsyncStreamReader<ChatMessage>(testMessage);
             var fakeWriter = new TestServerStreamWriter<ChatMessage>();
-            _connection.Chat(fakeReader, fakeWriter, fakeServerCallContext);
+            Task.Run(() => _connection.Chat(fakeReader, fakeWriter, fakeServerCallContext));
             fakeWriter.ReturnOnWrite().Wait(); // Internally, the transmitter calls a callback event which writes to this writer.
             Assert.AreEqual(testMessage, fakeWriter.Current);
         }

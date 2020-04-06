@@ -23,41 +23,20 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public event LogEventHandler LogEvent;
 
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
+        private readonly CancellationTokenSource tokenSource;
         private readonly ChatServiceClient client;
         private readonly GrpcChannel channel;
 
         private int channelId;
 
-        private CancellationTokenSource tokenSource;
-
         public MogmogConnection(string hostname, int channelId)
         {
             this.channelId = channelId;
-
+            this.tokenSource = new CancellationTokenSource();
             this.channel = GrpcChannel.ForAddress(hostname);
             this.client = new ChatServiceClient(channel);
-            this.chatStream = client.Chat();
-        }
-
-        public void SendMessage(ChatMessage message)
-        {
-            chatStream.RequestStream.WriteAsync(message);
-        }
-
-        public void SetChannelId(int newId)
-        {
-            this.channelId = newId;
-        }
-
-        public void Start()
-        {
-            this.tokenSource = new CancellationTokenSource();
+            this.chatStream = client.Chat(cancellationToken: this.tokenSource.Token);
             _ = ChatLoop(this.tokenSource.Token);
-        }
-
-        public void Stop()
-        {
-            this.tokenSource.Cancel();
         }
 
         private async Task ChatLoop(CancellationToken cancellationToken)
@@ -72,6 +51,16 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 });
             }
         }
+        
+        public void SendMessage(ChatMessage message)
+        {
+            chatStream.RequestStream.WriteAsync(message);
+        }
+
+        public void SetChannelId(int newId)
+        {
+            this.channelId = newId;
+        }
 
         #region IDisposable Support
         private bool disposedValue; // To detect redundant calls
@@ -82,17 +71,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             {
                 if (disposing)
                 {
-                    try
-                    {
-                        Stop();
-                    }
-                    catch (AggregateException ae)
-                    {
-                        if (!(ae.InnerException is RpcException))
-                            throw;
-                        if ((ae.InnerException as RpcException).Status.Detail != "Error starting gRPC call: No connection could be made because the target machine actively refused it.")
-                            throw; // This exception is fine to ignore, we don't want to crash everything if the user enters an invalid hostname.
-                    }
+                    this.tokenSource.Cancel();
                     this.tokenSource.Dispose();
                     this.chatStream.RequestStream.CompleteAsync().Wait();
                     this.chatStream.Dispose();

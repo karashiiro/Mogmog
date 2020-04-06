@@ -2,6 +2,7 @@
 using Mogmog.Protos;
 using Serilog;
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using static Mogmog.Protos.ChatService;
@@ -25,7 +26,7 @@ namespace Mogmog.Server.Services
             _transmitter.MessageSent += SendToClient;
         }
 
-        public override Task Chat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
+        public override async Task Chat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
         {
             if (requestStream == null)
                 throw new ArgumentNullException(nameof(requestStream));
@@ -34,16 +35,24 @@ namespace Mogmog.Server.Services
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
             
             _tokenSource = new CancellationTokenSource();
-            _ = ChatLoop(requestStream, _tokenSource.Token);
-            
-            return Task.CompletedTask;
+            await ChatLoop(requestStream, _tokenSource.Token);
         }
 
         private async Task ChatLoop(IAsyncStreamReader<ChatMessage> requestStream, CancellationToken cancellationToken)
         {
             while (true)
             {
-                if (!await requestStream.MoveNext(cancellationToken))
+                bool ready;
+                try
+                {
+                    ready = await requestStream.MoveNext(cancellationToken);
+                }
+                catch (IOException)
+                {
+                    Log.Error("The request stream was forcibly closed by the remote host.");
+                    return;
+                }
+                if (!ready)
                     continue;
                 var nextMessage = requestStream.Current;
                 nextMessage.World = _gameDataService.Worlds[nextMessage.WorldId];

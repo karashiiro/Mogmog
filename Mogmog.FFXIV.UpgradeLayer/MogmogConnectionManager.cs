@@ -34,7 +34,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     var connection = new MogmogConnection(hostname, this.connections.Count);
                     connection.MessageReceivedEvent += MessageReceived;
                     this.connections.Append(connection);
-                    connection.Start();
                 }
             }
         }
@@ -47,7 +46,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
             var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
             connection.MessageReceivedEvent += MessageReceived;
             connection.LogEvent += Log;
-            connection.Start();
             this.connections.Add(connection);
         }
 
