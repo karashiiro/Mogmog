@@ -26,19 +26,20 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
         private readonly CancellationTokenSource tokenSource;
-        private readonly ChatServiceClient client;
         private readonly GrpcChannel channel;
 
         public MogmogConnection(string hostname, int channelId)
         {
             this.ChannelId = channelId;
             this.tokenSource = new CancellationTokenSource();
+
             this.channel = GrpcChannel.ForAddress(hostname);
-            this.client = new ChatServiceClient(channel);
+            var client = new ChatServiceClient(channel);
             this.chatStream = client.Chat(new CallOptions()
                 .WithCancellationToken(this.tokenSource.Token)
                 .WithDeadline(DateTime.UtcNow.AddMinutes(1))
                 .WithWaitForReady());
+
             _ = ChatLoop(this.tokenSource.Token);
         }
 

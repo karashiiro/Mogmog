@@ -14,8 +14,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
 {
     static class Program
     {
-        static HttpClient client;
-        static HttpServer server;
         static MogmogConnectionManager connectionManager;
         static Uri localhost;
 
@@ -27,8 +25,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
             traceListener.LogEvent += Log;
             Trace.Listeners.Add(traceListener);
 
-            client = new HttpClient();
-            server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) =>
+            using var client = new HttpClient();
+            using var server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) =>
             {
                 #if DEBUG
                 Console.WriteLine(line);
