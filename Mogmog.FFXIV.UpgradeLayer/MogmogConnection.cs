@@ -19,8 +19,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
         public event MessageReceivedEventHandler MessageReceivedEvent;
 
-        public delegate void LogEventhandler(object sender, LogEventArgs e);
-        public event LogEventhandler LogEvent;
+        public delegate void LogEventHandler(object sender, LogEventArgs e);
+        public event LogEventHandler LogEvent;
 
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
         private readonly ChatServiceClient client;
