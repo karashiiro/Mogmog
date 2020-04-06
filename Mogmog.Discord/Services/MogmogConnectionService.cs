@@ -29,7 +29,9 @@ namespace Mogmog.Discord.Services
             
             _channel = GrpcChannel.ForAddress(hostname);
             var chatClient = new ChatServiceClient(_channel);
-            _chatStream = chatClient.Chat();
+            _chatStream = chatClient.Chat(new CallOptions()
+                .WithDeadline(DateTime.UtcNow.AddMinutes(1))
+                .WithWaitForReady());
 
             _runningTask = ChatLoop();
         }

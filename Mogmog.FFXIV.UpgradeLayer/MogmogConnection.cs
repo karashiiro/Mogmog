@@ -22,20 +22,23 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public delegate void LogEventHandler(object sender, LogEventArgs e);
         public event LogEventHandler LogEvent;
 
+        public int ChannelId { get; set; }
+
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
         private readonly CancellationTokenSource tokenSource;
         private readonly ChatServiceClient client;
         private readonly GrpcChannel channel;
 
-        private int channelId;
-
         public MogmogConnection(string hostname, int channelId)
         {
-            this.channelId = channelId;
+            this.ChannelId = channelId;
             this.tokenSource = new CancellationTokenSource();
             this.channel = GrpcChannel.ForAddress(hostname);
             this.client = new ChatServiceClient(channel);
-            this.chatStream = client.Chat(cancellationToken: this.tokenSource.Token);
+            this.chatStream = client.Chat(new CallOptions()
+                .WithCancellationToken(this.tokenSource.Token)
+                .WithDeadline(DateTime.UtcNow.AddMinutes(1))
+                .WithWaitForReady());
             _ = ChatLoop(this.tokenSource.Token);
         }
 
@@ -47,7 +50,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     continue;
                 MessageReceivedEvent(this, new MessageReceivedEventArgs {
                     Message = chatStream.ResponseStream.Current,
-                    ChannelId = this.channelId + 1
+                    ChannelId = this.ChannelId + 1
                 });
             }
         }
@@ -55,11 +58,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public void SendMessage(ChatMessage message)
         {
             chatStream.RequestStream.WriteAsync(message);
-        }
-
-        public void SetChannelId(int newId)
-        {
-            this.channelId = newId;
         }
 
         #region IDisposable Support

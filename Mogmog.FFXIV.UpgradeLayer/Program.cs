@@ -82,6 +82,9 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     case "RemoveHost":
                         connectionManager.RemoveHost(genericInterop.Arg);
                         break;
+                    case "ReloadHost":
+                        connectionManager.ReloadHost(genericInterop.Arg);
+                        break;
                     default:
                         throw new NotSupportedException();
                 }

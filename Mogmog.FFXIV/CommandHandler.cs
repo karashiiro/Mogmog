@@ -21,8 +21,9 @@ namespace Mogmog.FFXIV
 
             this.commands = new Dictionary<string, CommandInfo>
             {
-                { "/mgaddhost", new CommandInfo(this.parent.AddHost) { HelpMessage = "Connect to a Mogmog server using its address.", ShowInHelp = true, } },
-                { "/mgremovehost", new CommandInfo(this.parent.RemoveHost) { HelpMessage = "Disconnect from a Mogmog server using its address.", ShowInHelp = true, } },
+                { "/mgadd", new CommandInfo(this.parent.AddHost) { HelpMessage = "Connect to a Mogmog server using its address.", ShowInHelp = true, } },
+                { "/mgremove", new CommandInfo(this.parent.RemoveHost) { HelpMessage = "Disconnect from a Mogmog server using its address or number.", ShowInHelp = true, } },
+                { "/mgreload", new CommandInfo(this.parent.RemoveHost) { HelpMessage = "Reload a Mogmog server using its address or number.", ShowInHelp = true, } },
             };
 
             AddCommandHandlers();

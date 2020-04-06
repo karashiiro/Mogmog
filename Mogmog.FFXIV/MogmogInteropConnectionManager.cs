@@ -73,6 +73,11 @@ namespace Mogmog.FFXIV
             _ = SendToUpgradeLayer("RemoveHost", hostname);
         }
 
+        public void ReloadHost(string hostname)
+        {
+            _ = SendToUpgradeLayer("ReloadHost", hostname);
+        }
+
         #region Interop Interface Methods
         public byte[] UpgradeLayerMessageReceived(Stream stream)
         {

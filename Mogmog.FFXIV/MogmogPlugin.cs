@@ -59,19 +59,43 @@ namespace Mogmog.FFXIV
         public void AddHost(string command, string args)
         {
             this.connectionManager.AddHost(args);
-            this.commandHandler.AddChatHandler(this.config.Hostnames.IndexOf(args) + 1);
-            this.dalamud.Framework.Gui.Chat.Print($"Added connection {args}");
+            var idx = this.config.Hostnames.IndexOf(args);
+            this.commandHandler.AddChatHandler(idx + 1);
+            this.dalamud.Framework.Gui.Chat.Print($"Added connection {idx + 1}");
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void RemoveHost(string command, string args)
         {
             if (int.TryParse(args, out int i))
+            {
                 this.commandHandler.RemoveChatHandler(i);
+                this.connectionManager.RemoveHost(this.config.Hostnames[i - 1]);
+                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {i}");
+            }
             else
-                this.commandHandler.RemoveChatHandler(this.config.Hostnames.IndexOf(args) + 1);
-            this.connectionManager.RemoveHost(args);
-            this.dalamud.Framework.Gui.Chat.Print($"Removed connection {args}");
+            {
+                var idx = this.config.Hostnames.IndexOf(args);
+                this.commandHandler.RemoveChatHandler(idx + 1);
+                this.connectionManager.RemoveHost(args);
+                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {idx + 1}");
+            }
+        }
+
+        [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
+        public void ReloadHost(string command, string args)
+        {
+            if (int.TryParse(args, out int i))
+            {
+                this.connectionManager.ReloadHost(this.config.Hostnames[i - 1]);
+                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {i}");
+            }
+            else
+            {
+                var idx = this.config.Hostnames.IndexOf(args);
+                this.connectionManager.ReloadHost(args);
+                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {idx + 1}");
+            }
         }
 
         public void MessageSend(string command, string message)

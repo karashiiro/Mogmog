@@ -60,6 +60,16 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.connections.RemoveAt(i);
         }
 
+        public void ReloadHost(string hostname)
+        {
+            int i = this.config.Hostnames.IndexOf(hostname);
+            if (i == -1)
+                return;
+            var channelId = this.connections[i].ChannelId;
+            this.connections[i].Dispose();
+            this.connections[i] = new MogmogConnection(hostname, channelId);
+        }
+
         public void MessageSend(ChatMessage message, int channelId)
         {
             if (this.connections.Count <= channelId)
