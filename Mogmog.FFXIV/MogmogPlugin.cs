@@ -61,7 +61,7 @@ namespace Mogmog.FFXIV
             this.connectionManager.AddHost(args);
             var idx = this.config.Hostnames.IndexOf(args);
             this.commandHandler.AddChatHandler(idx + 1);
-            this.dalamud.Framework.Gui.Chat.Print($"Added connection {idx + 1}");
+            this.dalamud.Framework.Gui.Chat.Print($"Added connection {args}");
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
@@ -71,14 +71,14 @@ namespace Mogmog.FFXIV
             {
                 this.commandHandler.RemoveChatHandler(i);
                 this.connectionManager.RemoveHost(this.config.Hostnames[i - 1]);
-                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {i}");
+                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {args}");
             }
             else
             {
                 var idx = this.config.Hostnames.IndexOf(args);
                 this.commandHandler.RemoveChatHandler(idx + 1);
                 this.connectionManager.RemoveHost(args);
-                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {idx + 1}");
+                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {args}");
             }
         }
 
@@ -88,13 +88,12 @@ namespace Mogmog.FFXIV
             if (int.TryParse(args, out int i))
             {
                 this.connectionManager.ReloadHost(this.config.Hostnames[i - 1]);
-                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {i}");
+                this.dalamud.Framework.Gui.Chat.Print($"Reloaded connection {args}");
             }
             else
             {
-                var idx = this.config.Hostnames.IndexOf(args);
                 this.connectionManager.ReloadHost(args);
-                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {idx + 1}");
+                this.dalamud.Framework.Gui.Chat.Print($"Reloaded connection {args}");
             }
         }
 
