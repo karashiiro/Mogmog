@@ -1,5 +1,6 @@
 ﻿using Mogmog.Protos;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PeanutButter.SimpleHTTPServer;
 using System;
 using System.Diagnostics;
@@ -23,6 +24,9 @@ namespace Mogmog.FFXIV
         public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
         public event MessageReceivedEventHandler MessageReceivedEvent;
 
+        public delegate void LogEventHandler(object sender, LogEventArgs e);
+        public event LogEventHandler LogEvent;
+
         private readonly HttpClient client;
         private readonly HttpServer server;
         private readonly MogmogConfiguration config;
@@ -43,7 +47,13 @@ namespace Mogmog.FFXIV
             var filePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe");
             var serializedConfig = JsonConvert.SerializeObject(this.config).Replace("\"", "\\\"");
             var args = new string[] { serializedConfig, this.server.Port.ToString(CultureInfo.InvariantCulture) };
-            this.upgradeLayer = Process.Start(filePath, string.Join(" ", args));
+            var startInfo = new ProcessStartInfo(filePath, string.Join(" ", args))
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                WindowStyle = ProcessWindowStyle.Hidden,
+            };
+            this.upgradeLayer = Process.Start(startInfo);
         }
 
         public void MessageSend(ChatMessage message, int channelId)
@@ -64,20 +74,56 @@ namespace Mogmog.FFXIV
         }
 
         #region Interop Interface Methods
-        private byte[] UpgradeLayerMessageReceived(Stream stream)
+        public byte[] UpgradeLayerMessageReceived(Stream stream)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+
             using var memoryStream = new MemoryStream();
             stream.CopyTo(memoryStream);
-            var messageInterop = JsonConvert.DeserializeObject<ChatMessageInterop>(Encoding.UTF8.GetString(memoryStream.GetBuffer()));
-            var message = messageInterop.Message;
-            var channelId = messageInterop.ChannelId;
+            var data = Encoding.UTF8.GetString(memoryStream.GetBuffer());
 
-            MessageReceivedEvent(this, new MessageReceivedEventArgs { Message = message, ChannelId = channelId });
+            JToken messageInterop;
+            try
+            {
+                messageInterop = JObject.Parse(data);
+            }
+            catch (JsonReaderException e)
+            {
+                return Encoding.UTF8.GetBytes(e.Message);
+            }
+
+            if (messageInterop["Message"] != null) // Jank but whatever, ripping all this out once Dalamud on .NET Core is released
+            {
+                var chatMessage = messageInterop.ToObject<ChatMessageInterop>();
+                var message = chatMessage.Message;
+                var channelId = chatMessage.ChannelId;
+                try
+                {
+                    MessageReceivedEvent(this, new MessageReceivedEventArgs { Message = message, ChannelId = channelId });
+                }
+                catch (NullReferenceException)
+                {
+                    return Array.Empty<byte>(); // No callbacks set.
+                }
+            }
+            else
+            {
+                var logInfo = messageInterop.ToObject<GenericInterop>();
+                try
+                {
+                    LogEvent(this, new LogEventArgs { LogMessage = logInfo.Command, IsError = bool.Parse(logInfo.Arg) });
+                }
+                catch (NullReferenceException)
+                {
+                    return Array.Empty<byte>(); // No callbacks set.
+                }
+            }
 
             return Array.Empty<byte>();
         }
 
-        private async Task SendToUpgradeLayer(string command, string arg)
+        public async Task SendToUpgradeLayer(string command, string arg)
         {
             var pack = new GenericInterop
             {
@@ -98,6 +144,13 @@ namespace Mogmog.FFXIV
             using var messageBytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(pack)));
             await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid losing scope of the byte array.
         }
+
+        #if DEBUG
+        public IntPtr GetMainWindowHandle()
+        {
+            return this.upgradeLayer.MainWindowHandle;
+        }
+        #endif
         #endregion
 
         #region IDisposable Support
@@ -125,17 +178,5 @@ namespace Mogmog.FFXIV
             Dispose(true);
         }
         #endregion
-    }
-
-    struct ChatMessageInterop
-    {
-        public ChatMessage Message;
-        public int ChannelId;
-    }
-
-    struct GenericInterop
-    {
-        public string Command;
-        public string Arg;
     }
 }

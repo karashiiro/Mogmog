@@ -7,12 +7,15 @@ namespace Mogmog.FFXIV.UpgradeLayer
 {
     public class MogmogConnectionManager : IDisposable
     {
+        public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
+        public event MessageReceivedEventHandler MessageReceivedEvent;
+
+        public delegate void LogEventHandler(object sender, LogEventArgs e);
+        public event LogEventHandler LogEvent;
+
         private readonly DisposableStrongIndexedList<MogmogConnection> connections;
 
         private readonly MogmogConfiguration config;
-
-        public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
-        public event MessageReceivedEventHandler MessageReceivedEvent;
 
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Reference maintained in List.")]
         public MogmogConnectionManager(MogmogConfiguration config)
@@ -43,6 +46,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.config.Hostnames.Add(hostname);
             var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
             connection.MessageReceivedEvent += MessageReceived;
+            connection.LogEvent += Log;
             connection.Start();
             this.connections.Add(connection);
         }
@@ -54,6 +58,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 return;
             this.config.Hostnames.RemoveAt(i);
             this.connections[i].MessageReceivedEvent -= MessageReceived;
+            this.connections[i].LogEvent -= Log;
             this.connections.RemoveAt(i);
         }
 
@@ -71,6 +76,11 @@ namespace Mogmog.FFXIV.UpgradeLayer
         private void MessageReceived(object sender, MessageReceivedEventArgs e)
         {
             MessageReceivedEvent(sender, e);
+        }
+
+        private void Log(object sender, LogEventArgs e)
+        {
+            LogEvent(sender, e);
         }
 
         #region IDisposable Support

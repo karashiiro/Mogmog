@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PeanutButter.SimpleHTTPServer;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
@@ -22,6 +23,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         static async Task MainAsync(string[] args)
         {
+            var traceListener = new CallbackTraceListener();
+            traceListener.LogEvent += Log;
+            Trace.Listeners.Add(traceListener);
+
             client = new HttpClient();
             server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) =>
             {
@@ -38,7 +43,15 @@ namespace Mogmog.FFXIV.UpgradeLayer
             connectionManager = new MogmogConnectionManager(config);
             connectionManager.MessageReceivedEvent += MessageReceived;
 
-            await Task.Delay(-1);
+            await Task.Run(async () =>
+            {
+                while (true)
+                {
+                    await Task.Delay(10000);
+                    if (Process.GetProcessesByName("ffxiv_dx11").Length == 0)
+                        Environment.Exit(-1);
+                }
+            });
         }
 
         static byte[] ReadInput(Stream stream)
@@ -82,6 +95,11 @@ namespace Mogmog.FFXIV.UpgradeLayer
             _ = MessageReceivedAsync(e.Message, e.ChannelId);
         }
 
+        static void Log(object sender, LogEventArgs e)
+        {
+            _ = LogAsync(e.LogMessage, e.IsError);
+        }
+
         static async Task MessageReceivedAsync(ChatMessage message, int channelId)
         {
             var interopMessage = new ChatMessageInterop
@@ -95,19 +113,19 @@ namespace Mogmog.FFXIV.UpgradeLayer
             using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopMessage)));
             await client.PostAsync(localhost, bytes);
         }
-    }
 
-    struct ChatMessageInterop
-    {
-        public ChatMessage Message;
-        public int ChannelId;
+        static async Task LogAsync(string logMessage, bool isError)
+        {
+            var interopLog = new GenericInterop
+            {
+                Command = logMessage,
+                Arg = isError.ToString(CultureInfo.InvariantCulture),
+            };
+            #if DEBUG
+            Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({(isError ? "ERROR" : "INFO")}) {logMessage}");
+            #endif
+            using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopLog)));
+            await client.PostAsync(localhost, bytes);
+        }
     }
-
-#pragma warning disable CS0649
-    struct GenericInterop
-    {
-        public string Command;
-        public string Arg;
-    }
-#pragma warning restore CS0649
 }

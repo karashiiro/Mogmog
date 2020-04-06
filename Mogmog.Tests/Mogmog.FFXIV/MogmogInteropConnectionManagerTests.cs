@@ -1,8 +1,12 @@
 ﻿using Mogmog.Protos;
+using Newtonsoft.Json;
 using NUnit.Framework;
+using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 
 namespace Mogmog.FFXIV
 {
@@ -12,6 +16,35 @@ namespace Mogmog.FFXIV
         private HttpClient http;
         private MogmogConfiguration config;
         private MogmogInteropConnectionManager connectionManager;
+
+        private static readonly object[] callbackTestArgs =
+        {
+            new ChatMessageInterop
+            {
+                Message = new ChatMessage(),
+                ChannelId = 2,
+            },
+            new ChatMessageInterop
+            {
+                Message = new ChatMessage
+                {
+                    Author = "Dummy Author",
+                    Content = "dummy text",
+                },
+                ChannelId = 2,
+            },
+            "This is a string.",
+            new GenericInterop
+            {
+                Command = "Error",
+                Arg = "true",
+            },
+            new GenericInterop
+            {
+                Command = "NotError",
+                Arg = "false",
+            },
+        };
 
         [SetUp]
         public void SetUp()
@@ -26,6 +59,12 @@ namespace Mogmog.FFXIV
         {
             connectionManager.Dispose();
             http.Dispose();
+        }
+
+        [Test]
+        public void Constructor_StartsProcessWithoutWindow()
+        {
+            Assert.AreEqual(IntPtr.Zero, connectionManager.GetMainWindowHandle());
         }
 
         [Test]
@@ -48,6 +87,47 @@ namespace Mogmog.FFXIV
             var message = new ChatMessage();
             connectionManager.MessageSend(message, 0);
             Assert.Pass();
+        }
+
+        [Test]
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(4)]
+        [Parallelizable]
+        public void MessageReceived_CallsMessageReceivedEventAppropriately(int idx)
+        {
+            bool messageIsChatMessageInterop = callbackTestArgs[idx] is ChatMessageInterop;
+            bool messageReceivedCalled = false;
+            connectionManager.MessageReceivedEvent += (sender, e) =>
+            {
+                messageReceivedCalled = true;
+            };
+            var messageBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(callbackTestArgs[idx]));
+            using var messageStream = new MemoryStream(messageBytes);
+            connectionManager.UpgradeLayerMessageReceived(messageStream);
+            Assert.IsTrue(messageReceivedCalled && messageIsChatMessageInterop || !messageReceivedCalled && !messageIsChatMessageInterop, "Expected both true or both false, got {0} and {1}.", messageReceivedCalled, messageIsChatMessageInterop);
+        }
+
+        [Test]
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(4)]
+        public void MessageReceived_CallsLogEventAppropriately(int idx)
+        {
+            bool messageIsGenericInterop = callbackTestArgs[idx] is GenericInterop;
+            bool logCalled = false;
+            connectionManager.LogEvent += (sender, e) =>
+            {
+                logCalled = true;
+            };
+            var messageBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(callbackTestArgs[idx]));
+            using var messageStream = new MemoryStream(messageBytes);
+            connectionManager.UpgradeLayerMessageReceived(messageStream);
+            Assert.IsTrue(logCalled && messageIsGenericInterop || !logCalled && !messageIsGenericInterop, "Expected both true or both false, got {0} and {1}.", logCalled, messageIsGenericInterop);
         }
     }
 

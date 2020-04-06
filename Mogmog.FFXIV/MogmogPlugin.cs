@@ -51,6 +51,7 @@ namespace Mogmog.FFXIV
             //this.config = dalamud.GetPluginConfig() as MogmogConfiguration;
             this.connectionManager = new MogmogInteropConnectionManager(this.config, this.http);
             this.connectionManager.MessageReceivedEvent += MessageReceived;
+            this.connectionManager.LogEvent += Log;
             this.commandHandler = new CommandHandler(this, this.config, this.dalamud);
         }
 
@@ -122,6 +123,14 @@ namespace Mogmog.FFXIV
             });
             this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
         }
+
+        private void Log(object sender, LogEventArgs e)
+        {
+            if (e.IsError)
+                this.dalamud.LogError(e.LogMessage);
+            else
+                this.dalamud.Log(e.LogMessage);
+        }
         
         private async Task LoadAvatar(PlayerCharacter player)
         {
@@ -156,6 +165,7 @@ namespace Mogmog.FFXIV
                 if (disposing)
                 {
                     this.connectionManager.MessageReceivedEvent -= MessageReceived;
+                    this.connectionManager.LogEvent -= Log;
 
                     this.commandHandler.Dispose();
                     this.connectionManager.Dispose();
