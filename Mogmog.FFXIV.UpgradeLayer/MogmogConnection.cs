@@ -28,7 +28,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         private int channelId;
 
-        private Task runningTask;
         private CancellationTokenSource tokenSource;
 
         public MogmogConnection(string hostname, int channelId)
@@ -53,26 +52,19 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public void Start()
         {
             this.tokenSource = new CancellationTokenSource();
-            this.runningTask = Task.WhenAny(ChatLoop(), Task.Run(() =>
-            {
-                while (true)
-                {
-                    this.tokenSource.Token.ThrowIfCancellationRequested();
-                }
-            }));
+            _ = ChatLoop(this.tokenSource.Token);
         }
 
-        public async Task Stop()
+        public void Stop()
         {
             this.tokenSource.Cancel();
-            await this.runningTask;
         }
 
-        private async Task ChatLoop()
+        private async Task ChatLoop(CancellationToken cancellationToken)
         {
             while (true)
             {
-                if (!await this.chatStream.ResponseStream.MoveNext())
+                if (!await this.chatStream.ResponseStream.MoveNext(cancellationToken))
                     continue;
                 MessageReceivedEvent(this, new MessageReceivedEventArgs {
                     Message = chatStream.ResponseStream.Current,
@@ -90,8 +82,17 @@ namespace Mogmog.FFXIV.UpgradeLayer
             {
                 if (disposing)
                 {
-                    Stop().Wait();
-                    this.runningTask.Dispose();
+                    try
+                    {
+                        Stop();
+                    }
+                    catch (AggregateException ae)
+                    {
+                        if (!(ae.InnerException is RpcException))
+                            throw;
+                        if ((ae.InnerException as RpcException).Status.Detail != "Error starting gRPC call: No connection could be made because the target machine actively refused it.")
+                            throw; // This exception is fine to ignore, we don't want to crash everything if the user enters an invalid hostname.
+                    }
                     this.tokenSource.Dispose();
                     this.chatStream.RequestStream.CompleteAsync().Wait();
                     this.chatStream.Dispose();

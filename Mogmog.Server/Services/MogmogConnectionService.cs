@@ -15,7 +15,6 @@ namespace Mogmog.Server.Services
 
         private IServerStreamWriter<ChatMessage> _responseStream;
 
-        private Task _runningTask;
         private CancellationTokenSource _tokenSource;
 
         public MogmogConnectionService(GameDataService gameDataService, MogmogTransmissionService transmitter)
@@ -35,22 +34,16 @@ namespace Mogmog.Server.Services
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
             
             _tokenSource = new CancellationTokenSource();
-            _runningTask = Task.WhenAny(ChatLoop(requestStream), Task.Run(() =>
-            {
-                while (true)
-                {
-                    _tokenSource.Token.ThrowIfCancellationRequested();
-                }
-            }));
+            _ = ChatLoop(requestStream, _tokenSource.Token);
             
             return Task.CompletedTask;
         }
 
-        private async Task ChatLoop(IAsyncStreamReader<ChatMessage> requestStream)
+        private async Task ChatLoop(IAsyncStreamReader<ChatMessage> requestStream, CancellationToken cancellationToken)
         {
             while (true)
             {
-                if (!await requestStream.MoveNext())
+                if (!await requestStream.MoveNext(cancellationToken))
                     continue;
                 var nextMessage = requestStream.Current;
                 nextMessage.World = _gameDataService.Worlds[nextMessage.WorldId];
@@ -59,10 +52,9 @@ namespace Mogmog.Server.Services
             }
         }
 
-        private async Task Stop()
+        private void Stop()
         {
             _tokenSource.Cancel();
-            await _runningTask;
         }
 
         public void SendToClient(object sender, MessageEventArgs e)
@@ -81,8 +73,7 @@ namespace Mogmog.Server.Services
             {
                 if (disposing)
                 {
-                    Stop().Wait();
-                    _runningTask.Dispose();
+                    Stop();
                     _tokenSource.Dispose();
                     _transmitter.MessageSent -= SendToClient;
                 }
@@ -91,9 +82,7 @@ namespace Mogmog.Server.Services
             }
         }
 
-#pragma warning disable CA1816 // Dispose methods should call SuppressFinalize
         public void Dispose()
-#pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
         {
             Dispose(true);
         }

@@ -38,7 +38,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         }
 
         [Test]
-        public void RemoveHost_DoesNotThrowIfNotFound()
+        public void RemoveHost_DoesNotThrowIfNotAdded()
         {
             connectionManager.RemoveHost("https://localhost:5001");
             Assert.Pass();

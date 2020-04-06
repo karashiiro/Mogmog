@@ -15,6 +15,7 @@ namespace Mogmog.Tests
 
         public async Task<bool> MoveNext(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await Task.Delay(1);
             return true;
         }
