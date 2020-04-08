@@ -1,14 +1,7 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Mogmog
 {
-    public class LogEventArgs : EventArgs
-    {
-        public string LogMessage { get; set; }
-        public bool IsError { get; set; }
-    }
-
     public class CallbackTraceListener : TraceListener
     {
         public delegate void LogEventHandler(object sender, LogEventArgs e);
