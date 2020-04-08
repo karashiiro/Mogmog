@@ -95,26 +95,14 @@ namespace Mogmog.FFXIV
                 var chatMessage = messageInterop.ToObject<ChatMessageInterop>();
                 var message = chatMessage.Message;
                 var channelId = chatMessage.ChannelId;
-                try
-                {
-                    MessageReceivedEvent(this, new MessageReceivedEventArgs { Message = message, ChannelId = channelId });
-                }
-                catch (NullReferenceException)
-                {
-                    return Array.Empty<byte>(); // No callbacks set.
-                }
+                var handler = MessageReceivedEvent;
+                handler?.Invoke(this, new MessageReceivedEventArgs { Message = message, ChannelId = channelId });
             }
             else
             {
                 var logInfo = messageInterop.ToObject<GenericInterop>();
-                try
-                {
-                    LogEvent(this, new LogEventArgs { LogMessage = logInfo.Command, IsError = bool.Parse(logInfo.Arg) });
-                }
-                catch (NullReferenceException)
-                {
-                    return Array.Empty<byte>(); // No callbacks set.
-                }
+                var handler = LogEvent;
+                handler?.Invoke(this, new LogEventArgs { LogMessage = logInfo.Command, IsError = bool.Parse(logInfo.Arg) });
             }
 
             return Array.Empty<byte>();

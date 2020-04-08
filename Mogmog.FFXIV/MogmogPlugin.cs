@@ -35,14 +35,9 @@ namespace Mogmog.FFXIV
 
         #if DEBUG
         public MogmogPlugin()
-        {
-            this.config = new MogmogConfiguration();
-        }
-
+            => this.config = new MogmogConfiguration();
         public MogmogPlugin(MogmogConfiguration config)
-        {
-            this.config = config;
-        }
+            => this.config = config;
         #endif
 
         public void Initialize(DalamudPluginInterface dalamud)
@@ -56,17 +51,15 @@ namespace Mogmog.FFXIV
             this.commandHandler = new CommandHandler(this, this.config, this.dalamud);
         }
 
-        // TODO: Write tests for this
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void AddHost(string command, string args)
         {
             this.connectionManager.AddHost(args);
             var idx = this.config.Hostnames.IndexOf(args);
             this.commandHandler.AddChatHandler(idx + 1);
-            this.dalamud.Framework.Gui.Chat.Print($"Added connection {args}");
+            PrintLogMessage($"Added connection {args}");
         }
 
-        // TODO: Write tests for this
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void RemoveHost(string command, string args)
         {
@@ -76,10 +69,9 @@ namespace Mogmog.FFXIV
             var idx = this.config.Hostnames.IndexOf(hostname);
             this.commandHandler.RemoveChatHandler(idx + 1);
             this.connectionManager.RemoveHost(hostname);
-            this.dalamud.Framework.Gui.Chat.Print($"Removed connection {hostname}");
+            PrintLogMessage($"Removed connection {hostname}");
         }
 
-        // TODO: Write tests for this
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void ReloadHost(string command, string args)
         {
@@ -87,7 +79,7 @@ namespace Mogmog.FFXIV
             if (int.TryParse(args, out int i))
                 hostname = this.config.Hostnames[i - 1];
             this.connectionManager.ReloadHost(hostname);
-            this.dalamud.Framework.Gui.Chat.Print($"Reloaded connection {hostname}");
+            PrintLogMessage($"Reloaded connection {hostname}");
         }
 
         public void MessageSend(string command, string message)
@@ -145,6 +137,11 @@ namespace Mogmog.FFXIV
                 Type = XivChatType.Notice,
             });
             chat.UpdateQueue(this.dalamud.Framework);
+        }
+
+        private void PrintLogMessage(string message)
+        {
+            this.dalamud.Framework.Gui.Chat.Print(message);
         }
 
         private void Log(object sender, LogEventArgs e)
