@@ -16,11 +16,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
     public class MogmogConnection : IDisposable
     {
-        public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
-        public event MessageReceivedEventHandler MessageReceivedEvent;
-
-        public delegate void LogEventHandler(object sender, LogEventArgs e);
-        public event LogEventHandler LogEvent;
+        public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
+        public event EventHandler<LogEventArgs> LogEvent;
 
         public int ChannelId { get; set; }
 
@@ -42,6 +39,11 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
             _ = ChatLoop(this.tokenSource.Token);
         }
+        
+        public void SendMessage(ChatMessage message)
+        {
+            chatStream.RequestStream.WriteAsync(message);
+        }
 
         private async Task ChatLoop(CancellationToken cancellationToken)
         {
@@ -54,11 +56,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     ChannelId = this.ChannelId + 1
                 });
             }
-        }
-        
-        public void SendMessage(ChatMessage message)
-        {
-            chatStream.RequestStream.WriteAsync(message);
         }
 
         #region IDisposable Support

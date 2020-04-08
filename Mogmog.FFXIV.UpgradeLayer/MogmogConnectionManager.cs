@@ -7,11 +7,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
 {
     public class MogmogConnectionManager : IDisposable
     {
-        public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
-        public event MessageReceivedEventHandler MessageReceivedEvent;
-
-        public delegate void LogEventHandler(object sender, LogEventArgs e);
-        public event LogEventHandler LogEvent;
+        public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
+        public event EventHandler<LogEventArgs> LogEvent;
 
         private readonly DisposableStrongIndexedList<MogmogConnection> connections;
 
@@ -72,9 +69,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public void MessageSend(ChatMessage message, int channelId)
         {
-            if (this.connections.Count <= channelId)
-                return;
-            if (channelId < 0)
+            if (this.connections.Count <= channelId || channelId < 0)
                 return;
             if (this.connections[channelId] == null) // Shouldn't happen but might, should return an error message
                 return;

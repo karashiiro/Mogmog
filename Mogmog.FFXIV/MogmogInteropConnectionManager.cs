@@ -21,11 +21,8 @@ namespace Mogmog.FFXIV
 
     public class MogmogInteropConnectionManager : IDisposable
     {
-        public delegate void MessageReceivedEventHandler(object sender, MessageReceivedEventArgs e);
-        public event MessageReceivedEventHandler MessageReceivedEvent;
-
-        public delegate void LogEventHandler(object sender, LogEventArgs e);
-        public event LogEventHandler LogEvent;
+        public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
+        public event EventHandler<LogEventArgs> LogEvent;
 
         private readonly HttpClient client;
         private readonly HttpServer server;
