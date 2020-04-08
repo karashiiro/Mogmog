@@ -56,6 +56,7 @@ namespace Mogmog.FFXIV
             this.commandHandler = new CommandHandler(this, this.config, this.dalamud);
         }
 
+        // TODO: Write tests for this
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void AddHost(string command, string args)
         {
@@ -65,37 +66,28 @@ namespace Mogmog.FFXIV
             this.dalamud.Framework.Gui.Chat.Print($"Added connection {args}");
         }
 
+        // TODO: Write tests for this
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void RemoveHost(string command, string args)
         {
+            var hostname = args;
             if (int.TryParse(args, out int i))
-            {
-                this.commandHandler.RemoveChatHandler(i);
-                this.connectionManager.RemoveHost(this.config.Hostnames[i - 1]);
-                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {args}");
-            }
-            else
-            {
-                var idx = this.config.Hostnames.IndexOf(args);
-                this.commandHandler.RemoveChatHandler(idx + 1);
-                this.connectionManager.RemoveHost(args);
-                this.dalamud.Framework.Gui.Chat.Print($"Removed connection {args}");
-            }
+                hostname = this.config.Hostnames[i - 1];
+            var idx = this.config.Hostnames.IndexOf(hostname);
+            this.commandHandler.RemoveChatHandler(idx + 1);
+            this.connectionManager.RemoveHost(hostname);
+            this.dalamud.Framework.Gui.Chat.Print($"Removed connection {hostname}");
         }
 
+        // TODO: Write tests for this
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void ReloadHost(string command, string args)
         {
+            var hostname = args;
             if (int.TryParse(args, out int i))
-            {
-                this.connectionManager.ReloadHost(this.config.Hostnames[i - 1]);
-                this.dalamud.Framework.Gui.Chat.Print($"Reloaded connection {args}");
-            }
-            else
-            {
-                this.connectionManager.ReloadHost(args);
-                this.dalamud.Framework.Gui.Chat.Print($"Reloaded connection {args}");
-            }
+                hostname = this.config.Hostnames[i - 1];
+            this.connectionManager.ReloadHost(hostname);
+            this.dalamud.Framework.Gui.Chat.Print($"Reloaded connection {hostname}");
         }
 
         public void MessageSend(string command, string message)
@@ -107,7 +99,6 @@ namespace Mogmog.FFXIV
 
         private async Task MessageSendAsync(string command, string message)
         {
-            var chat = this.dalamud.Framework.Gui.Chat;
             var player = this.dalamud.ClientState.LocalPlayer;
 
             // Handles switching characters
@@ -117,12 +108,8 @@ namespace Mogmog.FFXIV
             // 7 if /global, 3 if /gl
             int channelId = int.Parse(command.Substring(command.StartsWith("/global", StringComparison.InvariantCultureIgnoreCase) ? 7 : 3), CultureInfo.InvariantCulture);
 
-            chat.PrintChat(new XivChatEntry
-            {
-                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{player.Name}{MogmogResources.CrossWorldIcon}{player.HomeWorld.GameData.Name}> {message}"),
-                Type = XivChatType.Notice,
-            });
-            chat.UpdateQueue(this.dalamud.Framework);
+            PrintChatMessage(channelId, player, message);
+
             var chatMessage = new ChatMessage
             {
                 Id = 0,
@@ -140,12 +127,24 @@ namespace Mogmog.FFXIV
         {
             if (e.Message.AuthorId == this.dalamud.ClientState.LocalContentId)
                 return;
-            this.dalamud.Framework.Gui.Chat.PrintChat(new XivChatEntry
+            PrintChatMessage(e);
+        }
+
+        private void PrintChatMessage(int channelId, PlayerCharacter player, string message)
+            => PrintChatMessage(channelId, player.Name, player.HomeWorld.GameData.Name, message);
+
+        private void PrintChatMessage(MessageReceivedEventArgs e)
+            => PrintChatMessage(e.ChannelId, e.Message.Author, e.Message.World, e.Message.Content);
+
+        private void PrintChatMessage(int channelId, string playerName, string worldName, string message)
+        {
+            var chat = this.dalamud.Framework.Gui.Chat;
+            chat.PrintChat(new XivChatEntry
             {
-                MessageBytes = Encoding.UTF8.GetBytes($"[GL{e.ChannelId}]<{e.Message.Author}{MogmogResources.CrossWorldIcon}{e.Message.World}> {e.Message.Content}"),
+                MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{playerName}{MogmogResources.CrossWorldIcon}{worldName}> {message}"),
                 Type = XivChatType.Notice,
             });
-            this.dalamud.Framework.Gui.Chat.UpdateQueue(this.dalamud.Framework);
+            chat.UpdateQueue(this.dalamud.Framework);
         }
 
         private void Log(object sender, LogEventArgs e)
