@@ -1,4 +1,5 @@
-﻿using Mogmog.Protos;
+﻿using Mogmog.Events;
+using Mogmog.Protos;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PeanutButter.SimpleHTTPServer;
@@ -13,12 +14,6 @@ using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV
 {
-    public class MessageReceivedEventArgs : EventArgs
-    {
-        public ChatMessage Message { get; set; }
-        public int ChannelId { get; set; }
-    }
-
     public class MogmogInteropConnectionManager : IDisposable
     {
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;

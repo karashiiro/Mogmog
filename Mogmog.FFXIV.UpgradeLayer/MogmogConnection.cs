@@ -1,5 +1,6 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
+using Mogmog.Events;
 using Mogmog.Protos;
 using System;
 using System.Threading;
@@ -8,12 +9,6 @@ using static Mogmog.Protos.ChatService;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
-    public class MessageReceivedEventArgs : EventArgs
-    {
-        public ChatMessage Message { get; set; }
-        public int ChannelId { get; set; }
-    }
-
     public class MogmogConnection : IDisposable
     {
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;

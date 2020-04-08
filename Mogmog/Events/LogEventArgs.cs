@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Mogmog
+namespace Mogmog.Events
 {
     public class LogEventArgs : EventArgs
     {

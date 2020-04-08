@@ -1,6 +1,7 @@
 ﻿using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Actors.Types;
 using Dalamud.Plugin;
+using Mogmog.Events;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
 using System;

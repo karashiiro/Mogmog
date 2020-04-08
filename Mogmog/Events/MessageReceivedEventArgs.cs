@@ -1,7 +1,7 @@
 ﻿using Mogmog.Protos;
 using System;
 
-namespace Mogmog
+namespace Mogmog.Events
 {
     public class MessageReceivedEventArgs : EventArgs
     {

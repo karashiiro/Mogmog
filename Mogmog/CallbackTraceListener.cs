@@ -1,11 +1,12 @@
-﻿using System.Diagnostics;
+﻿using Mogmog.Events;
+using System;
+using System.Diagnostics;
 
 namespace Mogmog
 {
     public class CallbackTraceListener : TraceListener
     {
-        public delegate void LogEventHandler(object sender, LogEventArgs e);
-        public event LogEventHandler LogEvent;
+        public event EventHandler<LogEventArgs> LogEvent;
 
         public override void Write(string message)
         {
