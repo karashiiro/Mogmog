@@ -16,7 +16,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
     static class Program
     {
         static HttpClient client;
-        static MogmogConnectionManager connectionManager;
+        static IConnectionManager connectionManager;
         static Uri localhost;
 
         static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();

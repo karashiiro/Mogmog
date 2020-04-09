@@ -3,7 +3,7 @@ using Grpc.Core.Testing;
 using Grpc.Core.Utils;
 using Mogmog.Protos;
 using Mogmog.Server.Services;
-using Mogmog.Tests;
+using Mogmog.Tests.Stubs;
 using NUnit.Framework;
 using System;
 using System.Threading;
@@ -80,7 +80,7 @@ namespace Mogmog.Server
             var fakeServerCallContext = TestServerCallContext.Create("Chat", null, DateTime.UtcNow.AddHours(1), new Metadata(), CancellationToken.None, "127.0.0.1", null, null, (metadata) => TaskUtils.CompletedTask, () => new WriteOptions(), (writeOptions) => { });
             var fakeReader = new TestAsyncStreamReader<ChatMessage>(testMessage);
             var fakeWriter = new TestServerStreamWriter<ChatMessage>();
-            _connection.Chat(fakeReader, fakeWriter, fakeServerCallContext);
+            _ = _connection.Chat(fakeReader, fakeWriter, fakeServerCallContext);
             fakeWriter.ReturnOnWrite().Wait();
             Assert.AreEqual(testMessage.World, expectedWorldName);
         }

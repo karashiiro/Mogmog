@@ -14,16 +14,16 @@ using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV
 {
-    public class MogmogInteropConnectionManager : IDisposable
+    public class MogmogInteropConnectionManager : IConnectionManager, IDisposable
     {
-        public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
-        public event EventHandler<LogEventArgs> LogEvent;
-
         private readonly HttpClient client;
         private readonly HttpServer server;
         private readonly MogmogConfiguration config;
         private readonly Process upgradeLayer;
         private readonly Uri localhost;
+
+        public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
+        public event EventHandler<LogEventArgs> LogEvent;
 
         public MogmogInteropConnectionManager(MogmogConfiguration config, HttpClient client)
         {
@@ -49,26 +49,16 @@ namespace Mogmog.FFXIV
         }
 
         public void MessageSend(ChatMessage message, int channelId)
-        {
-            _ = SendToUpgradeLayer(message, channelId);
-        }
+            => _ = SendToUpgradeLayer(message, channelId);
 
         public void AddHost(string hostname)
-        {
-            this.config.Hostnames.Add(hostname);
-            _ = SendToUpgradeLayer("AddHost", hostname);
-        }
+            => _ = SendToUpgradeLayer("AddHost", hostname);
 
         public void RemoveHost(string hostname)
-        {
-            this.config.Hostnames.Remove(hostname);
-            _ = SendToUpgradeLayer("RemoveHost", hostname);
-        }
+            => _ = SendToUpgradeLayer("RemoveHost", hostname);
 
         public void ReloadHost(string hostname)
-        {
-            _ = SendToUpgradeLayer("ReloadHost", hostname);
-        }
+            => _ = SendToUpgradeLayer("ReloadHost", hostname);
 
         #region Interop Interface Methods
         public byte[] UpgradeLayerMessageReceived(Stream stream)

@@ -6,14 +6,14 @@ using System.Linq;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
-    public class MogmogConnectionManager : IDisposable
+    public class MogmogConnectionManager : IConnectionManager, IDisposable
     {
-        public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
-        public event EventHandler<LogEventArgs> LogEvent;
-
         private readonly DisposableStrongIndexedList<MogmogConnection> connections;
 
         private readonly MogmogConfiguration config;
+
+        public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
+        public event EventHandler<LogEventArgs> LogEvent;
 
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Reference maintained in List.")]
         public MogmogConnectionManager(MogmogConfiguration config)

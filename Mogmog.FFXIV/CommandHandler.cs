@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Mogmog.FFXIV
 {
-    public class CommandHandler : IDisposable
+    public class CommandHandler : ICommandHandler, IDisposable
     {
         private readonly DalamudPluginInterface dalamud;
         private readonly MogmogPlugin parent;
@@ -29,13 +29,13 @@ namespace Mogmog.FFXIV
             AddCommandHandlers();
         }
 
-        public void AddChatHandler(int i)
+        public void AddCommandHandler(int i)
         {
             this.dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo(i));
             this.dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo(i, false));
         }
 
-        public void RemoveChatHandler(int i)
+        public void RemoveCommandHandler(int i)
         {
             this.dalamud.CommandManager.RemoveHandler($"/global{i}");
             this.dalamud.CommandManager.RemoveHandler($"/gl{i}");
@@ -67,8 +67,7 @@ namespace Mogmog.FFXIV
         {
             for (int i = 1; i <= this.config.Hostnames.Count; i++)
             {
-                this.dalamud.CommandManager.RemoveHandler($"/global{i}");
-                this.dalamud.CommandManager.RemoveHandler($"/gl{i}");
+                RemoveCommandHandler(i);
             }
             foreach (var command in this.commands)
             {

@@ -8,13 +8,12 @@ namespace Mogmog.Server.Services
 {
     public class MogmogTransmissionService : IDisposable
     {
-        public delegate void MessageEventHandler(object sender, MessageEventArgs e);
-        public event MessageEventHandler MessageSent;
-
         private readonly Queue<ChatMessage> _messageQueue;
 
         private Task _runningTask;
         private CancellationTokenSource _tokenSource;
+
+        public event EventHandler<MessageEventArgs> MessageSent;
 
         public MogmogTransmissionService()
         {

@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Mogmog.Tests
+namespace Mogmog.Tests.Stubs
 {
     public class TestAsyncStreamReader<T> : IAsyncStreamReader<T>
     {

@@ -11,14 +11,14 @@ namespace Mogmog.FFXIV.UpgradeLayer
 {
     public class MogmogConnection : IDisposable
     {
+        private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
+        private readonly CancellationTokenSource tokenSource;
+        private readonly GrpcChannel channel;
+
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
         public event EventHandler<LogEventArgs> LogEvent;
 
         public int ChannelId { get; set; }
-
-        private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
-        private readonly CancellationTokenSource tokenSource;
-        private readonly GrpcChannel channel;
 
         public MogmogConnection(string hostname, int channelId)
         {

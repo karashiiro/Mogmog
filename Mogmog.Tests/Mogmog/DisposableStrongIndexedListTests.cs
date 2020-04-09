@@ -1,4 +1,4 @@
-﻿using Mogmog.Tests;
+﻿using Mogmog.Tests.Stubs;
 using NUnit.Framework;
 
 namespace Mogmog

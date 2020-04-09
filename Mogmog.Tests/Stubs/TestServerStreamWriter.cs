@@ -1,7 +1,7 @@
 ﻿using Grpc.Core;
 using System.Threading.Tasks;
 
-namespace Mogmog.Tests
+namespace Mogmog.Tests.Stubs
 {
     public class TestServerStreamWriter<T> : IServerStreamWriter<T>
     {

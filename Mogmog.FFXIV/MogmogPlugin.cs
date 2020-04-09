@@ -24,61 +24,54 @@ namespace Mogmog.FFXIV
     {
         public string Name => "Mogmog";
 
-        private CommandHandler commandHandler;
-        private DalamudPluginInterface dalamud;
         private HttpClient http;
-        private MogmogConfiguration config;
-        private MogmogInteropConnectionManager connectionManager;
-
         private string avatar;
         private string lastPlayerName;
 
-        #if DEBUG
-        public MogmogPlugin()
-            => this.config = new MogmogConfiguration();
-        public MogmogPlugin(MogmogConfiguration config)
-            => this.config = config;
-        #endif
+        protected ICommandHandler CommandHandler { get; set; }
+        protected IConnectionManager ConnectionManager { get; set; }
+        protected DalamudPluginInterface Dalamud { get; set; }
+        protected MogmogConfiguration Config { get; set; }
 
         public void Initialize(DalamudPluginInterface dalamud)
         {
-            this.dalamud = dalamud;
+            this.Dalamud = dalamud;
             this.http = new HttpClient();
             //this.config = dalamud.GetPluginConfig() as MogmogConfiguration;
-            this.connectionManager = new MogmogInteropConnectionManager(this.config, this.http);
-            this.connectionManager.MessageReceivedEvent += MessageReceived;
-            this.connectionManager.LogEvent += Log;
-            this.commandHandler = new CommandHandler(this, this.config, this.dalamud);
+            this.ConnectionManager = new MogmogInteropConnectionManager(this.Config, this.http);
+            this.ConnectionManager.MessageReceivedEvent += MessageReceived;
+            this.ConnectionManager.LogEvent += Log;
+            this.CommandHandler = new CommandHandler(this, this.Config, this.Dalamud);
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
-        public void AddHost(string command, string args)
+        public void AddHost(string command, string hostname)
         {
-            this.connectionManager.AddHost(args);
-            var idx = this.config.Hostnames.IndexOf(args);
-            this.commandHandler.AddChatHandler(idx + 1);
-            PrintLogMessage($"Added connection {args}");
+            this.Config.Hostnames.Add(hostname);
+            this.ConnectionManager.AddHost(hostname);
+            var idx = this.Config.Hostnames.IndexOf(hostname);
+            this.CommandHandler.AddCommandHandler(idx + 1);
+            PrintLogMessage($"Added connection {hostname}");
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
-        public void RemoveHost(string command, string args)
+        public void RemoveHost(string command, string hostname)
         {
-            var hostname = args;
-            if (int.TryParse(args, out int i))
-                hostname = this.config.Hostnames[i - 1];
-            var idx = this.config.Hostnames.IndexOf(hostname);
-            this.commandHandler.RemoveChatHandler(idx + 1);
-            this.connectionManager.RemoveHost(hostname);
+            if (int.TryParse(hostname, out int i))
+                hostname = this.Config.Hostnames[i - 1];
+            var idx = this.Config.Hostnames.IndexOf(hostname);
+            this.CommandHandler.RemoveCommandHandler(idx + 1);
+            this.Config.Hostnames.Remove(hostname);
+            this.ConnectionManager.RemoveHost(hostname);
             PrintLogMessage($"Removed connection {hostname}");
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
-        public void ReloadHost(string command, string args)
+        public void ReloadHost(string command, string hostname)
         {
-            var hostname = args;
-            if (int.TryParse(args, out int i))
-                hostname = this.config.Hostnames[i - 1];
-            this.connectionManager.ReloadHost(hostname);
+            if (int.TryParse(hostname, out int i))
+                hostname = this.Config.Hostnames[i - 1];
+            this.ConnectionManager.ReloadHost(hostname);
             PrintLogMessage($"Reloaded connection {hostname}");
         }
 
@@ -91,7 +84,7 @@ namespace Mogmog.FFXIV
 
         private async Task MessageSendAsync(string command, string message)
         {
-            var player = this.dalamud.ClientState.LocalPlayer;
+            var player = this.Dalamud.ClientState.LocalPlayer;
 
             // Handles switching characters
             if (this.lastPlayerName == null || this.lastPlayerName != player.Name)
@@ -107,17 +100,17 @@ namespace Mogmog.FFXIV
                 Id = 0,
                 Content = message,
                 Author = player.Name,
-                AuthorId = this.dalamud.ClientState.LocalContentId,
+                AuthorId = this.Dalamud.ClientState.LocalContentId,
                 Avatar = this.avatar,
                 World = string.Empty,
                 WorldId = player.HomeWorld.Id,
             };
-            this.connectionManager.MessageSend(chatMessage, channelId - 1);
+            this.ConnectionManager.MessageSend(chatMessage, channelId - 1);
         }
 
         private void MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            if (e.Message.AuthorId == this.dalamud.ClientState.LocalContentId)
+            if (e.Message.AuthorId == this.Dalamud.ClientState.LocalContentId)
                 return;
             PrintChatMessage(e);
         }
@@ -130,26 +123,26 @@ namespace Mogmog.FFXIV
 
         private void PrintChatMessage(int channelId, string playerName, string worldName, string message)
         {
-            var chat = this.dalamud.Framework.Gui.Chat;
+            var chat = this.Dalamud.Framework.Gui.Chat;
             chat.PrintChat(new XivChatEntry
             {
                 MessageBytes = Encoding.UTF8.GetBytes($"[GL{channelId}]<{playerName}{MogmogResources.CrossWorldIcon}{worldName}> {message}"),
                 Type = XivChatType.Notice,
             });
-            chat.UpdateQueue(this.dalamud.Framework);
+            chat.UpdateQueue(this.Dalamud.Framework);
         }
 
         private void PrintLogMessage(string message)
         {
-            this.dalamud.Framework.Gui.Chat.Print(message);
+            this.Dalamud?.Framework.Gui.Chat.Print(message);
         }
 
         private void Log(object sender, LogEventArgs e)
         {
             if (e.IsError)
-                this.dalamud.LogError(e.LogMessage);
+                this.Dalamud.LogError(e.LogMessage);
             else
-                this.dalamud.Log(e.LogMessage);
+                this.Dalamud.Log(e.LogMessage);
         }
         
         private async Task LoadAvatar(PlayerCharacter player)
@@ -159,18 +152,18 @@ namespace Mogmog.FFXIV
             var uri = new Uri($"https://xivapi.com/character/search?name={charaName}&server={worldName}");
             try
             {
-                this.dalamud.Log("Making request to {Uri}", uri.OriginalString);
+                this.Dalamud.Log("Making request to {Uri}", uri.OriginalString);
                 var res = await this.http.GetStringAsync(uri);
                 this.avatar = JObject.Parse(res)["Results"][0]["Avatar"].ToObject<string>();
             }
             catch (HttpRequestException e)
             {
                 // If XIVAPI is down or broken, whatever
-                this.dalamud.LogError("XIVAPI returned an error: " + e.Message);
-                this.dalamud.LogError(e.StackTrace);
+                this.Dalamud.LogError("XIVAPI returned an error: " + e.Message);
+                this.Dalamud.LogError(e.StackTrace);
             }
             this.lastPlayerName = player.Name;
-            this.dalamud.Log("Player avatar is located at {Uri}.", this.avatar ?? "undefined");
+            this.Dalamud.Log("Player avatar is located at {Uri}.", this.avatar ?? "undefined");
             if (this.avatar == null)
                 this.avatar = string.Empty;
         }
@@ -184,17 +177,17 @@ namespace Mogmog.FFXIV
             {
                 if (disposing)
                 {
-                    this.connectionManager.MessageReceivedEvent -= MessageReceived;
-                    this.connectionManager.LogEvent -= Log;
+                    this.ConnectionManager.MessageReceivedEvent -= MessageReceived;
+                    this.ConnectionManager.LogEvent -= Log;
 
-                    this.commandHandler.Dispose();
-                    this.connectionManager.Dispose();
+                    this.CommandHandler.Dispose();
+                    this.ConnectionManager.Dispose();
 
                     this.http.Dispose();
 
                     /*this.dalamud.SavePluginConfig(this.config);*/
 
-                    this.dalamud.Dispose();
+                    this.Dalamud.Dispose();
                 }
 
                 disposedValue = true;

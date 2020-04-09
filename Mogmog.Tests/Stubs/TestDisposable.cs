@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Mogmog.Tests
+namespace Mogmog.Tests.Stubs
 {
     public class TestDisposable : IDisposable
     {
