@@ -27,6 +27,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             string testHost = "https://localhost:5001";
             connectionManager.AddHost(testHost);
             Assert.AreEqual(config.Hostnames[0], testHost);
+            Assert.IsTrue(config.Hostnames.Count == 1);
         }
 
         [Test]
@@ -38,10 +39,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
         }
 
         [Test]
-        public void RemoveHost_DoesNotThrowIfNotAdded()
+        public void RemoveHost_DoesNotChangeIfEmpty()
         {
             connectionManager.RemoveHost("https://localhost:5001");
-            Assert.Pass();
+            Assert.IsTrue(config.Hostnames.Count == 0);
         }
     }
 }
