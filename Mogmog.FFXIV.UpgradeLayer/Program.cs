@@ -100,19 +100,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
             _ = MessageReceivedAsync(e.Message, e.ChannelId);
         }
 
-        static void Log(object sender, LogEventArgs e)
-        {
-            if (e.IsError)
-                Mogger.LogError(e.LogMessage);
-            else
-                Mogger.Log(e.LogMessage);
-        }
-
-        static void ReqGeneric(object sender, GenericInteropArgs e)
-        {
-            _ = ReqGenericAsync(e.Message);
-        }
-
         static async Task MessageReceivedAsync(ChatMessage message, int channelId)
         {
             var interopMessage = new ChatMessageInterop
@@ -124,14 +111,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
             Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
             #endif
             await SendToParent(interopMessage);
-        }
-
-        static async Task ReqGenericAsync(GenericInterop message)
-        {
-            #if DEBUG
-            Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n {message.Command} {message.Arg}");
-            #endif
-            await SendToParent(message);
         }
 
         public static async Task SendToParent(object obj)

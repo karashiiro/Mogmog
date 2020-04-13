@@ -41,12 +41,9 @@ namespace Mogmog.FFXIV
 
             this.http = new HttpClient();
             this.Dalamud = dalamud;
-            //this.config = dalamud.GetPluginConfig() as MogmogConfiguration;
             this.ConnectionManager = new MogmogInteropConnectionManager(this.Config, this.http);
             this.ConnectionManager.MessageReceivedEvent += MessageReceived;
             this.CommandHandler = new CommandHandler(this, this.Config, this.Dalamud);
-
-            //this.oauth2.Authenticate();
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
@@ -180,8 +177,6 @@ namespace Mogmog.FFXIV
                     this.ConnectionManager.Dispose();
 
                     this.http.Dispose();
-
-                    /*this.dalamud.SavePluginConfig(this.config);*/
 
                     this.Dalamud.Dispose();
                 }

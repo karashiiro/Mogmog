@@ -21,8 +21,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         private bool handlerCompleted;
 
-        public event EventHandler<LogEventArgs> LogEvent;
-
         public bool IsAuthenticated { get; private set; }
         public string OAuth2Code { get; private set; }
 
@@ -43,8 +41,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     Mogger.LogError(e.Message);
                     if (i == reservedPorts.Length - 1)
                         throw;
-                    else
-                        continue;
                 }
             }
             authServer.AddHandler((processor, stream) => OAuth2RedirectHandler(processor, stateString));
