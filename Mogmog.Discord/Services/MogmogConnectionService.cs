@@ -5,6 +5,8 @@ using Grpc.Net.Client;
 using Mogmog.Protos;
 using Serilog;
 using System;
+using System.Collections.Specialized;
+using System.IO;
 using System.Threading.Tasks;
 using static Mogmog.Protos.ChatService;
 
@@ -29,6 +31,13 @@ namespace Mogmog.Discord.Services
             
             _channel = GrpcChannel.ForAddress(hostname);
             var chatClient = new ChatServiceClient(_channel);
+            var flags = (ServerFlags)chatClient.GetChatServerFlags(new ReqChatServerFlags()).Flags;
+            if (flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
+            {
+                var stateString = OAuth2Utils.GenerateStateString(100);
+                File.WriteAllText("identifier", stateString);
+                chatClient.SendOAuth2Code(new ReqOAuth2Code { OAuth2Code = stateString });
+            }
             _chatStream = chatClient.Chat(new CallOptions()
                 .WithDeadline(DateTime.UtcNow.AddMinutes(1))
                 .WithWaitForReady());

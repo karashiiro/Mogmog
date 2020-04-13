@@ -28,7 +28,7 @@ namespace Mogmog.Server
             var waiter = Task.Run(async () =>
             {
                 while (!eventFired)
-                    await Task.Delay(1);
+                    await Task.Delay(50);
             });
             _transmitter.MessageSent += (sender, e) =>
             {

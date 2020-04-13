@@ -3,10 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Mogmog.Protos;
 using Serilog;
 using System;
-using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,7 +22,7 @@ namespace Mogmog.Server.Services
 
         private CancellationTokenSource _tokenSource;
 
-        private readonly BitVector32 _flags;
+        private readonly ServerFlags _flags;
 
         public MogmogConnectionService(GameDataService gameDataService, MogmogTransmissionService transmitter, IConfiguration config)
         {
@@ -33,22 +31,33 @@ namespace Mogmog.Server.Services
             _discordOAuth2 = new DiscordOAuth2();
             _gameDataService = gameDataService;
             _transmitter = transmitter ?? throw new ArgumentNullException(nameof(transmitter));
-            _flags = new BitVector32(int.Parse(config["Flags"], CultureInfo.InvariantCulture));
+            _flags = (ServerFlags)int.Parse(config["Flags"], CultureInfo.InvariantCulture);
             _transmitter.MessageSent += SendToClient;
         }
 
         public override Task<ChatServerFlags> GetChatServerFlags(ReqChatServerFlags req, ServerCallContext context)
         {
-            return Task.FromResult(new ChatServerFlags { Flags = _flags.Data });
+            return Task.FromResult(new ChatServerFlags { Flags = (int)_flags });
         }
 
         public override async Task<GeneralAck> SendOAuth2Code(ReqOAuth2Code code, ServerCallContext context)
         {
-            var oAuthCode = code?.OAuth2Code;
-            if (oAuthCode == null)
+            var oAuth2Code = code?.OAuth2Code;
+            if (oAuth2Code == null)
                 throw new HttpRequestException("401 Unauthorized");
-            var authInfo = await DiscordOAuth2.Authorize(oAuthCode);
-            _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException("401 Unauthorized");
+            var specialUserToken = await GetSpecialUserToken();
+            if (string.IsNullOrEmpty(specialUserToken) || specialUserToken != oAuth2Code)
+            {
+                var authInfo = await DiscordOAuth2.Authorize(oAuth2Code);
+                _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException("401 Unauthorized");
+            }
+            else
+            {
+                _discordOAuth2.AccessToken = new AccessCodeResponse
+                {
+                    Bypass = true,
+                };
+            }
             return new GeneralAck();
         }
 
@@ -58,7 +67,7 @@ namespace Mogmog.Server.Services
                 throw new ArgumentNullException(nameof(requestStream));
             _responseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
 
-            if (_flags[0] && _discordOAuth2.AccessToken == null)
+            if (_flags.HasFlag(ServerFlags.RequiresDiscordOAuth2) && _discordOAuth2.AccessToken == null)
                 throw new HttpRequestException("401 Unauthorized");
             
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
@@ -100,6 +109,16 @@ namespace Mogmog.Server.Services
             if (e == null)
                 return;
             _responseStream.WriteAsync(e.Message);
+        }
+
+        private static async Task<string> GetSpecialUserToken()
+        {
+            var specialUserTokenPath = Path.Combine(Environment.GetEnvironmentVariable("DISCORD_BOT_PATH"), "identifier");
+            if (File.Exists(specialUserTokenPath))
+            {
+                return await File.ReadAllTextAsync(specialUserTokenPath);
+            }
+            return null;
         }
 
         #region IDisposable Support

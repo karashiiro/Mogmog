@@ -67,5 +67,8 @@ namespace Mogmog.Server
 
         [JsonProperty("scope")]
         public string Scope { get; }
+
+        [JsonIgnore]
+        public bool Bypass { get; set; }
     }
 }
