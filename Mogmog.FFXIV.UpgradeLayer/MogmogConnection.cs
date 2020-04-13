@@ -16,7 +16,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
         private readonly GrpcChannel channel;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
-        public event EventHandler<LogEventArgs> LogEvent;
 
         public int ChannelId { get; set; }
 

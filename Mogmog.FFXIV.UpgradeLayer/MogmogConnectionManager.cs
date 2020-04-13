@@ -1,4 +1,5 @@
 ﻿using Mogmog.Events;
+using Mogmog.Logging;
 using Mogmog.Protos;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -13,7 +14,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
         private readonly MogmogConfiguration config;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
-        public event EventHandler<LogEventArgs> LogEvent;
 
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Reference maintained in List.")]
         public MogmogConnectionManager(MogmogConfiguration config)
@@ -40,13 +40,12 @@ namespace Mogmog.FFXIV.UpgradeLayer
         {
             if (this.config.Hostnames.Contains(hostname))
             {
-                LogError(LogMessages.HostExists);
+                Mogger.LogError(LogMessages.HostExists);
                 return;
             }
             this.config.Hostnames.Add(hostname);
             var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
             connection.MessageReceivedEvent += MessageReceived;
-            connection.LogEvent += Log;
             this.connections.Add(connection);
         }
 
@@ -57,7 +56,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 return;
             this.config.Hostnames.RemoveAt(i);
             this.connections[i].MessageReceivedEvent -= MessageReceived;
-            this.connections[i].LogEvent -= Log;
             this.connections.RemoveAt(i);
         }
 
@@ -77,7 +75,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 return;
             if (this.connections[channelId] == null) // Shouldn't happen but might
             {
-                LogError(LogMessages.HostNotFound);
+                Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
             this.connections[channelId].SendMessage(message);
@@ -88,18 +86,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
             var handler = MessageReceivedEvent;
             handler?.Invoke(sender, e);
         }
-
-        private void Log(object sender, LogEventArgs e)
-        {
-            var handler = LogEvent;
-            handler?.Invoke(sender, e);
-        }
-
-        private void Log(string message, bool isError = false)
-            => Log(this, new LogEventArgs { LogMessage = message, IsError = isError });
-
-        private void LogError(string message)
-            => Log(message, true);
 
         #region IDisposable Support
         private bool disposedValue; // To detect redundant calls

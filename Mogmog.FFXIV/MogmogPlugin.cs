@@ -2,6 +2,7 @@
 using Dalamud.Game.ClientState.Actors.Types;
 using Dalamud.Plugin;
 using Mogmog.Events;
+using Mogmog.Logging;
 using Mogmog.OAuth2;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
@@ -36,13 +37,13 @@ namespace Mogmog.FFXIV
 
         public void Initialize(DalamudPluginInterface dalamud)
         {
-            this.http = new HttpClient();
+            Mogger.Logger = new DalamudLogger(dalamud);
 
+            this.http = new HttpClient();
             this.Dalamud = dalamud;
             //this.config = dalamud.GetPluginConfig() as MogmogConfiguration;
             this.ConnectionManager = new MogmogInteropConnectionManager(this.Config, this.http);
             this.ConnectionManager.MessageReceivedEvent += MessageReceived;
-            this.ConnectionManager.LogEvent += Log;
             this.CommandHandler = new CommandHandler(this, this.Config, this.Dalamud);
 
             //this.oauth2.Authenticate();
@@ -140,14 +141,6 @@ namespace Mogmog.FFXIV
         {
             this.Dalamud?.Framework.Gui.Chat.Print(message);
         }
-
-        private void Log(object sender, LogEventArgs e)
-        {
-            if (e.IsError)
-                this.Dalamud.LogError(e.LogMessage);
-            else
-                this.Dalamud.Log(e.LogMessage);
-        }
         
         private async Task LoadAvatar(PlayerCharacter player)
         {
@@ -182,7 +175,6 @@ namespace Mogmog.FFXIV
                 if (disposing)
                 {
                     this.ConnectionManager.MessageReceivedEvent -= MessageReceived;
-                    this.ConnectionManager.LogEvent -= Log;
 
                     this.CommandHandler.Dispose();
                     this.ConnectionManager.Dispose();

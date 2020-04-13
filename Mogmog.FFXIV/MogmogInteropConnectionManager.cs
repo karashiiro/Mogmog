@@ -1,4 +1,5 @@
 ﻿using Mogmog.Events;
+using Mogmog.Logging;
 using Mogmog.Protos;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -22,7 +23,6 @@ namespace Mogmog.FFXIV
         private readonly Uri localhost;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
-        public event EventHandler<LogEventArgs> LogEvent;
 
         public MogmogInteropConnectionManager(MogmogConfiguration config, HttpClient client)
         {
@@ -90,8 +90,10 @@ namespace Mogmog.FFXIV
             else
             {
                 var logInfo = messageInterop.ToObject<GenericInterop>();
-                var handler = LogEvent;
-                handler?.Invoke(this, new LogEventArgs { LogMessage = logInfo.Command, IsError = bool.Parse(logInfo.Arg) });
+                if (bool.Parse(logInfo.Arg))
+                    Mogger.LogError(logInfo.Command);
+                else
+                    Mogger.Log(logInfo.Command);
             }
 
             return Array.Empty<byte>();

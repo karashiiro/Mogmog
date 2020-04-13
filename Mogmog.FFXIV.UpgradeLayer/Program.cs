@@ -1,4 +1,5 @@
 ﻿using Mogmog.Events;
+using Mogmog.Logging;
 using Mogmog.Protos;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -23,8 +24,9 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         static async Task MainAsync(string[] args)
         {
-            var traceListener = new CallbackTraceListener();
-            traceListener.LogEvent += Log;
+            Mogger.Logger = new ProgramLogger();
+
+            var traceListener = new ProgramTraceListener();
             Trace.Listeners.Add(traceListener);
 
             client = new HttpClient();
@@ -100,7 +102,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         static void Log(object sender, LogEventArgs e)
         {
-            _ = LogAsync(e.LogMessage, e.IsError);
+            if (e.IsError)
+                Mogger.LogError(e.LogMessage);
+            else
+                Mogger.Log(e.LogMessage);
         }
 
         static void ReqGeneric(object sender, GenericInteropArgs e)
@@ -121,19 +126,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
             await SendToParent(interopMessage);
         }
 
-        static async Task LogAsync(string logMessage, bool isError)
-        {
-            var interopLog = new GenericInterop
-            {
-                Command = logMessage,
-                Arg = isError.ToString(CultureInfo.InvariantCulture),
-            };
-            #if DEBUG
-            Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({(isError ? "ERROR" : "INFO")}) {logMessage}");
-            #endif
-            await SendToParent(interopLog);
-        }
-
         static async Task ReqGenericAsync(GenericInterop message)
         {
             #if DEBUG
@@ -142,7 +134,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             await SendToParent(message);
         }
 
-        static async Task SendToParent(object obj)
+        public static async Task SendToParent(object obj)
         {
             using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj)));
             await client.PostAsync(localhost, bytes);

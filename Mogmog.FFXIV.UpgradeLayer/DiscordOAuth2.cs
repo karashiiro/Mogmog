@@ -1,5 +1,6 @@
 ﻿using Mogmog.Events;
 using Mogmog.Exceptions;
+using Mogmog.Logging;
 using Mogmog.OAuth2;
 using PeanutButter.SimpleHTTPServer;
 using PeanutButter.SimpleTcpServer;
@@ -27,7 +28,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public void Authenticate()
         {
-            Log(LogMessages.DiscordAuthInProgress);
+            Mogger.Log(LogMessages.DiscordAuthInProgress);
             this.handlerCompleted = false;
             var stateString = OAuth2Utils.GenerateStateString(20);
             HttpServer authServer = null;
@@ -35,11 +36,11 @@ namespace Mogmog.FFXIV.UpgradeLayer
             {
                 try
                 {
-                    authServer = new HttpServer(reservedPorts[i], (line) => Log(line));
+                    authServer = new HttpServer(reservedPorts[i], Mogger.Log);
                 }
                 catch (PortUnavailableException e)
                 {
-                    LogError(e.Message);
+                    Mogger.LogError(e.Message);
                     if (i == reservedPorts.Length - 1)
                         throw;
                     else
@@ -92,19 +93,5 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     throw;
             }
         }
-
-        private void Log(string message, bool isError = false)
-        {
-            var handler = LogEvent;
-            var logMessage = new LogEventArgs
-            {
-                LogMessage = message,
-                IsError = isError,
-            };
-            handler?.Invoke(this, logMessage);
-        }
-
-        private void LogError(string message)
-            => Log(message, true);
     }
 }

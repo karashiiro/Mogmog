@@ -116,12 +116,9 @@ namespace Mogmog.FFXIV
         [TestCase(4)]
         public void MessageReceived_CallsLogEventAppropriately(int idx)
         {
+            Assert.Fail();
             bool messageIsGenericInterop = callbackTestArgs[idx] is GenericInterop;
             bool logCalled = false;
-            connectionManager.LogEvent += (sender, e) =>
-            {
-                logCalled = true;
-            };
             var messageBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(callbackTestArgs[idx]));
             using var messageStream = new MemoryStream(messageBytes);
             connectionManager.UpgradeLayerMessageReceived(messageStream);

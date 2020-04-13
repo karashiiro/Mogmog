@@ -6,8 +6,6 @@ namespace Mogmog
 {
     public interface IConnectionManager : IDisposable
     {
-        event EventHandler<LogEventArgs> LogEvent;
-
         event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
 
         void MessageSend(ChatMessage message, int channelId);
