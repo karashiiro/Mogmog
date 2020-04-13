@@ -14,7 +14,6 @@ namespace Mogmog.FFXIV
     public class MogmogInteropConnectionManagerTests
     {
         private HttpClient http;
-        private MogmogConfiguration config;
         private MogmogInteropConnectionManager connectionManager;
 
         private static readonly object[] callbackTestArgs =
@@ -49,9 +48,8 @@ namespace Mogmog.FFXIV
         [SetUp]
         public void SetUp()
         {
-            config = new MogmogConfiguration();
             http = new HttpClient();
-            connectionManager = new MogmogInteropConnectionManager(config, http);
+            connectionManager = new MogmogInteropConnectionManager(new MogmogConfiguration(), http);
         }
 
         [TearDown]

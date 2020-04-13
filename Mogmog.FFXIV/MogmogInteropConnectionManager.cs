@@ -18,7 +18,6 @@ namespace Mogmog.FFXIV
     {
         private readonly HttpClient client;
         private readonly HttpServer server;
-        private readonly MogmogConfiguration config;
         private readonly Process upgradeLayer;
         private readonly Uri localhost;
 
@@ -34,10 +33,8 @@ namespace Mogmog.FFXIV
 
             this.localhost = new Uri($"http://localhost:{this.server.Port + 1}");
 
-            this.config = config;
-
             var filePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe");
-            var serializedConfig = JsonConvert.SerializeObject(this.config).Replace("\"", "\\\"");
+            var serializedConfig = JsonConvert.SerializeObject(config).Replace("\"", "\\\"");
             var args = new string[] { serializedConfig, this.server.Port.ToString(CultureInfo.InvariantCulture) };
             var startInfo = new ProcessStartInfo(filePath, string.Join(" ", args))
             {

@@ -14,7 +14,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
     {
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
         private readonly CancellationTokenSource tokenSource;
-        private readonly IOAuth2Kit oAuth2;
         private readonly GrpcChannel channel;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
@@ -26,15 +25,15 @@ namespace Mogmog.FFXIV.UpgradeLayer
         {
             this.ChannelId = channelId;
             this.tokenSource = new CancellationTokenSource();
-            this.oAuth2 = new DiscordOAuth2();
 
             this.channel = GrpcChannel.ForAddress(hostname);
             var client = new ChatServiceClient(channel);
             var flags = client.GetChatServerFlags(new ReqChatServerFlags()).Flags;
             if (flags == 1)
             {
-                this.oAuth2.Authenticate();
-                var oAuth2Code = this.oAuth2.OAuth2Code;
+                var oAuth2 = new DiscordOAuth2();
+                oAuth2.Authenticate();
+                var oAuth2Code = oAuth2.OAuth2Code;
                 client.SendOAuth2Code(new ReqOAuth2Code { OAuth2Code = oAuth2Code });
             }
             this.chatStream = client.Chat(new CallOptions()
