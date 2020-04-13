@@ -12,7 +12,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public void LogError(string message)
             => _ = LogErrorAsync(message);
 
-        private async Task LogAsync(string message)
+        private static async Task LogAsync(string message)
         {
             var interopLog = new GenericInterop
             {
@@ -22,7 +22,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             await Program.SendToParent(interopLog);
         }
 
-        private async Task LogErrorAsync(string message)
+        private static async Task LogErrorAsync(string message)
         {
             var interopLog = new GenericInterop
             {
