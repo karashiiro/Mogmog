@@ -25,7 +25,6 @@ namespace Mogmog.Server.Services
         private CancellationTokenSource _tokenSource;
 
         private readonly BitVector32 _flags;
-        private string _authToken;
 
         public MogmogConnectionService(GameDataService gameDataService, MogmogTransmissionService transmitter, IConfiguration config)
         {
@@ -50,7 +49,6 @@ namespace Mogmog.Server.Services
                 throw new HttpRequestException("401 Unauthorized");
             var authInfo = await DiscordOAuth2.Authorize(oAuthCode);
             _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException("401 Unauthorized");
-            _authToken = authInfo.AccessToken;
             return new GeneralAck();
         }
 

@@ -6,6 +6,7 @@ using Mogmog.Server.Services;
 using Mogmog.Tests.Stubs;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,7 +16,6 @@ namespace Mogmog.Server
     public class MogmogConnectionServiceTests
     {
         private MogmogTransmissionService _transmitter;
-
         private MogmogConnectionService _connection;
 
         [SetUp]
@@ -24,7 +24,7 @@ namespace Mogmog.Server
             var gds = new GameDataService();
             _transmitter = new MogmogTransmissionService();
 
-            _connection = new MogmogConnectionService(gds, _transmitter);
+            _connection = new MogmogConnectionService(gds, _transmitter, new TestConfiguration(new Dictionary<string, string> { { "Flags", "0" } }));
         }
 
         [TearDown]
@@ -37,6 +37,7 @@ namespace Mogmog.Server
         [Test]
         public void Chat_InputPassesToOutput()
         {
+            Assert.Fail();
             var testMessage = new ChatMessage
             {
                 Author = "Dummy Author",
@@ -65,6 +66,7 @@ namespace Mogmog.Server
         [TestCase((int)PseudoWorld.LINE, "LINE")]
         public void Chat_WorldIsSet(int id, string expectedWorldName)
         {
+            Assert.Fail();
             var testMessage = new ChatMessage
             {
                 Author = "Dummy Author",

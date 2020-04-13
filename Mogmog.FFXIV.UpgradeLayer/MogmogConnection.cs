@@ -30,11 +30,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
             var flags = client.GetChatServerFlags(new ReqChatServerFlags()).Flags;
             if (flags == 1)
             {
-                var request = new GenericInterop
-                {
-                    Command = "",
-                    Arg = "",
-                };
                 client.SendOAuth2Code(new ReqOAuth2Code { OAuth2Code = oAuth2Code });
             }
             this.chatStream = client.Chat(new CallOptions()

@@ -10,20 +10,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
         private MogmogConfiguration config;
         private MogmogConnectionManager connectionManager;
 
-        private Grpc.Core.Server server;
-
-        [OneTimeSetUp]
-        public void OneTimeSetup()
-        {
-            server = TestUtils.StartChatServer(5001);
-        }
-
-        [OneTimeTearDown]
-        public void OneTimeTeardown()
-        {
-            TestUtils.StopChatServer(server);
-        }
-
         [SetUp]
         public void Setup()
         {
