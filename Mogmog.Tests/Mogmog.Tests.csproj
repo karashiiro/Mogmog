@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Mogmog.FFXIV.UpgradeLayer\Mogmog.FFXIV.UpgradeLayer.csproj" />
     <ProjectReference Include="..\Mogmog.FFXIV\Mogmog.FFXIV.csproj" />
     <ProjectReference Include="..\Mogmog.Server\Mogmog.Server.csproj" />
+    <ProjectReference Include="..\Mogmog\Mogmog.csproj" />
   </ItemGroup>
 
   <ItemGroup>

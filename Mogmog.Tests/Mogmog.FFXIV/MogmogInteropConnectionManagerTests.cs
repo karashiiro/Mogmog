@@ -1,4 +1,6 @@
-﻿using Mogmog.Protos;
+﻿using Mogmog.Logging;
+using Mogmog.Protos;
+using Mogmog.Tests.Stubs;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
@@ -15,6 +17,7 @@ namespace Mogmog.FFXIV
     {
         private HttpClient http;
         private MogmogInteropConnectionManager connectionManager;
+        private TestLogger logger;
 
         private static readonly object[] callbackTestArgs =
         {
@@ -48,6 +51,8 @@ namespace Mogmog.FFXIV
         [SetUp]
         public void SetUp()
         {
+            Mogger.Logger = logger = new TestLogger();
+
             http = new HttpClient();
             connectionManager = new MogmogInteropConnectionManager(new MogmogConfiguration(), http);
         }
@@ -116,13 +121,11 @@ namespace Mogmog.FFXIV
         [TestCase(4)]
         public void MessageReceived_CallsLogEventAppropriately(int idx)
         {
-            Assert.Fail();
             bool messageIsGenericInterop = callbackTestArgs[idx] is GenericInterop;
-            bool logCalled = false;
             var messageBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(callbackTestArgs[idx]));
             using var messageStream = new MemoryStream(messageBytes);
             connectionManager.UpgradeLayerMessageReceived(messageStream);
-            Assert.IsTrue(logCalled && messageIsGenericInterop || !logCalled && !messageIsGenericInterop, "Expected both true or both false, got {0} and {1}.", logCalled, messageIsGenericInterop);
+            Assert.IsTrue(logger.LogCalledTimes == 1 && messageIsGenericInterop || logger.LogCalledTimes == 0 && !messageIsGenericInterop, "Expected both true or both false, got {0} and {1}.", logger.LogCalledTimes == 1, messageIsGenericInterop);
         }
     }
 

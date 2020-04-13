@@ -1,5 +1,4 @@
-﻿using Mogmog.Tests;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {

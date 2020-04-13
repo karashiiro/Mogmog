@@ -23,7 +23,6 @@ namespace Mogmog.Server
         {
             var gds = new GameDataService();
             _transmitter = new MogmogTransmissionService();
-
             _connection = new MogmogConnectionService(gds, _transmitter, new TestConfiguration(new Dictionary<string, string> { { "Flags", "0" } }));
         }
 
@@ -37,7 +36,6 @@ namespace Mogmog.Server
         [Test]
         public void Chat_InputPassesToOutput()
         {
-            Assert.Fail();
             var testMessage = new ChatMessage
             {
                 Author = "Dummy Author",
@@ -66,7 +64,6 @@ namespace Mogmog.Server
         [TestCase((int)PseudoWorld.LINE, "LINE")]
         public void Chat_WorldIsSet(int id, string expectedWorldName)
         {
-            Assert.Fail();
             var testMessage = new ChatMessage
             {
                 Author = "Dummy Author",
