@@ -27,7 +27,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public void Authenticate()
         {
-            Log("Attempting to authenticate with Discord.");
+            Log(LogMessages.DiscordAuthInProgress);
             this.handlerCompleted = false;
             var stateString = OAuth2Utils.GenerateStateString(20);
             HttpServer authServer = null;
@@ -63,7 +63,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             var uri = new Uri(processor.FullUrl);
             var queryParams = uri.ParseQueryString().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             if (queryParams["state"] != state)
-                throw new CSRFInvalidationException("CSRF attack suspected! Please report this error on Discord; it may indicate a vulnerability in the application.");
+                throw new CSRFInvalidationException(ExceptionMessages.CSRFInvalidation);
             OAuth2Code = queryParams["code"];
             this.handlerCompleted = true;
             return HttpServerPipelineResult.Handled;
@@ -83,7 +83,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             {
                 // hack because of this: https://github.com/dotnet/corefx/issues/10361
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    Process.Start(new ProcessStartInfo("cmd", $"/c start {url.Replace("&", "^&")}") { CreateNoWindow = true });
+                    Process.Start(new ProcessStartInfo("cmd", $"/c start {url.Replace("&", "^&", StringComparison.InvariantCulture)}") { CreateNoWindow = true });
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     Process.Start("xdg-open", url);
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))

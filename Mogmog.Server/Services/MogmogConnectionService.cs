@@ -44,19 +44,16 @@ namespace Mogmog.Server.Services
         {
             var oAuth2Code = code?.OAuth2Code;
             if (oAuth2Code == null)
-                throw new HttpRequestException("401 Unauthorized");
+                throw new HttpRequestException(HttpStatusCodes.Unauthorized);
             var specialUserToken = await GetSpecialUserToken();
             if (string.IsNullOrEmpty(specialUserToken) || specialUserToken != oAuth2Code)
             {
                 var authInfo = await DiscordOAuth2.Authorize(oAuth2Code);
-                _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException("401 Unauthorized");
+                _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException(HttpStatusCodes.Unauthorized);
             }
             else
             {
-                _discordOAuth2.AccessToken = new AccessCodeResponse
-                {
-                    Bypass = true,
-                };
+                _discordOAuth2.AccessToken = new AccessCodeResponse { Bypass = true };
             }
             return new GeneralAck();
         }
@@ -68,7 +65,7 @@ namespace Mogmog.Server.Services
             _responseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
 
             if (_flags.HasFlag(ServerFlags.RequiresDiscordOAuth2) && _discordOAuth2.AccessToken == null)
-                throw new HttpRequestException("401 Unauthorized");
+                throw new HttpRequestException(HttpStatusCodes.Unauthorized);
             
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
             

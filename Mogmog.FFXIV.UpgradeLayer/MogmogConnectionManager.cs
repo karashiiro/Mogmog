@@ -40,7 +40,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         {
             if (this.config.Hostnames.Contains(hostname))
             {
-                LogError("The provided host already exists.");
+                LogError(LogMessages.HostExists);
                 return;
             }
             this.config.Hostnames.Add(hostname);
@@ -77,7 +77,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 return;
             if (this.connections[channelId] == null) // Shouldn't happen but might
             {
-                LogError("The provided host was not found! This should not happen; please report this issue.");
+                LogError(LogMessages.HostNotFound);
                 return;
             }
             this.connections[channelId].SendMessage(message);
