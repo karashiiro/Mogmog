@@ -1,11 +1,18 @@
 ﻿using Mogmog.Logging;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
     public class ProgramLogger : ILogger
     {
-        public async void Log(string message)
+        public void Log(string message)
+            => _ = LogAsync(message);
+
+        public void LogError(string message)
+            => _ = LogErrorAsync(message);
+
+        private async Task LogAsync(string message)
         {
             var interopLog = new GenericInterop
             {
@@ -15,7 +22,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             await Program.SendToParent(interopLog);
         }
 
-        public async void LogError(string message)
+        private async Task LogErrorAsync(string message)
         {
             var interopLog = new GenericInterop
             {
