@@ -12,7 +12,7 @@ namespace Mogmog.Server
     {
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "<Pending>")]
+        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Conforming to ASP.NET requirement")]
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc();
@@ -23,7 +23,7 @@ namespace Mogmog.Server
 
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "<Pending>")]
+        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Conforming to ASP.NET requirement")]
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

@@ -36,12 +36,15 @@ namespace Mogmog.FFXIV.UpgradeLayer
             }
         }
 
-        public void AddHost(string hostname)
+        public void AddHost(string hostname, string oAuth2Code = null)
         {
             if (this.config.Hostnames.Contains(hostname))
-                return; // Should send back an error message or something eventually.
+            {
+                LogError("The provided host already exists.");
+                return;
+            }
             this.config.Hostnames.Add(hostname);
-            var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
+            var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname), oAuth2Code);
             connection.MessageReceivedEvent += MessageReceived;
             connection.LogEvent += Log;
             this.connections.Add(connection);
@@ -72,20 +75,31 @@ namespace Mogmog.FFXIV.UpgradeLayer
         {
             if (this.connections.Count <= channelId || channelId < 0)
                 return;
-            if (this.connections[channelId] == null) // Shouldn't happen but might, should return an error message
+            if (this.connections[channelId] == null) // Shouldn't happen but might
+            {
+                LogError("The provided host was not found! This should not happen; please report this issue.");
                 return;
+            }
             this.connections[channelId].SendMessage(message);
         }
 
         private void MessageReceived(object sender, MessageReceivedEventArgs e)
         {
-            MessageReceivedEvent(sender, e);
+            var handler = MessageReceivedEvent;
+            handler?.Invoke(sender, e);
         }
 
         private void Log(object sender, LogEventArgs e)
         {
-            LogEvent(sender, e);
+            var handler = LogEvent;
+            handler?.Invoke(sender, e);
         }
+
+        private void Log(string message, bool isError = false)
+            => Log(this, new LogEventArgs { LogMessage = message, IsError = isError });
+
+        private void LogError(string message)
+            => Log(message, true);
 
         #region IDisposable Support
         private bool disposedValue; // To detect redundant calls

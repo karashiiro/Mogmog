@@ -2,6 +2,7 @@
 using Dalamud.Game.ClientState.Actors.Types;
 using Dalamud.Plugin;
 using Mogmog.Events;
+using Mogmog.OAuth2;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
 using System;
@@ -30,25 +31,31 @@ namespace Mogmog.FFXIV
 
         protected ICommandHandler CommandHandler { get; set; }
         protected IConnectionManager ConnectionManager { get; set; }
+        protected IOAuth2Kit OAuth2 { get; set; }
         protected DalamudPluginInterface Dalamud { get; set; }
         protected MogmogConfiguration Config { get; set; }
 
         public void Initialize(DalamudPluginInterface dalamud)
         {
-            this.Dalamud = dalamud;
+            this.OAuth2 = new DiscordOAuth2();
+            this.OAuth2.LogEvent += Log;
             this.http = new HttpClient();
+
+            this.Dalamud = dalamud;
             //this.config = dalamud.GetPluginConfig() as MogmogConfiguration;
             this.ConnectionManager = new MogmogInteropConnectionManager(this.Config, this.http);
             this.ConnectionManager.MessageReceivedEvent += MessageReceived;
             this.ConnectionManager.LogEvent += Log;
             this.CommandHandler = new CommandHandler(this, this.Config, this.Dalamud);
+
+            //this.oauth2.Authenticate();
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void AddHost(string command, string hostname)
         {
             this.Config.Hostnames.Add(hostname);
-            this.ConnectionManager.AddHost(hostname);
+            this.ConnectionManager.AddHost(hostname, this.OAuth2.OAuth2Code);
             var idx = this.Config.Hostnames.IndexOf(hostname);
             this.CommandHandler.AddCommandHandler(idx + 1);
             PrintLogMessage($"Added connection {hostname}");

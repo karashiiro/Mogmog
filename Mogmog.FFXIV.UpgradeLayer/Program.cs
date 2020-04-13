@@ -77,7 +77,11 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 switch (genericInterop.Command)
                 {
                     case "AddHost":
-                        connectionManager.AddHost(genericInterop.Arg);
+                        var args = genericInterop.Arg.Split(' ');
+                        if (args.Length == 2)
+                            connectionManager.AddHost(args[0], args[1]);
+                        else
+                            connectionManager.AddHost(args[0], null);
                         break;
                     case "RemoveHost":
                         connectionManager.RemoveHost(genericInterop.Arg);
@@ -103,6 +107,11 @@ namespace Mogmog.FFXIV.UpgradeLayer
             _ = LogAsync(e.LogMessage, e.IsError);
         }
 
+        static void ReqGeneric(object sender, GenericInteropArgs e)
+        {
+            _ = ReqGenericAsync(e.Message);
+        }
+
         static async Task MessageReceivedAsync(ChatMessage message, int channelId)
         {
             var interopMessage = new ChatMessageInterop
@@ -113,8 +122,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             #if DEBUG
             Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
             #endif
-            using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopMessage)));
-            await client.PostAsync(localhost, bytes);
+            await SendToParent(interopMessage);
         }
 
         static async Task LogAsync(string logMessage, bool isError)
@@ -127,7 +135,20 @@ namespace Mogmog.FFXIV.UpgradeLayer
             #if DEBUG
             Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({(isError ? "ERROR" : "INFO")}) {logMessage}");
             #endif
-            using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(interopLog)));
+            await SendToParent(interopLog);
+        }
+
+        static async Task ReqGenericAsync(GenericInterop message)
+        {
+            #if DEBUG
+            Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n {message.Command} {message.Arg}");
+            #endif
+            await SendToParent(message);
+        }
+
+        static async Task SendToParent(object obj)
+        {
+            using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj)));
             await client.PostAsync(localhost, bytes);
         }
     }

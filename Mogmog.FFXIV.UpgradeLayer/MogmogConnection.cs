@@ -20,13 +20,23 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public int ChannelId { get; set; }
 
-        public MogmogConnection(string hostname, int channelId)
+        public MogmogConnection(string hostname, int channelId, string oAuth2Code = null)
         {
             this.ChannelId = channelId;
             this.tokenSource = new CancellationTokenSource();
 
             this.channel = GrpcChannel.ForAddress(hostname);
             var client = new ChatServiceClient(channel);
+            var flags = client.GetChatServerFlags(new ReqChatServerFlags()).Flags;
+            if (flags == 1)
+            {
+                var request = new GenericInterop
+                {
+                    Command = "",
+                    Arg = "",
+                };
+                client.SendOAuth2Code(new ReqOAuth2Code { OAuth2Code = oAuth2Code });
+            }
             this.chatStream = client.Chat(new CallOptions()
                 .WithCancellationToken(this.tokenSource.Token)
                 .WithDeadline(DateTime.UtcNow.AddMinutes(1))

@@ -51,8 +51,13 @@ namespace Mogmog.FFXIV
         public void MessageSend(ChatMessage message, int channelId)
             => _ = SendToUpgradeLayer(message, channelId);
 
-        public void AddHost(string hostname)
-            => _ = SendToUpgradeLayer("AddHost", hostname);
+        public void AddHost(string hostname, string oAuth2Code = null)
+        {
+            if (oAuth2Code == null)
+                _ = SendToUpgradeLayer("AddHost", hostname);
+            else
+                _ = SendToUpgradeLayer("AddHost", $"{hostname} {oAuth2Code}");
+        }
 
         public void RemoveHost(string hostname)
             => _ = SendToUpgradeLayer("RemoveHost", hostname);
@@ -106,7 +111,7 @@ namespace Mogmog.FFXIV
                 Arg = arg,
             };
             using var messageBytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(pack)));
-            await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid losing scope of the byte array.
+            await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid disposing the byte array.
         }
 
         private async Task SendToUpgradeLayer(ChatMessage message, int channelId)
@@ -117,7 +122,7 @@ namespace Mogmog.FFXIV
                 ChannelId = channelId,
             };
             using var messageBytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(pack)));
-            await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid losing scope of the byte array.
+            await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid disposing the byte array.
         }
 
         #if DEBUG

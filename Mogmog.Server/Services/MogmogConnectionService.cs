@@ -1,8 +1,13 @@
 ﻿using Grpc.Core;
+using Microsoft.Extensions.Configuration;
 using Mogmog.Protos;
 using Serilog;
 using System;
+using System.Collections.Specialized;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using static Mogmog.Protos.ChatService;
@@ -11,6 +16,7 @@ namespace Mogmog.Server.Services
 {
     public class MogmogConnectionService : ChatServiceBase, IDisposable
     {
+        private readonly DiscordOAuth2 _discordOAuth2;
         private readonly GameDataService _gameDataService;
         private readonly MogmogTransmissionService _transmitter;
 
@@ -18,12 +24,34 @@ namespace Mogmog.Server.Services
 
         private CancellationTokenSource _tokenSource;
 
-        public MogmogConnectionService(GameDataService gameDataService, MogmogTransmissionService transmitter)
+        private readonly BitVector32 _flags;
+        private string _authToken;
+
+        public MogmogConnectionService(GameDataService gameDataService, MogmogTransmissionService transmitter, IConfiguration config)
         {
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+            _discordOAuth2 = new DiscordOAuth2();
             _gameDataService = gameDataService;
             _transmitter = transmitter ?? throw new ArgumentNullException(nameof(transmitter));
-
+            _flags = new BitVector32(int.Parse(config["Flags"], CultureInfo.InvariantCulture));
             _transmitter.MessageSent += SendToClient;
+        }
+
+        public override Task<ChatServerFlags> GetChatServerFlags(ReqChatServerFlags req, ServerCallContext context)
+        {
+            return Task.FromResult(new ChatServerFlags { Flags = _flags.Data });
+        }
+
+        public override async Task<GeneralAck> SendOAuth2Code(ReqOAuth2Code code, ServerCallContext context)
+        {
+            var oAuthCode = code?.OAuth2Code;
+            if (oAuthCode == null)
+                throw new HttpRequestException("401 Unauthorized");
+            var authInfo = await DiscordOAuth2.Authorize(oAuthCode);
+            _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException("401 Unauthorized");
+            _authToken = authInfo.AccessToken;
+            return new GeneralAck();
         }
 
         public override async Task Chat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
@@ -31,6 +59,9 @@ namespace Mogmog.Server.Services
             if (requestStream == null)
                 throw new ArgumentNullException(nameof(requestStream));
             _responseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
+
+            if (_flags[0] && _discordOAuth2.AccessToken == null)
+                throw new HttpRequestException("401 Unauthorized");
             
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
             

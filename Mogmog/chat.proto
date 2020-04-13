@@ -5,6 +5,10 @@ option csharp_namespace = "Mogmog.Protos";
 package chat;
 
 service ChatService {
+    rpc GetChatServerFlags (ReqChatServerFlags) returns (ChatServerFlags);
+
+    rpc SendOAuth2Code (ReqOAuth2Code) returns (GeneralAck);
+
     rpc Chat (stream ChatMessage) returns (stream ChatMessage);
 }
 
@@ -23,3 +27,23 @@ message ChatMessage {
     int32 WorldId = 8;
     int32 AdditionalFlags = 9; // An additional 32 booleans reserved for future use.
 }
+
+/*
+ * Used to communicate authentication requirements and the like to clients.
+ * Bit 0 - OAuth2 requirement
+ */
+message ChatServerFlags {
+    int32 Flags = 1;
+}
+
+message ReqChatServerFlags {
+    bool Dummy = 1;
+}
+
+ message ReqOAuth2Code {
+     string OAuth2Code = 1;
+ }
+
+ message GeneralAck {
+     bool Status = 1;
+ }
