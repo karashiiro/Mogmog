@@ -12,7 +12,7 @@ namespace Mogmog
 
         void MessageSend(ChatMessage message, int channelId);
 
-        void AddHost(string hostname, string oAuth2Code);
+        void AddHost(string hostname);
 
         void RemoveHost(string hostname);
 

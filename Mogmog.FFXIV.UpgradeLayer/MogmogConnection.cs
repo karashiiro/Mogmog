@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
 using Mogmog.Events;
+using Mogmog.OAuth2;
 using Mogmog.Protos;
 using System;
 using System.Threading;
@@ -13,6 +14,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
     {
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
         private readonly CancellationTokenSource tokenSource;
+        private readonly IOAuth2Kit oAuth2;
         private readonly GrpcChannel channel;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
@@ -20,16 +22,19 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public int ChannelId { get; set; }
 
-        public MogmogConnection(string hostname, int channelId, string oAuth2Code = null)
+        public MogmogConnection(string hostname, int channelId)
         {
             this.ChannelId = channelId;
             this.tokenSource = new CancellationTokenSource();
+            this.oAuth2 = new DiscordOAuth2();
 
             this.channel = GrpcChannel.ForAddress(hostname);
             var client = new ChatServiceClient(channel);
             var flags = client.GetChatServerFlags(new ReqChatServerFlags()).Flags;
             if (flags == 1)
             {
+                this.oAuth2.Authenticate();
+                var oAuth2Code = this.oAuth2.OAuth2Code;
                 client.SendOAuth2Code(new ReqOAuth2Code { OAuth2Code = oAuth2Code });
             }
             this.chatStream = client.Chat(new CallOptions()

@@ -77,11 +77,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 switch (genericInterop.Command)
                 {
                     case "AddHost":
-                        var args = genericInterop.Arg.Split(' ');
-                        if (args.Length == 2)
-                            connectionManager.AddHost(args[0], args[1]);
-                        else
-                            connectionManager.AddHost(args[0], null);
+                        connectionManager.AddHost(genericInterop.Arg);
                         break;
                     case "RemoveHost":
                         connectionManager.RemoveHost(genericInterop.Arg);

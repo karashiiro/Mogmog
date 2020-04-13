@@ -10,7 +10,6 @@ namespace Mogmog.FFXIV
     {
         private Mock<ICommandHandler> fakeCommandHandler;
         private Mock<IConnectionManager> fakeConnectionManager;
-        private Mock<IOAuth2Kit> fakeOAuth2;
 
         private MogmogConfiguration config;
         private TestMogmogPlugin mogmog;
@@ -20,7 +19,6 @@ namespace Mogmog.FFXIV
         {
             fakeCommandHandler = new Mock<ICommandHandler>();
             fakeConnectionManager = new Mock<IConnectionManager>();
-            fakeOAuth2 = new Mock<IOAuth2Kit>();
         }
 
         [SetUp]
@@ -31,7 +29,6 @@ namespace Mogmog.FFXIV
             mogmog.SetCommandHandler(fakeCommandHandler.Object);
             mogmog.SetConfig(config);
             mogmog.SetConnectionManager(fakeConnectionManager.Object);
-            mogmog.SetOAuth2(fakeOAuth2.Object);
         }
 
         [Test]

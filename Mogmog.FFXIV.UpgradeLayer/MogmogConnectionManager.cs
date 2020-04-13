@@ -36,7 +36,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             }
         }
 
-        public void AddHost(string hostname, string oAuth2Code = null)
+        public void AddHost(string hostname)
         {
             if (this.config.Hostnames.Contains(hostname))
             {
@@ -44,7 +44,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 return;
             }
             this.config.Hostnames.Add(hostname);
-            var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname), oAuth2Code);
+            var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
             connection.MessageReceivedEvent += MessageReceived;
             connection.LogEvent += Log;
             this.connections.Add(connection);

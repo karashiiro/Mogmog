@@ -31,14 +31,11 @@ namespace Mogmog.FFXIV
 
         protected ICommandHandler CommandHandler { get; set; }
         protected IConnectionManager ConnectionManager { get; set; }
-        protected IOAuth2Kit OAuth2 { get; set; }
         protected DalamudPluginInterface Dalamud { get; set; }
         protected MogmogConfiguration Config { get; set; }
 
         public void Initialize(DalamudPluginInterface dalamud)
         {
-            this.OAuth2 = new DiscordOAuth2();
-            this.OAuth2.LogEvent += Log;
             this.http = new HttpClient();
 
             this.Dalamud = dalamud;
@@ -55,7 +52,7 @@ namespace Mogmog.FFXIV
         public void AddHost(string command, string hostname)
         {
             this.Config.Hostnames.Add(hostname);
-            this.ConnectionManager.AddHost(hostname, this.OAuth2.OAuth2Code);
+            this.ConnectionManager.AddHost(hostname);
             var idx = this.Config.Hostnames.IndexOf(hostname);
             this.CommandHandler.AddCommandHandler(idx + 1);
             PrintLogMessage($"Added connection {hostname}");

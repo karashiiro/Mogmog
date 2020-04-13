@@ -11,12 +11,12 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace Mogmog.FFXIV
+namespace Mogmog.FFXIV.UpgradeLayer
 {
     public class DiscordOAuth2 : IOAuth2Kit
     {
-        private const string oAuth2BaseUrl = "https://discordapp.com/api/oauth2/authorize?client_id=698205573388435518&redirect_uri=https%3A%2F%2Flocalhost%3A{0}%2Flogin%2Fdiscord&response_type=code&scope=identify&state={1}";
-        private static readonly int[] reservedPorts = new int[] { 5002, 13648, 30124 };
+        private const string oAuth2BaseUrl = "https://discordapp.com/api/oauth2/authorize?client_id={0}&redirect_uri=https%3A%2F%2Flocalhost%3A{1}%2Flogin%2Fdiscord&response_type=code&scope=identify&state={2}";
+        private static readonly int[] reservedPorts = new [] { 5002, 13648, 30124 };
 
         private bool handlerCompleted;
 
@@ -69,11 +69,11 @@ namespace Mogmog.FFXIV
             return HttpServerPipelineResult.Handled;
         }
 
-        private string GetOAuth2Url(int port, string stateString)
-            => string.Format(CultureInfo.InvariantCulture, oAuth2BaseUrl, port, stateString);
+        private static string GetOAuth2Url(int port, string stateString)
+            => string.Format(CultureInfo.InvariantCulture, oAuth2BaseUrl, "dummy", port, stateString);
 
         // https://stackoverflow.com/a/43232486
-        private void OpenUrl(string url)
+        private static void OpenUrl(string url)
         {
             try
             {
