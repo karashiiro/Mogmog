@@ -126,4 +126,7 @@
   <data name="HostNotFound" xml:space="preserve">
     <value>The provided host was not found! This should not happen; please report this issue.</value>
   </data>
+  <data name="HostOffline" xml:space="preserve">
+    <value>Failed to connect: The hostname is incorrect or the server is offline.</value>
+  </data>
 </root>

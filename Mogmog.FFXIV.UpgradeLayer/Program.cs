@@ -47,6 +47,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             var config = new MogmogConfiguration();
             #endif
             connectionManager = new MogmogConnectionManager(config);
+            connectionManager.MessageReceivedEvent += MessageReceived;
 
             #if DEBUGSTANDALONE
             await Task.Run(() =>
@@ -84,8 +85,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 }
             });
             #else
-            connectionManager.MessageReceivedEvent += MessageReceived;
-
             await Task.Run(async () =>
             {
                 while (true)
@@ -105,7 +104,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
             string input = Encoding.UTF8.GetString(memoryStream.GetBuffer());
 
-            #if DEBUG || DEBUGSTANDALONE
+            #if DEBUG
             Console.WriteLine(input);
             #endif
 
@@ -149,7 +148,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 Message = message,
                 ChannelId = channelId,
             };
-            #if DEBUG || DEBUGSTANDALONE
+            #if DEBUG
             Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
             #endif
             await SendToParent(interopMessage);
@@ -157,8 +156,13 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public static async Task SendToParent(object obj)
         {
+            #if !DEBUGSTANDALONE
             using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj)));
             await client.PostAsync(localhost, bytes);
+            #else
+            Console.WriteLine(JsonConvert.SerializeObject(obj));
+            await Task.CompletedTask;
+            #endif
         }
     }
 }

@@ -55,8 +55,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
             catch (RpcException e)
             {
                 this.config.Hostnames.Remove(hostname);
-                if (e.Message == "Error starting gRPC call: No connection could be made because the target machine actively refused it.")
-                    Mogger.LogError(ExceptionMessages.RpcExceptionServerOffline); // A more user-friendly error
+                if (e.Status.Detail == "Error starting gRPC call: No connection could be made because the target machine actively refused it.")
+                    Mogger.LogError(LogMessages.HostOffline); // A more user-friendly error
                 else
                     Mogger.LogError(e.Message);
                 return;

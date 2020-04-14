@@ -68,14 +68,5 @@ namespace Mogmog.Exceptions {
                 return ResourceManager.GetString("CSRFInvalidation", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Failed to connect: The hostname is incorrect or the server is offline..
-        /// </summary>
-        public static string RpcExceptionServerOffline {
-            get {
-                return ResourceManager.GetString("RpcExceptionServerOffline", resourceCulture);
-            }
-        }
     }
 }

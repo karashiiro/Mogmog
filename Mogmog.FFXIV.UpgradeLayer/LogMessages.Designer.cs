@@ -86,5 +86,14 @@ namespace Mogmog.FFXIV.UpgradeLayer {
                 return ResourceManager.GetString("HostNotFound", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed to connect: The hostname is incorrect or the server is offline..
+        /// </summary>
+        internal static string HostOffline {
+            get {
+                return ResourceManager.GetString("HostOffline", resourceCulture);
+            }
+        }
     }
 }
