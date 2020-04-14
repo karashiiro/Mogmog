@@ -66,25 +66,25 @@ namespace Mogmog.FFXIV.UpgradeLayer
             return HttpServerPipelineResult.Handled;
         }
 
-        private static string GetOAuth2Url(int port, string stateString)
-            => string.Format(CultureInfo.InvariantCulture, oAuth2BaseUrl, "dummy", port, stateString);
+        private static Uri GetOAuth2Url(int port, string stateString)
+            => new Uri(string.Format(CultureInfo.InvariantCulture, oAuth2BaseUrl, "dummy", port, stateString));
 
         // https://stackoverflow.com/a/43232486
-        private static void OpenUrl(string url)
+        private static void OpenUrl(Uri uri)
         {
             try
             {
-                Process.Start(url);
+                Process.Start(uri.AbsoluteUri);
             }
             catch
             {
                 // hack because of this: https://github.com/dotnet/corefx/issues/10361
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    Process.Start(new ProcessStartInfo("cmd", $"/c start {url.Replace("&", "^&", StringComparison.InvariantCulture)}") { CreateNoWindow = true });
+                    Process.Start(new ProcessStartInfo("cmd", $"/c start {uri.AbsoluteUri.Replace("&", "^&", StringComparison.InvariantCulture)}") { CreateNoWindow = true });
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    Process.Start("xdg-open", url);
+                    Process.Start("xdg-open", uri.AbsoluteUri);
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                    Process.Start("open", url);
+                    Process.Start("open", uri.AbsoluteUri);
                 else
                     throw;
             }

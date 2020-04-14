@@ -12,7 +12,7 @@ namespace Mogmog
         public static IEnumerable<KeyValuePair<string, string>> ParseQueryString(this Uri uri)
         {
             if (uri == null)
-                throw new ArgumentException("uri");
+                throw new ArgumentException(nameof(uri));
 
             var matches = queryStringRegex.Matches(uri.OriginalString);
             for (int i = 0; i < matches.Count; i++)
