@@ -1,4 +1,6 @@
-﻿using Mogmog.Events;
+﻿using Grpc.Core;
+using Mogmog.Events;
+using Mogmog.Exceptions;
 using Mogmog.Logging;
 using Mogmog.Protos;
 using System;
@@ -36,6 +38,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             }
         }
 
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Disposal responsibility belongs to the connection manager.")]
         public void AddHost(string hostname)
         {
             if (this.config.Hostnames.Contains(hostname))
@@ -44,7 +47,20 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 return;
             }
             this.config.Hostnames.Add(hostname);
-            var connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
+            MogmogConnection connection;
+            try
+            {
+                connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
+            }
+            catch (RpcException e)
+            {
+                this.config.Hostnames.Remove(hostname);
+                if (e.Message == "Error starting gRPC call: No connection could be made because the target machine actively refused it.")
+                    Mogger.LogError(ExceptionMessages.RpcExceptionServerOffline); // A more user-friendly error
+                else
+                    Mogger.LogError(e.Message);
+                return;
+            }
             connection.MessageReceivedEvent += MessageReceived;
             this.connections.Add(connection);
         }

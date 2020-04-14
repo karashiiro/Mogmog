@@ -30,9 +30,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
             Trace.Listeners.Add(traceListener);
 
             client = new HttpClient();
+            #if !DEBUGSTANDALONE
             using var server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) =>
             {
-                #if DEBUG || DEBUGSTANDALONE
+                #if DEBUG
                 Console.WriteLine(line);
                 #endif
             });
@@ -42,6 +43,9 @@ namespace Mogmog.FFXIV.UpgradeLayer
             server.AddJsonDocumentHandler((processor, stream) => ReadInput(stream));
 
             var config = JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
+            #else
+            var config = new MogmogConfiguration();
+            #endif
             connectionManager = new MogmogConnectionManager(config);
 
             #if DEBUGSTANDALONE

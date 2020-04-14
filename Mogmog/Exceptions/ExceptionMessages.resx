@@ -120,4 +120,7 @@
   <data name="CSRFInvalidation" xml:space="preserve">
     <value>CSRF attack suspected! Please report this error on Discord; it may indicate a vulnerability in the application.</value>
   </data>
+  <data name="RpcExceptionServerOffline" xml:space="preserve">
+    <value>Failed to connect: The hostname is incorrect or the server is offline.</value>
+  </data>
 </root>
