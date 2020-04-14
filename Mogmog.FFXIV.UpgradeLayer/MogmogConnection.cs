@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
 using Mogmog.Events;
+using Mogmog.Logging;
 using Mogmog.Protos;
 using System;
 using System.Threading;
@@ -27,6 +28,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.channel = GrpcChannel.ForAddress(hostname);
             var client = new ChatServiceClient(channel);
             var flags = (ServerFlags)client.GetChatServerFlags(new ReqChatServerFlags()).Flags;
+            Mogger.Log($"Server flags for {hostname}: {flags}");
             if (flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
                 var oAuth2 = new DiscordOAuth2();

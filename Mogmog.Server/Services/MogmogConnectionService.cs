@@ -31,7 +31,7 @@ namespace Mogmog.Server.Services
             _discordOAuth2 = new DiscordOAuth2();
             _gameDataService = gameDataService;
             _transmitter = transmitter ?? throw new ArgumentNullException(nameof(transmitter));
-            _flags = (ServerFlags)int.Parse(config["Flags"], CultureInfo.InvariantCulture);
+            _flags = ServerFlagsParser.ParseFromConfig(config);
             _transmitter.MessageSent += SendToClient;
         }
 
@@ -98,7 +98,7 @@ namespace Mogmog.Server.Services
 
         private void Stop()
         {
-            _tokenSource.Cancel();
+            _tokenSource?.Cancel();
         }
 
         public void SendToClient(object sender, MessageEventArgs e)
@@ -128,7 +128,7 @@ namespace Mogmog.Server.Services
                 if (disposing)
                 {
                     Stop();
-                    _tokenSource.Dispose();
+                    _tokenSource?.Dispose();
                     _transmitter.MessageSent -= SendToClient;
                 }
 

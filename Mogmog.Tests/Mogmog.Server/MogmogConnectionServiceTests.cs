@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
 using Grpc.Core.Testing;
 using Grpc.Core.Utils;
+using Microsoft.Extensions.Configuration;
 using Mogmog.Protos;
 using Mogmog.Server.Services;
 using Mogmog.Tests.Stubs;
@@ -23,7 +24,9 @@ namespace Mogmog.Server
         {
             var gds = new GameDataService();
             _transmitter = new MogmogTransmissionService();
-            _connection = new MogmogConnectionService(gds, _transmitter, new TestConfiguration(new Dictionary<string, string> { { "Flags", "0" } }));
+            _connection = new MogmogConnectionService(gds, _transmitter, new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>())
+                .Build());
         }
 
         [TearDown]
