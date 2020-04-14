@@ -32,7 +32,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             client = new HttpClient();
             using var server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) =>
             {
-                #if DEBUG
+                #if DEBUG || DEBUGSTANDALONE
                 Console.WriteLine(line);
                 #endif
             });
@@ -43,6 +43,43 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
             var config = JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
             connectionManager = new MogmogConnectionManager(config);
+
+            #if DEBUGSTANDALONE
+            await Task.Run(() =>
+            {
+                while (true)
+                {
+                    string input = Console.ReadLine();
+                    var args = input.Split(' ');
+                    var command = args[0].ToLowerInvariant();
+                    args = args[1..];
+                    switch (command)
+                    {
+                        case "addhost":
+                            connectionManager.AddHost(args[0]);
+                            break;
+                        case "removehost":
+                            connectionManager.RemoveHost(args[0]);
+                            break;
+                        case "reloadhost":
+                            connectionManager.ReloadHost(args[0]);
+                            break;
+                        case "send":
+                            var message = new ChatMessage
+                            {
+                                Author = "Test User",
+                                Content = string.Join(' ', args[1..]),
+                            };
+                            var channelId = int.Parse(args[0], CultureInfo.InvariantCulture);
+                            connectionManager.MessageSend(message, channelId);
+                            break;
+                        default:
+                            Console.WriteLine("Command not recognized.");
+                            break;
+                    }
+                }
+            });
+            #else
             connectionManager.MessageReceivedEvent += MessageReceived;
 
             await Task.Run(async () =>
@@ -54,6 +91,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         Environment.Exit(-1);
                 }
             });
+            #endif
         }
 
         static byte[] ReadInput(Stream stream)
@@ -63,7 +101,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
             string input = Encoding.UTF8.GetString(memoryStream.GetBuffer());
 
-            #if DEBUG
+            #if DEBUG || DEBUGSTANDALONE
             Console.WriteLine(input);
             #endif
 
@@ -107,7 +145,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 Message = message,
                 ChannelId = channelId,
             };
-            #if DEBUG
+            #if DEBUG || DEBUGSTANDALONE
             Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
             #endif
             await SendToParent(interopMessage);

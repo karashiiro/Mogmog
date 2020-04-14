@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Configurations>Debug;Release;Debug-Standalone</Configurations>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -13,6 +14,11 @@
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <OutputPath>..\Mogmog.FFXIV\bin\Debug</OutputPath>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Standalone|AnyCPU'">
+    <OutputPath>..\Mogmog.FFXIV\bin\Debug</OutputPath>
+    <DefineConstants>DEBUGSTANDALONE</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
