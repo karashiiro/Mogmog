@@ -115,9 +115,9 @@ namespace Mogmog.Server.Services
 
         private static async Task<string> GetSpecialUserToken()
         {
-            if (Environment.GetEnvironmentVariable("DISCORD_BOT_PATH") == null)
+            if (Environment.GetEnvironmentVariable("MOGMOG_DISCORD_BOT_PATH") == null)
                 return null;
-            var specialUserTokenPath = Path.Combine(Environment.GetEnvironmentVariable("DISCORD_BOT_PATH"), "identifier");
+            var specialUserTokenPath = Path.Combine(Environment.GetEnvironmentVariable("MOGMOG_DISCORD_BOT_PATH"), "identifier");
             if (File.Exists(specialUserTokenPath))
             {
                 return await File.ReadAllTextAsync(specialUserTokenPath);
