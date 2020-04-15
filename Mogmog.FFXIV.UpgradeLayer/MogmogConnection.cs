@@ -51,7 +51,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         
         public void SendMessage(ChatMessage message)
         {
-            chatStream.RequestStream.WriteAsync(message);
+            this.chatStream.RequestStream.WriteAsync(message);
         }
 
         private async Task ChatLoop(CancellationToken cancellationToken)
@@ -62,7 +62,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     continue;
                 MessageReceivedEvent(this, new MessageReceivedEventArgs {
                     Message = chatStream.ResponseStream.Current,
-                    ChannelId = this.ChannelId + 1
+                    ChannelId = this.ChannelId + 1,
                 });
             }
         }

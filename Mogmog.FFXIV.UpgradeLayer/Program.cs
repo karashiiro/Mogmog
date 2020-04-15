@@ -78,7 +78,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
                                 Content = string.Join(' ', args[1..]),
                             };
                             var channelId = int.Parse(args[0], CultureInfo.InvariantCulture);
-                            connectionManager.MessageSend(message, channelId);
+                            Console.WriteLine($"[GL{channelId}]<Test User>{string.Join(' ', args[1..])}");
+                            connectionManager.MessageSend(message, channelId - 1);
                             break;
                         default:
                             Console.WriteLine("Command not recognized.");

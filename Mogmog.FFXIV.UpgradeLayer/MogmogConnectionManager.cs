@@ -69,7 +69,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
         {
             int i = this.config.Hostnames.IndexOf(hostname);
             if (i == -1)
+            {
+                Mogger.LogError(LogMessages.HostNotFound);
                 return;
+            }
             this.config.Hostnames.RemoveAt(i);
             this.connections[i].MessageReceivedEvent -= MessageReceived;
             this.connections.RemoveAt(i);
@@ -79,7 +82,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
         {
             int i = this.config.Hostnames.IndexOf(hostname);
             if (i == -1)
+            {
+                Mogger.LogError(LogMessages.HostNotFound);
                 return;
+            }
             var channelId = this.connections[i].ChannelId;
             this.connections[i].Dispose();
             this.connections[i] = new MogmogConnection(hostname, channelId);
@@ -88,7 +94,10 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public void MessageSend(ChatMessage message, int channelId)
         {
             if (this.connections.Count <= channelId || channelId < 0)
+            {
+                Mogger.LogError(LogMessages.HostNotFound + $" {this.connections.Count} connections found.");
                 return;
+            }
             if (this.connections[channelId] == null) // Shouldn't happen but might
             {
                 Mogger.LogError(LogMessages.HostNotFound);

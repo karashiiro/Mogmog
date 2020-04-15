@@ -79,7 +79,7 @@ namespace Mogmog.FFXIV.UpgradeLayer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The provided host was not found! This should not happen; please report this issue..
+        ///   Looks up a localized string similar to The provided host was not found. Please check your channel ID and try again..
         /// </summary>
         internal static string HostNotFound {
             get {

@@ -48,6 +48,8 @@ namespace Mogmog.Server.Services
                 throw new ArgumentNullException(nameof(requestStream));
             _responseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
 
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
             await Authenticate(context.RequestHeaders);
             
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
