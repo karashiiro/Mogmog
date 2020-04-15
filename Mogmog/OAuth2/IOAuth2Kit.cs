@@ -4,6 +4,6 @@
     {
         string OAuth2Code { get; }
 
-        void Authenticate();
+        void Authenticate(string serverId);
     }
 }

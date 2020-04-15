@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Mogmog.Protos;
 using Serilog;
 using System;
-using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
@@ -35,9 +34,9 @@ namespace Mogmog.Server.Services
             _transmitter.MessageSent += SendToClient;
         }
 
-        public override Task<ChatServerFlags> GetChatServerFlags(ReqChatServerFlags req, ServerCallContext context)
+        public override Task<ChatServerInfo> GetChatServerInfo(ReqChatServerInfo req, ServerCallContext context)
         {
-            return Task.FromResult(new ChatServerFlags { Flags = (int)_flags });
+            return Task.FromResult(new ChatServerInfo { Flags = (int)_flags, ServerId = Environment.GetEnvironmentVariable("MOGMOG_SERVER_CLIENT_ID") });
         }
 
         public override async Task<GeneralAck> SendOAuth2Code(ReqOAuth2Code code, ServerCallContext context)
@@ -110,6 +109,8 @@ namespace Mogmog.Server.Services
 
         private static async Task<string> GetSpecialUserToken()
         {
+            if (Environment.GetEnvironmentVariable("DISCORD_BOT_PATH") == null)
+                return null;
             var specialUserTokenPath = Path.Combine(Environment.GetEnvironmentVariable("DISCORD_BOT_PATH"), "identifier");
             if (File.Exists(specialUserTokenPath))
             {

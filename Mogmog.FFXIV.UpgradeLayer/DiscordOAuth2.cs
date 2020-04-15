@@ -1,5 +1,4 @@
-﻿using Mogmog.Events;
-using Mogmog.Exceptions;
+﻿using Mogmog.Exceptions;
 using Mogmog.Logging;
 using Mogmog.OAuth2;
 using PeanutButter.SimpleHTTPServer;
@@ -16,7 +15,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
 {
     public class DiscordOAuth2 : IOAuth2Kit
     {
-        private const string oAuth2BaseUrl = "https://discordapp.com/api/oauth2/authorize?client_id={0}&redirect_uri=https%3A%2F%2Flocalhost%3A{1}%2Flogin%2Fdiscord&response_type=code&scope=identify&state={2}";
+        private const string oAuth2BaseUrl = "https://discordapp.com/api/oauth2/authorize?client_id={0}&redirect_uri=http%3A%2F%2Flocalhost%3A{1}%2Flogin%2Fdiscord&response_type=code&scope=identify&state={2}";
         private static readonly int[] reservedPorts = new [] { 5002, 13648, 30124 };
 
         private bool handlerCompleted;
@@ -24,7 +23,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public bool IsAuthenticated { get; private set; }
         public string OAuth2Code { get; private set; }
 
-        public void Authenticate()
+        public void Authenticate(string serverAccountId)
         {
             Mogger.Log(LogMessages.DiscordAuthInProgress);
             this.handlerCompleted = false;
@@ -43,8 +42,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         throw;
                 }
             }
-            authServer.AddHandler((processor, stream) => OAuth2RedirectHandler(processor, stateString));
-            OpenUrl(GetOAuth2Url(authServer.Port, stateString));
+            authServer.AddHtmlDocumentHandler((processor, stream) => OAuth2RedirectHandler(processor, authServer.Port, stateString));
+            OpenUrl(GetOAuth2Url(serverAccountId, authServer.Port, stateString));
             while (!this.handlerCompleted)
                 Task.Delay(50).Wait();
             authServer.Dispose();
@@ -55,19 +54,20 @@ namespace Mogmog.FFXIV.UpgradeLayer
         /// </summary>
         /// <returns cref="HttpServerPipelineResult">The success status of the handler action.</returns>
         /// <exception cref="KeyNotFoundException">Thrown if no access code is returned by the server.</exception>
-        private HttpServerPipelineResult OAuth2RedirectHandler(HttpProcessor processor, string state)
+        private string OAuth2RedirectHandler(HttpProcessor processor, int port, string state)
         {
-            var uri = new Uri(processor.FullUrl);
+            var uri = new Uri("http://localhost:" + port + processor.FullUrl);
             var queryParams = uri.ParseQueryString().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            Mogger.Log($"Sent state {state}, receiving state {queryParams["state"]}");
             if (queryParams["state"] != state)
                 throw new CSRFInvalidationException(ExceptionMessages.CSRFInvalidation);
             OAuth2Code = queryParams["code"];
             this.handlerCompleted = true;
-            return HttpServerPipelineResult.Handled;
+            return "Success"; // TODO: Make a full success page
         }
 
-        private static Uri GetOAuth2Url(int port, string stateString)
-            => new Uri(string.Format(CultureInfo.InvariantCulture, oAuth2BaseUrl, "dummy", port, stateString));
+        private static Uri GetOAuth2Url(string serverAccountId, int port, string stateString)
+            => new Uri(string.Format(CultureInfo.InvariantCulture, oAuth2BaseUrl, serverAccountId, port, stateString));
 
         // https://stackoverflow.com/a/43232486
         private static void OpenUrl(Uri uri)

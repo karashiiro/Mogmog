@@ -55,6 +55,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 while (true)
                 {
                     string input = Console.ReadLine();
+                    if (string.IsNullOrEmpty(input))
+                        continue;
                     var args = input.Split(' ');
                     var command = args[0].ToLowerInvariant();
                     args = args[1..];

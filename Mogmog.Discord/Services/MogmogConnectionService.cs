@@ -31,7 +31,7 @@ namespace Mogmog.Discord.Services
             
             _channel = GrpcChannel.ForAddress(hostname);
             var chatClient = new ChatServiceClient(_channel);
-            var flags = (ServerFlags)chatClient.GetChatServerFlags(new ReqChatServerFlags()).Flags;
+            var flags = (ServerFlags)chatClient.GetChatServerInfo(new ReqChatServerInfo()).Flags;
             if (flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
                 var stateString = OAuth2Utils.GenerateStateString(100);

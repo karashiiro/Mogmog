@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Net.Http;
 using System.Text;
@@ -8,7 +9,7 @@ namespace Mogmog.Server
 {
     public class DiscordOAuth2
     {
-        private const string redirectUri = "https://localhost:5001/login/discord";
+        private const string redirectUri = "http://localhost:5002/login/discord";
 
         public AccessCodeResponse AccessToken { get; set; }
 
@@ -26,7 +27,10 @@ namespace Mogmog.Server
             using var content = new StringContent(postData.ToString(), Encoding.UTF8, "application/x-www-form-urlencoded");
             var res = await http.PostAsync(new Uri("https://discordapp.com/api/oauth2/token"), content);
             if (!res.IsSuccessStatusCode)
+            {
+                Log.Error("Discord user authentication for access code {AccessCode} failed, reason: {ErrorMessage}", accessCode, res.ReasonPhrase);
                 return null;
+            }
 
             return JsonConvert.DeserializeObject<AccessCodeResponse>(await res.Content.ReadAsStringAsync());
         }

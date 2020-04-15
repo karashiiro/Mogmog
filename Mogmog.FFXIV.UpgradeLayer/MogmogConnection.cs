@@ -27,12 +27,13 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
             this.channel = GrpcChannel.ForAddress(hostname);
             var client = new ChatServiceClient(channel);
-            var flags = (ServerFlags)client.GetChatServerFlags(new ReqChatServerFlags()).Flags;
+            var serverInfo = client.GetChatServerInfo(new ReqChatServerInfo());
+            var flags = (ServerFlags)serverInfo.Flags;
             Mogger.Log($"Server flags for {hostname}: {flags}");
             if (flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
                 var oAuth2 = new DiscordOAuth2();
-                oAuth2.Authenticate();
+                oAuth2.Authenticate(serverInfo.ServerId);
                 var oAuth2Code = oAuth2.OAuth2Code;
                 client.SendOAuth2Code(new ReqOAuth2Code { OAuth2Code = oAuth2Code });
             }

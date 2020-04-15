@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace Mogmog
 {
@@ -9,7 +10,9 @@ namespace Mogmog
             byte[] rawOutput = new byte[seedLength];
             var rand = new Random();
             rand.NextBytes(rawOutput);
-            return Convert.ToBase64String(rawOutput);
+            var state = Convert.ToBase64String(rawOutput);
+            state = Regex.Replace(state, @"[^0-9a-zA-Z]+", "");
+            return state;
         }
     }
 }
