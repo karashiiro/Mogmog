@@ -1,9 +1,12 @@
 ﻿using Grpc.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
 using Mogmog.Protos;
 using Serilog;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,32 +42,13 @@ namespace Mogmog.Server.Services
             return Task.FromResult(new ChatServerInfo { Flags = (int)_flags, ServerId = Environment.GetEnvironmentVariable("MOGMOG_SERVER_CLIENT_ID") });
         }
 
-        public override async Task<GeneralAck> SendOAuth2Code(ReqOAuth2Code code, ServerCallContext context)
-        {
-            var oAuth2Code = code?.OAuth2Code;
-            if (oAuth2Code == null)
-                throw new HttpRequestException(HttpStatusCodes.Unauthorized);
-            var specialUserToken = await GetSpecialUserToken();
-            if (string.IsNullOrEmpty(specialUserToken) || specialUserToken != oAuth2Code)
-            {
-                var authInfo = await DiscordOAuth2.Authorize(oAuth2Code);
-                _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException(HttpStatusCodes.Unauthorized);
-            }
-            else
-            {
-                _discordOAuth2.AccessToken = new AccessCodeResponse { Bypass = true };
-            }
-            return new GeneralAck();
-        }
-
         public override async Task Chat(IAsyncStreamReader<ChatMessage> requestStream, IServerStreamWriter<ChatMessage> responseStream, ServerCallContext context)
         {
             if (requestStream == null)
                 throw new ArgumentNullException(nameof(requestStream));
             _responseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
 
-            if (_flags.HasFlag(ServerFlags.RequiresDiscordOAuth2) && _discordOAuth2.AccessToken == null)
-                throw new HttpRequestException(HttpStatusCodes.Unauthorized);
+            await Authenticate(context.RequestHeaders);
             
             Log.Information("Added stream {StreamName} to client list.", requestStream.ToString());
             
@@ -105,6 +89,26 @@ namespace Mogmog.Server.Services
             if (e == null)
                 return;
             _responseStream.WriteAsync(e.Message);
+        }
+
+        private async Task Authenticate(Metadata headers)
+        {
+            var oAuth2CodeEntry = headers.FirstOrDefault((kvp) => kvp.Key == "code");
+            if (oAuth2CodeEntry == null)
+                throw new HttpRequestException(HttpStatusCodes.Unauthorized);
+            var oAuth2Code = oAuth2CodeEntry.Value;
+            var specialUserToken = await GetSpecialUserToken();
+            if (string.IsNullOrEmpty(specialUserToken) || specialUserToken != oAuth2Code)
+            {
+                var authInfo = await DiscordOAuth2.Authorize(oAuth2Code);
+                _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException(HttpStatusCodes.Unauthorized);
+            }
+            else
+            {
+                _discordOAuth2.AccessToken = new AccessCodeResponse { Bypass = true };
+            }
+            if (_flags.HasFlag(ServerFlags.RequiresDiscordOAuth2) && _discordOAuth2.AccessToken == null)
+                throw new HttpRequestException(HttpStatusCodes.Unauthorized);
         }
 
         private static async Task<string> GetSpecialUserToken()

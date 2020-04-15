@@ -7,8 +7,6 @@ package chat;
 service ChatService {
     rpc GetChatServerInfo (ReqChatServerInfo) returns (ChatServerInfo);
 
-    rpc SendOAuth2Code (ReqOAuth2Code) returns (GeneralAck);
-
     rpc Chat (stream ChatMessage) returns (stream ChatMessage);
 }
 
@@ -40,11 +38,3 @@ message ChatServerInfo {
 message ReqChatServerInfo {
     bool Dummy = 1;
 }
-
- message ReqOAuth2Code {
-     string OAuth2Code = 1;
- }
-
- message GeneralAck {
-     bool Status = 1;
- }

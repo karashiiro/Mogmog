@@ -6,6 +6,7 @@ using Mogmog.Protos;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using static Grpc.Core.Metadata;
 using static Mogmog.Protos.ChatService;
 
 namespace Mogmog.FFXIV.UpgradeLayer
@@ -24,24 +25,27 @@ namespace Mogmog.FFXIV.UpgradeLayer
         {
             this.ChannelId = channelId;
             this.tokenSource = new CancellationTokenSource();
-
             this.channel = GrpcChannel.ForAddress(hostname);
             var client = new ChatServiceClient(channel);
             var serverInfo = client.GetChatServerInfo(new ReqChatServerInfo());
             var flags = (ServerFlags)serverInfo.Flags;
             Mogger.Log($"Server flags for {hostname}: {flags}");
+            var callOptions = new CallOptions()
+                .WithCancellationToken(this.tokenSource.Token)
+                .WithDeadline(DateTime.UtcNow.AddMinutes(1))
+                .WithWaitForReady();
             if (flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
                 var oAuth2 = new DiscordOAuth2();
                 oAuth2.Authenticate(serverInfo.ServerId);
                 var oAuth2Code = oAuth2.OAuth2Code;
-                client.SendOAuth2Code(new ReqOAuth2Code { OAuth2Code = oAuth2Code });
+                var headers = new Metadata
+                {
+                    new Entry("code", oAuth2Code),
+                };
+                callOptions = callOptions.WithHeaders(headers);
             }
-            this.chatStream = client.Chat(new CallOptions()
-                .WithCancellationToken(this.tokenSource.Token)
-                .WithDeadline(DateTime.UtcNow.AddMinutes(1))
-                .WithWaitForReady());
-
+            this.chatStream = client.Chat(callOptions);
             _ = ChatLoop(this.tokenSource.Token);
         }
         

@@ -7,7 +7,9 @@ using Serilog;
 using System;
 using System.Collections.Specialized;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
+using static Grpc.Core.Metadata;
 using static Mogmog.Protos.ChatService;
 
 namespace Mogmog.Discord.Services
@@ -31,16 +33,21 @@ namespace Mogmog.Discord.Services
             
             _channel = GrpcChannel.ForAddress(hostname);
             var chatClient = new ChatServiceClient(_channel);
+            var callOptions = new CallOptions()
+                .WithDeadline(DateTime.UtcNow.AddMinutes(1))
+                .WithWaitForReady();
             var flags = (ServerFlags)chatClient.GetChatServerInfo(new ReqChatServerInfo()).Flags;
             if (flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
                 var stateString = OAuth2Utils.GenerateStateString(100);
                 File.WriteAllText("identifier", stateString);
-                chatClient.SendOAuth2Code(new ReqOAuth2Code { OAuth2Code = stateString });
+                var headers = new Metadata
+                {
+                    new Entry("code", stateString),
+                };
+                callOptions = callOptions.WithHeaders(headers);
             }
-            _chatStream = chatClient.Chat(new CallOptions()
-                .WithDeadline(DateTime.UtcNow.AddMinutes(1))
-                .WithWaitForReady());
+            _chatStream = chatClient.Chat(callOptions);
 
             _runningTask = ChatLoop();
         }
