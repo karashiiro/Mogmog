@@ -3,7 +3,6 @@ using Dalamud.Game.ClientState.Actors.Types;
 using Dalamud.Plugin;
 using Mogmog.Events;
 using Mogmog.Logging;
-using Mogmog.OAuth2;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
 using System;

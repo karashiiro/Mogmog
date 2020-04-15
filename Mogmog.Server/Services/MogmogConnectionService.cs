@@ -1,7 +1,5 @@
 ﻿using Grpc.Core;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Primitives;
 using Mogmog.Protos;
 using Serilog;
 using System;
@@ -103,13 +101,13 @@ namespace Mogmog.Server.Services
             if (string.IsNullOrEmpty(specialUserToken) || specialUserToken != oAuth2Code)
             {
                 var authInfo = await DiscordOAuth2.Authorize(oAuth2Code);
-                _discordOAuth2.AccessToken = authInfo ?? throw new HttpRequestException(HttpStatusCodes.Unauthorized);
+                _discordOAuth2.AccessInformation = authInfo ?? throw new HttpRequestException(HttpStatusCodes.Unauthorized);
             }
             else
             {
-                _discordOAuth2.AccessToken = new AccessCodeResponse { Bypass = true };
+                _discordOAuth2.AccessInformation = new AccessCodeResponse { Bypass = true };
             }
-            if (_flags.HasFlag(ServerFlags.RequiresDiscordOAuth2) && _discordOAuth2.AccessToken == null)
+            if (_flags.HasFlag(ServerFlags.RequiresDiscordOAuth2) && _discordOAuth2.AccessInformation == null)
                 throw new HttpRequestException(HttpStatusCodes.Unauthorized);
         }
 
@@ -135,6 +133,7 @@ namespace Mogmog.Server.Services
                 if (disposing)
                 {
                     Stop();
+                    _discordOAuth2.Dispose();
                     _tokenSource?.Dispose();
                     _transmitter.MessageSent -= SendToClient;
                 }
