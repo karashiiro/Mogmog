@@ -25,7 +25,7 @@ namespace Mogmog
             if (dayMatch.Success)
             {
                 string dayOrDate = dayMatch.Value.Trim();
-                if (dayOrDate.IndexOf("/") != -1)
+                if (dayOrDate.IndexOf("/", StringComparison.InvariantCultureIgnoreCase) != -1)
                 {
                     int[] mmddyyyy = dayOrDate.Split('/').Select(term => int.Parse(term)).ToArray();
                     date = new DateTime(mmddyyyy.Length == 3 ? mmddyyyy[2] : DateTime.Now.Year, mmddyyyy[0], mmddyyyy[1]);

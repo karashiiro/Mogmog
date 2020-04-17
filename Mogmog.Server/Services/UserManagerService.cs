@@ -236,7 +236,7 @@ namespace Mogmog.Server.Services
             }
         }
 
-        private void ThrowIfUserNull(User user)
+        private static void ThrowIfUserNull(User user)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));

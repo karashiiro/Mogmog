@@ -6,10 +6,6 @@ namespace Mogmog
 {
     public class ConcurrentList<T> : ConcurrentLinkedList<T>, IEnumerable<T>
     {
-        public ConcurrentList() : base()
-        {
-        }
-
         public IEnumerator<T> GetEnumerator()
         {
             var cur = First;

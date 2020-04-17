@@ -30,6 +30,7 @@ namespace Mogmog.Tests.Stubs
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
         #endregion
     }
