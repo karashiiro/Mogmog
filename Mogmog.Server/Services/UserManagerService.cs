@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,12 +35,25 @@ namespace Mogmog.Server.Services
         public UserManagerService()
         {
             _userList = new ConcurrentList<User>();
-            _bannedUserList= new ConcurrentList<ulong>();
-            _mutedUserList = new ConcurrentList<ulong>();
-            _tempbanList = new ConcurrentList<TempbanEntry>();
+
+            if (File.Exists("banned_users"))
+                _bannedUserList = JsonConvert.DeserializeObject<ConcurrentList<ulong>>(File.ReadAllText("banned_users"));
+            else
+                _bannedUserList = new ConcurrentList<ulong>();
+
+            if (File.Exists("tempbanned_users"))
+                _tempbanList = JsonConvert.DeserializeObject<ConcurrentList<TempbanEntry>>(File.ReadAllText("tempbanned_users"));
+            else
+                _tempbanList = new ConcurrentList<TempbanEntry>();
+
+            if (File.Exists("muted_users"))
+                _mutedUserList = JsonConvert.DeserializeObject<ConcurrentList<ulong>>(File.ReadAllText("muted_users"));
+            else
+                _mutedUserList = new ConcurrentList<ulong>();
 
             _tokenSource = new CancellationTokenSource();
             _ = CheckTempBans(_tokenSource.Token);
+            _ = BackupLists(_tokenSource.Token);
         }
 
         public MogmogOperationResult AddUser(User user)
@@ -207,6 +222,17 @@ namespace Mogmog.Server.Services
                     }
                 }
                 await Task.Delay(3000, token);
+            }
+        }
+
+        private async Task BackupLists(CancellationToken token)
+        {
+            while (true)
+            {
+                await File.WriteAllTextAsync("banned_users", JsonConvert.SerializeObject(_bannedUserList), token);
+                await File.WriteAllTextAsync("tempbanned_users", JsonConvert.SerializeObject(_tempbanList), token);
+                await File.WriteAllTextAsync("muted_users", JsonConvert.SerializeObject(_mutedUserList), token);
+                await Task.Delay(5000, token);
             }
         }
 
