@@ -1,6 +1,7 @@
 ﻿using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Actors.Types;
 using Dalamud.Plugin;
+using Lumina.Excel.GeneratedSheets;
 using Mogmog.Events;
 using Mogmog.Logging;
 using Mogmog.Protos;
@@ -8,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,7 +31,7 @@ namespace Mogmog.FFXIV
         private string avatar;
         private string lastPlayerName;
 
-        protected ICommandHandler CommandHandler { get; set; }
+        protected IChatCommandHandler CommandHandler { get; set; }
         protected IConnectionManager ConnectionManager { get; set; }
         protected DalamudPluginInterface Dalamud { get; set; }
         protected MogmogConfiguration Config { get; set; }
@@ -51,7 +53,7 @@ namespace Mogmog.FFXIV
             this.Config.Hostnames.Add(hostname);
             this.ConnectionManager.AddHost(hostname);
             var idx = this.Config.Hostnames.IndexOf(hostname);
-            this.CommandHandler.AddCommandHandler(idx + 1);
+            this.CommandHandler.AddChatHandler(idx + 1);
             PrintLogMessage($"Added connection {hostname}");
         }
 
@@ -61,7 +63,7 @@ namespace Mogmog.FFXIV
             if (int.TryParse(hostname, out int i))
                 hostname = this.Config.Hostnames[i - 1];
             var idx = this.Config.Hostnames.IndexOf(hostname);
-            this.CommandHandler.RemoveCommandHandler(idx + 1);
+            this.CommandHandler.RemoveChatHandler(idx + 1);
             this.Config.Hostnames.Remove(hostname);
             this.ConnectionManager.RemoveHost(hostname);
             PrintLogMessage($"Removed connection {hostname}");
@@ -75,6 +77,88 @@ namespace Mogmog.FFXIV
             this.ConnectionManager.ReloadHost(hostname);
             PrintLogMessage($"Reloaded connection {hostname}");
         }
+
+        #region Moderation Commands
+        public void BanUser(string command, string args)
+        {
+            var parsedArgs = ProcessTargetUserArgs(command, args);
+            if (parsedArgs == null)
+                return;
+            this.ConnectionManager.BanUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
+        }
+
+        public void UnbanUser(string command, string args)
+        {
+            var parsedArgs = ProcessTargetUserArgs(command, args);
+            if (parsedArgs == null)
+                return;
+            this.ConnectionManager.UnbanUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
+        }
+
+        public void TempbanUser(string command, string args)
+        {
+            var parsedArgs = ProcessTargetUserArgs(command, args, "<Unban Date and/or Time>");
+            if (parsedArgs == null)
+                return;
+            var end = DateTimeUtils.GetDateTime(args);
+            this.ConnectionManager.TempbanUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3, end);
+        }
+
+        public void KickUser(string command, string args)
+        {
+            var parsedArgs = ProcessTargetUserArgs(command, args);
+            if (parsedArgs == null)
+                return;
+            this.ConnectionManager.KickUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
+        }
+
+        public void MuteUser(string command, string args)
+        {
+            var parsedArgs = ProcessTargetUserArgs(command, args);
+            if (parsedArgs == null)
+                return;
+            this.ConnectionManager.MuteUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
+        }
+
+        public void UnmuteUser(string command, string args)
+        {
+            var parsedArgs = ProcessTargetUserArgs(command, args);
+            if (parsedArgs == null)
+                return;
+            this.ConnectionManager.UnmuteUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
+        }
+
+        private Tuple<string, int, int> ProcessTargetUserArgs(string command, string rawArgs)
+            => ProcessTargetUserArgs(command, rawArgs, string.Empty);
+
+        private Tuple<string, int, int> ProcessTargetUserArgs(string command, string rawArgs, string additionalArgHints)
+        {
+            if (rawArgs == null)
+                throw new ArgumentNullException(rawArgs);
+            var args = rawArgs.Split(' ');
+            if (args.Length >= 4 && int.TryParse(args[0], out int channelId))
+            {
+                var name = $"{args[2]} {args[3]}";
+                var worldName = args[1];
+                worldName = char.ToUpperInvariant(worldName[0]) + worldName.Substring(1);
+                var world = this.Dalamud.Data.GetExcelSheet<World>()
+                    .GetRows()
+                    .FirstOrDefault((row) => row.Name == worldName);
+                if (world == null)
+                {
+                    PrintLogMessage(LogMessages.WorldNotFound);
+                    return null;
+                }
+                var worldId = world.RowId;
+                return new Tuple<string, int, int>(name, worldId, channelId);
+            }
+            else
+            {
+                PrintLogMessage(string.Format(CultureInfo.InvariantCulture, LogMessages.TargetUserCommandFailed, command, additionalArgHints));
+                return null;
+            }
+        }
+        #endregion
 
         public void MessageSend(string command, string message)
         {

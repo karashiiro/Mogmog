@@ -120,6 +120,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             else
             {
                 var genericInterop = message.ToObject<GenericInterop>();
+                var args = genericInterop.Arg.Split(' ');
                 switch (genericInterop.Command)
                 {
                     case "AddHost":
@@ -130,6 +131,24 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         break;
                     case "ReloadHost":
                         connectionManager.ReloadHost(genericInterop.Arg);
+                        break;
+                    case "BanUser":
+                        connectionManager.BanUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        break;
+                    case "UnbanUser":
+                        connectionManager.UnbanUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        break;
+                    case "TempbanUser":
+                        connectionManager.TempbanUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture), DateTime.FromBinary(long.Parse(args[4], CultureInfo.CurrentCulture)));
+                        break;
+                    case "KickUser":
+                        connectionManager.KickUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        break;
+                    case "MuteUser":
+                        connectionManager.MuteUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        break;
+                    case "UnmuteUser":
+                        connectionManager.UnmuteUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
                         break;
                     default:
                         throw new NotSupportedException();

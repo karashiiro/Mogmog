@@ -18,6 +18,7 @@ namespace Mogmog.Server
             services.AddGrpc();
             services
                 .AddSingleton<GameDataService>()
+                .AddSingleton<UserManagerService>()
                 .AddSingleton<MogmogTransmissionService>();
         }
 

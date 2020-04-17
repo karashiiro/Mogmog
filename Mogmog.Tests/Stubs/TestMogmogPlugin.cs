@@ -6,7 +6,7 @@ namespace Mogmog.Tests.Stubs
 {
     public class TestMogmogPlugin : MogmogPlugin
     {
-        public void SetCommandHandler(ICommandHandler commandHandler)
+        public void SetCommandHandler(IChatCommandHandler commandHandler)
             => this.CommandHandler = commandHandler;
 
         public void SetConnectionManager(IConnectionManager connectionManager)

@@ -15,6 +15,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
     {
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
         private readonly CancellationTokenSource tokenSource;
+        private readonly ChatServiceClient chatClient;
         private readonly GrpcChannel channel;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
@@ -26,8 +27,8 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.ChannelId = channelId;
             this.tokenSource = new CancellationTokenSource();
             this.channel = GrpcChannel.ForAddress(hostname);
-            var client = new ChatServiceClient(channel);
-            var serverInfo = client.GetChatServerInfo(new ReqChatServerInfo());
+            this.chatClient = new ChatServiceClient(channel);
+            var serverInfo = this.chatClient.GetChatServerInfo(new ReqChatServerInfo());
             var flags = (ServerFlags)serverInfo.Flags;
             Mogger.Log($"Server flags for {hostname}: {flags}");
             var callOptions = new CallOptions()
@@ -45,7 +46,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 };
                 callOptions = callOptions.WithHeaders(headers);
             }
-            this.chatStream = client.Chat(callOptions);
+            this.chatStream = this.chatClient.Chat(callOptions);
             _ = ChatLoop(this.tokenSource.Token);
         }
         
@@ -66,6 +67,26 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 });
             }
         }
+
+        #region Moderation Commands
+        public async Task BanUser(string name, int worldId)
+            => await this.chatClient.BanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+
+        public async Task UnbanUser(string name, int worldId)
+            => await this.chatClient.UnbanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+
+        public async Task TempbanUser(string name, int worldId, DateTime end)
+            => await this.chatClient.TempbanUserAsync(new ReqTempbanUser { UserName = name, UserWorldId = worldId, UnbanTimestamp = end.ToBinary() });
+
+        public async Task KickUser(string name, int worldId)
+            => await this.chatClient.KickUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+
+        public async Task MuteUser(string name, int worldId)
+            => await this.chatClient.MuteUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+
+        public async Task UnmuteUser(string name, int worldId)
+            => await this.chatClient.UnmuteUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+        #endregion
 
         #region IDisposable Support
         private bool disposedValue; // To detect redundant calls

@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Mogmog.Discord.Services;
@@ -85,6 +86,8 @@ namespace Mogmog.Discord
         {
             return new ServiceCollection()
                 .AddSingleton(new DiscordSocketClient(disConfig))
+                .AddSingleton<CommandService>()
+                .AddSingleton<CommandHandlingService>()
                 .AddSingleton<MogmogConnectionService>()
                 .BuildServiceProvider();
         }

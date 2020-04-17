@@ -2,10 +2,12 @@
 using Dalamud.Plugin;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using static Dalamud.Game.Command.CommandInfo;
 
 namespace Mogmog.FFXIV
 {
-    public class CommandHandler : ICommandHandler, IDisposable
+    public class CommandHandler : IChatCommandHandler, IDisposable
     {
         private readonly DalamudPluginInterface dalamud;
         private readonly MogmogPlugin parent;
@@ -19,23 +21,26 @@ namespace Mogmog.FFXIV
             this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.dalamud = dalamud ?? throw new ArgumentNullException(nameof(dalamud));
 
-            this.commands = new Dictionary<string, CommandInfo>
-            {
-                { "/mgadd", new CommandInfo(this.parent.AddHost) { HelpMessage = "Connect to a Mogmog server using its address.", ShowInHelp = true, } },
-                { "/mgremove", new CommandInfo(this.parent.RemoveHost) { HelpMessage = "Disconnect from a Mogmog server using its address or number.", ShowInHelp = true, } },
-                { "/mgreload", new CommandInfo(this.parent.ReloadHost) { HelpMessage = "Reload a Mogmog server using its address or number.", ShowInHelp = true, } },
-            };
-
-            AddCommandHandlers();
+            this.commands = new Dictionary<string, CommandInfo>();
+            AddCommand("/mgadd", this.parent.AddHost, CommandInfoMessages.Add);
+            AddCommand("/mgremove", this.parent.RemoveHost, CommandInfoMessages.Remove);
+            AddCommand("/mgreload", this.parent.ReloadHost, CommandInfoMessages.Reload);
+            AddCommand("/mgban", this.parent.BanUser, CommandInfoMessages.Ban + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgban"));
+            AddCommand("/mgunban", this.parent.UnbanUser, CommandInfoMessages.Unban + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgunban"));
+            AddCommand("/mgtempban", this.parent.TempbanUser, CommandInfoMessages.Tempban + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgtempban"));
+            AddCommand("/mgkick", this.parent.KickUser, CommandInfoMessages.Kick + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgkick"));
+            AddCommand("/mgmute", this.parent.MuteUser, CommandInfoMessages.Mute + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgmute"));
+            AddCommand("/mgunmute", this.parent.UnmuteUser, CommandInfoMessages.Unmute + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgunmute"));
+            AddChatHandlers();
         }
 
-        public void AddCommandHandler(int i)
+        public void AddChatHandler(int i)
         {
             this.dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo(i));
             this.dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo(i, false));
         }
 
-        public void RemoveCommandHandler(int i)
+        public void RemoveChatHandler(int i)
         {
             this.dalamud.CommandManager.RemoveHandler($"/global{i}");
             this.dalamud.CommandManager.RemoveHandler($"/gl{i}");
@@ -50,12 +55,11 @@ namespace Mogmog.FFXIV
             };
         }
 
-        private void AddCommandHandlers()
+        private void AddChatHandlers()
         {
             for (int i = 1; i <= this.config.Hostnames.Count; i++)
             {
-                this.dalamud.CommandManager.AddHandler($"/global{i}", OnMessageCommandInfo(i));
-                this.dalamud.CommandManager.AddHandler($"/gl{i}", OnMessageCommandInfo(i, false));
+                AddChatHandler(i);
             }
             foreach (var command in this.commands)
             {
@@ -63,16 +67,23 @@ namespace Mogmog.FFXIV
             }
         }
 
-        private void RemoveCommandHandlers()
+        private void RemoveChatHandlers()
         {
             for (int i = 1; i <= this.config.Hostnames.Count; i++)
             {
-                RemoveCommandHandler(i);
+                RemoveChatHandler(i);
             }
             foreach (var command in this.commands)
             {
                 this.dalamud.CommandManager.RemoveHandler(command.Key);
             }
+        }
+
+        private void AddCommand(string command, HandlerDelegate function, string helpMessage)
+        {
+            this.commands.Add(
+                command, new CommandInfo(function) { HelpMessage = helpMessage, ShowInHelp = true, }
+            );
         }
 
         #region IDisposable Support
@@ -84,7 +95,7 @@ namespace Mogmog.FFXIV
             {
                 if (disposing)
                 {
-                    RemoveCommandHandlers();
+                    RemoveChatHandlers();
                 }
 
                 disposedValue = true;

@@ -24,7 +24,7 @@ namespace Mogmog.Server
         {
             var gds = new GameDataService();
             _transmitter = new MogmogTransmissionService();
-            _connection = new MogmogConnectionService(gds, _transmitter, new ConfigurationBuilder()
+            _connection = new MogmogConnectionService(gds, new UserManagerService(), _transmitter, new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>())
                 .Build());
         }

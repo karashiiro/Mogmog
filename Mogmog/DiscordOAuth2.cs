@@ -1,12 +1,12 @@
 ﻿using Newtonsoft.Json;
-using Serilog;
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Mogmog.Server
+namespace Mogmog
 {
     public class DiscordOAuth2 : IDisposable
     {
@@ -22,20 +22,15 @@ namespace Mogmog.Server
             _ = RefreshAccessInformation(this.tokenSource.Token);
         }
 
-        private async Task RefreshAccessInformation(CancellationToken token)
+        public async Task<UserObjectResponse> GetUserInfo()
         {
-            while (true)
-            {
-                if (token.IsCancellationRequested)
-                    token.ThrowIfCancellationRequested();
-                if (AccessInformation == null)
-                {
-                    await Task.Delay(1000);
-                    continue;
-                }
-                await Task.Delay((AccessInformation.ExpiresIn - 100) * 1000, token);
-                AccessInformation = await Refresh(AccessInformation.RefreshToken);
-            }
+            using var http = new HttpClient();
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(AccessInformation.TokenType, AccessInformation.AccessToken);
+            var res = await http.GetAsync(new Uri("https://discordapp.com/api/users/@me"));
+            if (!res.IsSuccessStatusCode)
+                throw new HttpRequestException(res.ReasonPhrase);
+            return JsonConvert.DeserializeObject<UserObjectResponse>(await res.Content.ReadAsStringAsync());
+
         }
 
         public static async Task<AccessCodeResponse> Authorize(string accessCode)
@@ -53,7 +48,6 @@ namespace Mogmog.Server
             var res = await http.PostAsync(new Uri("https://discordapp.com/api/oauth2/token"), content);
             if (!res.IsSuccessStatusCode)
             {
-                Log.Error("Discord user authentication for access code {AccessCode} failed, reason: {ErrorMessage}", accessCode, res.ReasonPhrase);
                 return null;
             }
 
@@ -77,6 +71,22 @@ namespace Mogmog.Server
                 return null;
 
             return JsonConvert.DeserializeObject<AccessCodeResponse>(await res.Content.ReadAsStringAsync());
+        }
+
+        private async Task RefreshAccessInformation(CancellationToken token)
+        {
+            while (true)
+            {
+                if (token.IsCancellationRequested)
+                    token.ThrowIfCancellationRequested();
+                if (AccessInformation == null)
+                {
+                    await Task.Delay(1000);
+                    continue;
+                }
+                await Task.Delay((AccessInformation.ExpiresIn - 100) * 1000, token);
+                AccessInformation = await Refresh(AccessInformation.RefreshToken);
+            }
         }
 
         #region IDisposable Support
@@ -123,5 +133,17 @@ namespace Mogmog.Server
 
         [JsonIgnore]
         public bool Bypass { get; set; }
+    }
+
+    public class UserObjectResponse
+    {
+        [JsonProperty("id")]
+        public ulong Id { get; }
+
+        [JsonProperty("username")]
+        public string Username { get; }
+
+        [JsonProperty("discriminator")]
+        public string Discriminator { get; }
     }
 }

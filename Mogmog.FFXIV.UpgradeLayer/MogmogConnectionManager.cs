@@ -91,6 +91,68 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.connections[i] = new MogmogConnection(hostname, channelId);
         }
 
+        #region Moderation Commands
+        public void BanUser(string name, int worldId, int channelId)
+        {
+            if (this.connections[channelId] == null)
+            {
+                Mogger.LogError(LogMessages.HostNotFound);
+                return;
+            }
+            _ = this.connections[channelId].BanUser(name, worldId);
+        }
+
+        public void UnbanUser(string name, int worldId, int channelId)
+        {
+            if (this.connections[channelId] == null)
+            {
+                Mogger.LogError(LogMessages.HostNotFound);
+                return;
+            }
+            _ = this.connections[channelId].UnbanUser(name, worldId);
+        }
+
+        public void TempbanUser(string name, int worldId, int channelId, DateTime end)
+        {
+            if (this.connections[channelId] == null)
+            {
+                Mogger.LogError(LogMessages.HostNotFound);
+                return;
+            }
+            _ = this.connections[channelId].TempbanUser(name, worldId, end);
+        }
+
+        public void KickUser(string name, int worldId, int channelId)
+        {
+            if (this.connections[channelId] == null)
+            {
+                Mogger.LogError(LogMessages.HostNotFound);
+                return;
+            }
+            _ = this.connections[channelId].KickUser(name, worldId);
+        }
+
+        public void MuteUser(string name, int worldId, int channelId)
+        {
+            if (this.connections[channelId] == null)
+            {
+                Mogger.LogError(LogMessages.HostNotFound);
+                return;
+            }
+            _ = this.connections[channelId].MuteUser(name, worldId);
+        }
+
+        public void UnmuteUser(string name, int worldId, int channelId)
+        {
+            if (this.connections[channelId] == null)
+            {
+                Mogger.LogError(LogMessages.HostNotFound);
+                return;
+            }
+            _ = this.connections[channelId].UnmuteUser(name, worldId);
+        }
+        #endregion
+
         public void MessageSend(ChatMessage message, int channelId)
         {
             if (this.connections.Count <= channelId || channelId < 0)

@@ -59,6 +59,24 @@ namespace Mogmog.FFXIV
         public void ReloadHost(string hostname)
             => _ = SendToUpgradeLayer("ReloadHost", hostname);
 
+        public void BanUser(string name, int worldId, int channelId)
+            => _ = SendToUpgradeLayer("BanUser", $"{channelId} {name} {worldId}");
+
+        public void UnbanUser(string name, int worldId, int channelId)
+            => _ = SendToUpgradeLayer("UnbanUser", $"{channelId} {name} {worldId}");
+
+        public void TempbanUser(string name, int worldId, int channelId, DateTime end)
+            => _ = SendToUpgradeLayer("TempbanUser", $"{channelId} {name} {worldId} {end.ToBinary()}");
+
+        public void KickUser(string name, int worldId, int channelId)
+            => _ = SendToUpgradeLayer("KickUser", $"{channelId} {name} {worldId}");
+
+        public void MuteUser(string name, int worldId, int channelId)
+            => _ = SendToUpgradeLayer("MuteUser", $"{channelId} {name} {worldId}");
+
+        public void UnmuteUser(string name, int worldId, int channelId)
+            => _ = SendToUpgradeLayer("UnmuteUser", $"{channelId} {name} {worldId}");
+
         #region Interop Interface Methods
         public byte[] UpgradeLayerMessageReceived(Stream stream)
         {

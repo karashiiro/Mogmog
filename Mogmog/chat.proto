@@ -8,6 +8,32 @@ service ChatService {
     rpc GetChatServerInfo (ReqChatServerInfo) returns (ChatServerInfo);
 
     rpc Chat (stream ChatMessage) returns (stream ChatMessage);
+
+    rpc GetUserInfo (ReqUserInfo) returns (UserInfo);
+
+    rpc BanUser (UserActionRequest) returns (GeneralResult);
+
+    rpc BanDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+
+    rpc UnbanUser (UserActionRequest) returns (GeneralResult);
+
+    rpc UnbanDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+
+    rpc TempbanUser (ReqTempbanUser) returns (GeneralResult);
+
+    rpc TempbanDiscordUser (ReqTempbanDiscordUser) returns (GeneralResult);
+
+    rpc KickUser (UserActionRequest) returns (GeneralResult);
+
+    rpc KickDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+
+    rpc MuteUser (UserActionRequest) returns (GeneralResult);
+
+    rpc MuteDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+
+    rpc UnmuteUser (UserActionRequest) returns (GeneralResult);
+
+    rpc UnmuteDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
 }
 
 /*
@@ -15,7 +41,7 @@ service ChatService {
  * easier to deal with. The client can provide an ID, and the server will return a world name.
  */
 message ChatMessage {
-    uint64 Id = 1;
+    uint64 Id = 1; // The message's ID
     string Content = 2;
     string Author = 3; // The name of the author.
     uint64 AuthorId = 4; // The message author's ID.
@@ -28,7 +54,6 @@ message ChatMessage {
 
 /*
  * Used to communicate authentication requirements and the like to clients.
- * Bit 0 - OAuth2 requirement
  */
 message ChatServerInfo {
     int32 Flags = 1;
@@ -37,4 +62,41 @@ message ChatServerInfo {
 
 message ReqChatServerInfo {
     bool Dummy = 1;
+}
+
+message UserInfo {
+    bool Success = 1;
+    string Message = 2;
+    uint64 UserId = 3;
+    string UserExternalName = 4;
+}
+
+message ReqUserInfo {
+    string UserName = 1;
+    int32 UserWorldId = 2;
+}
+
+message GeneralResult {
+    bool Success = 1;
+    string Message = 2;
+}
+
+message UserActionRequest {
+    string UserName = 1;
+    int32 UserWorldId = 2;
+}
+
+message UserDiscordActionRequest {
+    uint64 Id = 1;
+}
+
+message ReqTempbanUser {
+    string UserName = 1;
+    int32 UserWorldId = 2;
+    int64 UnbanTimestamp = 3;
+}
+
+message ReqTempbanDiscordUser {
+    uint64 Id = 1;
+    int64 UnbanTimestamp = 2;
 }

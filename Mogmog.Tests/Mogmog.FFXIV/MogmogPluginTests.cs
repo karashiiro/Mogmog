@@ -8,7 +8,7 @@ namespace Mogmog.FFXIV
     [TestFixture]
     public class MogmogPluginTests
     {
-        private Mock<ICommandHandler> fakeCommandHandler;
+        private Mock<IChatCommandHandler> fakeCommandHandler;
         private Mock<IConnectionManager> fakeConnectionManager;
 
         private MogmogConfiguration config;
@@ -17,7 +17,7 @@ namespace Mogmog.FFXIV
         [OneTimeSetUp]
         public void OneTimeSetup()
         {
-            fakeCommandHandler = new Mock<ICommandHandler>();
+            fakeCommandHandler = new Mock<IChatCommandHandler>();
             fakeConnectionManager = new Mock<IConnectionManager>();
         }
 

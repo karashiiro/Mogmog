@@ -6,6 +6,7 @@ using Mogmog.Protos;
 using Serilog;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using static Grpc.Core.Metadata;
 using static Mogmog.Protos.ChatService;
@@ -21,42 +22,56 @@ namespace Mogmog.Discord.Services
         private SocketGuildChannel RelayChannel { get => _client.GetChannel(ulong.Parse(Environment.GetEnvironmentVariable("MOGMOG_RELAY_CHANNEL"))) as SocketGuildChannel; }
 
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> _chatStream;
+        private readonly ChatServiceClient _chatClient;
         private readonly GrpcChannel _channel;
 
-        private readonly Task _runningTask;
+        private readonly CancellationTokenSource _tokenSource;
+
+        public ServerFlags Flags { get; set; }
 
         public MogmogConnectionService(DiscordSocketClient client)
         {
             _client = client;
-            
             _channel = GrpcChannel.ForAddress(hostname);
-            var chatClient = new ChatServiceClient(_channel);
+            _chatClient = new ChatServiceClient(_channel);
             var callOptions = new CallOptions()
                 .WithDeadline(DateTime.UtcNow.AddMinutes(1))
                 .WithWaitForReady();
-            var flags = (ServerFlags)chatClient.GetChatServerInfo(new ReqChatServerInfo()).Flags;
-            if (flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
+            Flags = (ServerFlags)_chatClient.GetChatServerInfo(new ReqChatServerInfo()).Flags;
+            if (Flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
                 var stateString = OAuth2Utils.GenerateStateString(100);
                 File.WriteAllText("identifier", stateString);
                 var headers = new Metadata
                 {
                     new Entry("code", stateString),
+                    new Entry("name", _client.CurrentUser.ToString()),
+                    new Entry("worldId", ((int)PseudoWorld.Discord).ToString()),
                 };
                 callOptions = callOptions.WithHeaders(headers);
             }
-            _chatStream = chatClient.Chat(callOptions);
-
-            _runningTask = ChatLoop();
+            _chatStream = _chatClient.Chat(callOptions);
+            _tokenSource = new CancellationTokenSource();
+            _ = ChatLoop(_tokenSource.Token);
         }
 
-        public void Dispose()
-        {
-            _chatStream.RequestStream.CompleteAsync().Wait();
-            _channel.ShutdownAsync().Wait();
-        }
+        public async Task BanUserAsync(IGuildUser user)
+            => await _chatClient.BanDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
 
-        public bool IsActive() => _runningTask.Status == TaskStatus.Running;
+        public async Task UnbanUserAsync(IGuildUser user)
+            => await _chatClient.UnbanDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
+
+        public async Task TempbanUserAsync(IGuildUser user, DateTime end)
+            => await _chatClient.TempbanDiscordUserAsync(new ReqTempbanDiscordUser { Id = user.Id, UnbanTimestamp = end.ToBinary() });
+
+        public async Task KickUserAsync(IGuildUser user)
+            => await _chatClient.KickDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
+
+        public async Task MuteUserAsync(IGuildUser user)
+            => await _chatClient.MuteDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
+
+        public async Task UnmuteUserAsync(IGuildUser user)
+            => await _chatClient.UnmuteDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
 
         public async Task DiscordMessageReceivedAsync(SocketMessage rawMessage)
         {
@@ -79,7 +94,7 @@ namespace Mogmog.Discord.Services
                 AuthorId2 = _client.CurrentUser.Id,
                 Avatar = rawMessage.Author.GetAvatarUrl(),
                 World = string.Empty,
-                WorldId = (int)PseudoWorld.Discord
+                WorldId = (int)PseudoWorld.Discord,
             };
 
             await _chatStream.RequestStream.WriteAsync(chatMessage);
@@ -101,12 +116,40 @@ namespace Mogmog.Discord.Services
             await (RelayChannel as ITextChannel).SendMessageAsync(embed: messageEmbed);
         }
 
-        private async Task ChatLoop()
+        private async Task ChatLoop(CancellationToken token)
         {
-            while (await _chatStream.ResponseStream.MoveNext())
+            while (await _chatStream.ResponseStream.MoveNext(token))
             {
+                if (token.IsCancellationRequested)
+                    token.ThrowIfCancellationRequested();
                 await GrpcMessageReceivedAsync(_chatStream.ResponseStream.Current);
             }
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _tokenSource.Cancel();
+                    _tokenSource.Dispose();
+                    _chatStream.RequestStream.CompleteAsync().Wait();
+                    _channel.ShutdownAsync().Wait();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }
