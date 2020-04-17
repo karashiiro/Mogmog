@@ -81,8 +81,7 @@ message ReqUserInfo {
 }
 
 message GeneralResult {
-    bool Success = 1;
-    string Message = 2;
+    string Result = 1;
 }
 
 message UserActionRequest {

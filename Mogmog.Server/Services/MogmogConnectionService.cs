@@ -120,11 +120,7 @@ namespace Mogmog.Server.Services
                 var worldId = req.UserWorldId;
                 result = await _userManager.OpUser(name, worldId);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> OpDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
@@ -141,11 +137,7 @@ namespace Mogmog.Server.Services
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.OpUser(user);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> BanUser(UserActionRequest req, ServerCallContext context)
@@ -160,11 +152,7 @@ namespace Mogmog.Server.Services
                 var worldId = req.UserWorldId;
                 result = await _userManager.BanUser(name, worldId);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> BanDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
@@ -181,11 +169,7 @@ namespace Mogmog.Server.Services
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.BanUser(user);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> UnbanUser(UserActionRequest req, ServerCallContext context)
@@ -200,11 +184,7 @@ namespace Mogmog.Server.Services
                 var worldId = req.UserWorldId;
                 result = await _userManager.UnbanUser(name, worldId);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> UnbanDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
@@ -221,11 +201,7 @@ namespace Mogmog.Server.Services
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.BanUser(user);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> TempbanUser(ReqTempbanUser req, ServerCallContext context)
@@ -240,11 +216,7 @@ namespace Mogmog.Server.Services
                 var worldId = req.UserWorldId;
                 result = await _userManager.TempbanUser(name, worldId, DateTime.FromBinary(req.UnbanTimestamp));
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> TempbanDiscordUser(ReqTempbanDiscordUser req, ServerCallContext context)
@@ -261,11 +233,7 @@ namespace Mogmog.Server.Services
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.TempbanUser(user, DateTime.FromBinary(req.UnbanTimestamp));
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> KickUser(UserActionRequest req, ServerCallContext context)
@@ -280,11 +248,7 @@ namespace Mogmog.Server.Services
                 var worldId = req.UserWorldId;
                 result = await _userManager.KickUser(name, worldId);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> KickDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
@@ -301,11 +265,7 @@ namespace Mogmog.Server.Services
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.KickUser(user);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> MuteUser(UserActionRequest req, ServerCallContext context)
@@ -320,11 +280,7 @@ namespace Mogmog.Server.Services
                 var worldId = req.UserWorldId;
                 result = await _userManager.MuteUser(name, worldId);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> MuteDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
@@ -341,11 +297,7 @@ namespace Mogmog.Server.Services
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.MuteUser(user);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> UnmuteUser(UserActionRequest req, ServerCallContext context)
@@ -360,11 +312,7 @@ namespace Mogmog.Server.Services
                 var worldId = req.UserWorldId;
                 result = await _userManager.UnmuteUser(name, worldId);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public override async Task<GeneralResult> UnmuteDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
@@ -381,11 +329,7 @@ namespace Mogmog.Server.Services
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.UnmuteUser(user);
             }
-            return new GeneralResult
-            {
-                Success = true,
-                Message = result.ToString(),
-            };
+            return BuildResult(result);
         }
 
         public void SendToClient(object sender, MessageEventArgs e)
@@ -441,6 +385,14 @@ namespace Mogmog.Server.Services
         private void Stop()
         {
             _tokenSource?.Cancel();
+        }
+
+        private static GeneralResult BuildResult(MogmogOperationResult result)
+        {
+            return new GeneralResult
+            {
+                Result = result.ToString(),
+            };
         }
 
         #region IDisposable Support
