@@ -108,17 +108,62 @@ namespace Mogmog.Server.Services
             };
         }
 
+        public override async Task<GeneralResult> OpUser(UserActionRequest req, ServerCallContext context)
+        {
+            if (req == null)
+                throw new ArgumentNullException(nameof(req));
+            var isOp = await _userManager.IsOp(req.OAuth2Code);
+            var result = isOp.Item2;
+            if (isOp.Item1)
+            {
+                var name = req.UserName;
+                var worldId = req.UserWorldId;
+                result = await _userManager.OpUser(name, worldId);
+            }
+            return new GeneralResult
+            {
+                Success = true,
+                Message = result.ToString(),
+            };
+        }
+
+        public override async Task<GeneralResult> OpDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
+        {
+            if (req == null)
+                throw new ArgumentNullException(nameof(req));
+            var isOp = await _userManager.IsOp(req.StateKey);
+            var result = isOp.Item2;
+            if (result == MogmogOperationResult.Success)
+            {
+                var getUserResult = await _userManager.GetUser(req.Id);
+                var user = getUserResult.Item1;
+                result = getUserResult.Item2;
+                if (result == MogmogOperationResult.Success)
+                    result = await _userManager.OpUser(user);
+            }
+            return new GeneralResult
+            {
+                Success = true,
+                Message = result.ToString(),
+            };
+        }
+
         public override async Task<GeneralResult> BanUser(UserActionRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var name = req.UserName;
-            var worldId = req.UserWorldId;
-            await _userManager.BanUser(name, worldId);
+            var isOp = await _userManager.IsOp(req.OAuth2Code);
+            var result = isOp.Item2;
+            if (isOp.Item1)
+            {
+                var name = req.UserName;
+                var worldId = req.UserWorldId;
+                result = await _userManager.BanUser(name, worldId);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -126,12 +171,20 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var user = await _userManager.GetDiscordUser(req.Id);
-            await _userManager.BanUser(user);
+            var isOp = await _userManager.IsOp(req.StateKey);
+            var result = isOp.Item2;
+            if (result == MogmogOperationResult.Success)
+            {
+                var getUserResult = await _userManager.GetUser(req.Id);
+                var user = getUserResult.Item1;
+                result = getUserResult.Item2;
+                if (result == MogmogOperationResult.Success)
+                    result = await _userManager.BanUser(user);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -139,13 +192,18 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var name = req.UserName;
-            var worldId = req.UserWorldId;
-            await _userManager.UnbanUser(name, worldId);
+            var isOp = await _userManager.IsOp(req.OAuth2Code);
+            var result = isOp.Item2;
+            if (isOp.Item1)
+            {
+                var name = req.UserName;
+                var worldId = req.UserWorldId;
+                result = await _userManager.UnbanUser(name, worldId);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -153,12 +211,20 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var user = await _userManager.GetDiscordUser(req.Id);
-            await _userManager.UnbanUser(user);
+            var isOp = await _userManager.IsOp(req.StateKey);
+            var result = isOp.Item2;
+            if (result == MogmogOperationResult.Success)
+            {
+                var getUserResult = await _userManager.GetUser(req.Id);
+                var user = getUserResult.Item1;
+                result = getUserResult.Item2;
+                if (result == MogmogOperationResult.Success)
+                    result = await _userManager.BanUser(user);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -166,14 +232,18 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var name = req.UserName;
-            var worldId = req.UserWorldId;
-            var end = req.UnbanTimestamp;
-            await _userManager.TempbanUser(name, worldId, DateTime.FromBinary(end));
+            var isOp = await _userManager.IsOp(req.OAuth2Code);
+            var result = isOp.Item2;
+            if (isOp.Item1)
+            {
+                var name = req.UserName;
+                var worldId = req.UserWorldId;
+                result = await _userManager.TempbanUser(name, worldId, DateTime.FromBinary(req.UnbanTimestamp));
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -181,41 +251,60 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var user = await _userManager.GetDiscordUser(req.Id);
-            var end = DateTime.FromBinary(req.UnbanTimestamp);
-            await _userManager.TempbanUser(user, end);
+            var isOp = await _userManager.IsOp(req.StateKey);
+            var result = isOp.Item2;
+            if (result == MogmogOperationResult.Success)
+            {
+                var getUserResult = await _userManager.GetUser(req.Id);
+                var user = getUserResult.Item1;
+                result = getUserResult.Item2;
+                if (result == MogmogOperationResult.Success)
+                    result = await _userManager.TempbanUser(user, DateTime.FromBinary(req.UnbanTimestamp));
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
-        public override Task<GeneralResult> KickUser(UserActionRequest req, ServerCallContext context)
+        public override async Task<GeneralResult> KickUser(UserActionRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var name = req.UserName;
-            var worldId = req.UserWorldId;
-            var user = _userManager.GetUser(name, worldId);
-            user.Disconnect();
-            return Task.FromResult(new GeneralResult
+            var isOp = await _userManager.IsOp(req.OAuth2Code);
+            var result = isOp.Item2;
+            if (isOp.Item1)
+            {
+                var name = req.UserName;
+                var worldId = req.UserWorldId;
+                result = await _userManager.KickUser(name, worldId);
+            }
+            return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
-            });
+                Message = result.ToString(),
+            };
         }
 
         public override async Task<GeneralResult> KickDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var user = await _userManager.GetDiscordUser(req.Id);
-            user.Disconnect();
+            var isOp = await _userManager.IsOp(req.StateKey);
+            var result = isOp.Item2;
+            if (result == MogmogOperationResult.Success)
+            {
+                var getUserResult = await _userManager.GetUser(req.Id);
+                var user = getUserResult.Item1;
+                result = getUserResult.Item2;
+                if (result == MogmogOperationResult.Success)
+                    result = await _userManager.KickUser(user);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -223,13 +312,18 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var name = req.UserName;
-            var worldId = req.UserWorldId;
-            await _userManager.UnmuteUser(name, worldId);
+            var isOp = await _userManager.IsOp(req.OAuth2Code);
+            var result = isOp.Item2;
+            if (isOp.Item1)
+            {
+                var name = req.UserName;
+                var worldId = req.UserWorldId;
+                result = await _userManager.MuteUser(name, worldId);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -237,12 +331,20 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var user = await _userManager.GetDiscordUser(req.Id);
-            await _userManager.MuteUser(user);
+            var isOp = await _userManager.IsOp(req.StateKey);
+            var result = isOp.Item2;
+            if (result == MogmogOperationResult.Success)
+            {
+                var getUserResult = await _userManager.GetUser(req.Id);
+                var user = getUserResult.Item1;
+                result = getUserResult.Item2;
+                if (result == MogmogOperationResult.Success)
+                    result = await _userManager.MuteUser(user);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -250,13 +352,18 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var name = req.UserName;
-            var worldId = req.UserWorldId;
-            await _userManager.MuteUser(name, worldId);
+            var isOp = await _userManager.IsOp(req.OAuth2Code);
+            var result = isOp.Item2;
+            if (isOp.Item1)
+            {
+                var name = req.UserName;
+                var worldId = req.UserWorldId;
+                result = await _userManager.UnmuteUser(name, worldId);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -264,12 +371,20 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var user = await _userManager.GetDiscordUser(req.Id);
-            await _userManager.UnmuteUser(user);
+            var isOp = await _userManager.IsOp(req.StateKey);
+            var result = isOp.Item2;
+            if (result == MogmogOperationResult.Success)
+            {
+                var getUserResult = await _userManager.GetUser(req.Id);
+                var user = getUserResult.Item1;
+                result = getUserResult.Item2;
+                if (result == MogmogOperationResult.Success)
+                    result = await _userManager.UnmuteUser(user);
+            }
             return new GeneralResult
             {
                 Success = true,
-                Message = string.Empty,
+                Message = result.ToString(),
             };
         }
 
@@ -289,7 +404,7 @@ namespace Mogmog.Server.Services
             AccessCodeResponse accessInfo = null;
             if (_flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
-                var specialUserToken = await GetSpecialUserToken();
+                var specialUserToken = await UserManagerService.GetSpecialUserToken();
                 if (string.IsNullOrEmpty(specialUserToken) || specialUserToken != oAuth2Code)
                 {
                     var authInfo = await DiscordOAuth2.Authorize(oAuth2Code);
@@ -303,7 +418,7 @@ namespace Mogmog.Server.Services
             var nameEntry = headers.FirstOrDefault((kvp) => kvp.Key == "name");
             var worldIdEntry = headers.FirstOrDefault((kvp) => kvp.Key == "worldId");
             if (nameEntry == null || worldIdEntry == null || !int.TryParse(worldIdEntry.Value, out int worldId))
-                throw new HttpRequestException(HttpStatusCodes.Unauthorized); // TODO: make Malformed Request
+                throw new HttpRequestException(HttpStatusCodes.BadRequest);
             var name = nameEntry.Value;
             try
             {
@@ -311,7 +426,7 @@ namespace Mogmog.Server.Services
             }
             catch (KeyNotFoundException)
             {
-                throw new HttpRequestException(HttpStatusCodes.Unauthorized); // TODO: make Malformed Request
+                throw new HttpRequestException(HttpStatusCodes.BadRequest);
             }
             var user = new User(name, worldId)
             {
@@ -326,18 +441,6 @@ namespace Mogmog.Server.Services
         private void Stop()
         {
             _tokenSource?.Cancel();
-        }
-
-        private static async Task<string> GetSpecialUserToken()
-        {
-            if (Environment.GetEnvironmentVariable("MOGMOG_DISCORD_BOT_PATH") == null)
-                return null;
-            var specialUserTokenPath = Path.Combine(Environment.GetEnvironmentVariable("MOGMOG_DISCORD_BOT_PATH"), "identifier");
-            if (File.Exists(specialUserTokenPath))
-            {
-                return await File.ReadAllTextAsync(specialUserTokenPath);
-            }
-            return null;
         }
 
         #region IDisposable Support

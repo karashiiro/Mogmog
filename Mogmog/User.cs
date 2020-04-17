@@ -8,11 +8,8 @@ namespace Mogmog
         public event EventHandler ForcedDisconnect;
 
         public int WorldId { get; }
-
         public string Name { get; }
-
         public DiscordOAuth2 AuthState { get; set; }
-
         public UserObjectResponse Info { get; private set; }
 
         public User(string name, int worldId)

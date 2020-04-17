@@ -9,6 +9,15 @@ namespace Mogmog.Discord.Modules
     {
         public MogmogConnectionService Mogmog { get; set; }
 
+        [Command("op")]
+        [RequireContext(ContextType.Guild)]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task OpUserAsync(IGuildUser user)
+        {
+            await Mogmog.OpUserAsync(user);
+            await ReplyAsync($"Successfully opped user ${user.Mention}");
+        }
+
         [Command("ban")]
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.BanMembers)]

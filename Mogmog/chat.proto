@@ -11,6 +11,10 @@ service ChatService {
 
     rpc GetUserInfo (ReqUserInfo) returns (UserInfo);
 
+    rpc OpUser (UserActionRequest) returns (GeneralResult);
+
+    rpc OpDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+
     rpc BanUser (UserActionRequest) returns (GeneralResult);
 
     rpc BanDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
@@ -84,19 +88,23 @@ message GeneralResult {
 message UserActionRequest {
     string UserName = 1;
     int32 UserWorldId = 2;
+    string OAuth2Code = 3;
 }
 
 message UserDiscordActionRequest {
     uint64 Id = 1;
+    string StateKey = 2;
 }
 
 message ReqTempbanUser {
     string UserName = 1;
     int32 UserWorldId = 2;
     int64 UnbanTimestamp = 3;
+    string OAuth2Code = 4;
 }
 
 message ReqTempbanDiscordUser {
     uint64 Id = 1;
     int64 UnbanTimestamp = 2;
+    string StateKey = 3;
 }

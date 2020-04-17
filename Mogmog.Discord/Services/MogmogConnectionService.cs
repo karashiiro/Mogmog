@@ -17,17 +17,15 @@ namespace Mogmog.Discord.Services
     {
         private const string hostname = "https://localhost:5001";
 
-        private readonly DiscordSocketClient _client;
-
-        private SocketGuildChannel RelayChannel { get => _client.GetChannel(ulong.Parse(Environment.GetEnvironmentVariable("MOGMOG_RELAY_CHANNEL"))) as SocketGuildChannel; }
-
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> _chatStream;
-        private readonly ChatServiceClient _chatClient;
-        private readonly GrpcChannel _channel;
-
         private readonly CancellationTokenSource _tokenSource;
+        private readonly ChatServiceClient _chatClient;
+        private readonly DiscordSocketClient _client;
+        private readonly GrpcChannel _channel;
+        private readonly string _stateKey;
 
         public ServerFlags Flags { get; set; }
+        private SocketGuildChannel RelayChannel { get => _client.GetChannel(ulong.Parse(Environment.GetEnvironmentVariable("MOGMOG_RELAY_CHANNEL"))) as SocketGuildChannel; }
 
         public MogmogConnectionService(DiscordSocketClient client)
         {
@@ -40,11 +38,11 @@ namespace Mogmog.Discord.Services
             Flags = (ServerFlags)_chatClient.GetChatServerInfo(new ReqChatServerInfo()).Flags;
             if (Flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
-                var stateString = OAuth2Utils.GenerateStateString(100);
-                File.WriteAllText("identifier", stateString);
+                _stateKey = OAuth2Utils.GenerateStateString(100);
+                File.WriteAllText("identifier", _stateKey);
                 var headers = new Metadata
                 {
-                    new Entry("code", stateString),
+                    new Entry("code", _stateKey),
                     new Entry("name", _client.CurrentUser.ToString()),
                     new Entry("worldId", ((int)PseudoWorld.Discord).ToString()),
                 };
@@ -55,23 +53,26 @@ namespace Mogmog.Discord.Services
             _ = ChatLoop(_tokenSource.Token);
         }
 
+        public async Task OpUserAsync(IGuildUser user)
+            => await _chatClient.OpDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
+
         public async Task BanUserAsync(IGuildUser user)
-            => await _chatClient.BanDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
+            => await _chatClient.BanDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task UnbanUserAsync(IGuildUser user)
-            => await _chatClient.UnbanDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
+            => await _chatClient.UnbanDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task TempbanUserAsync(IGuildUser user, DateTime end)
-            => await _chatClient.TempbanDiscordUserAsync(new ReqTempbanDiscordUser { Id = user.Id, UnbanTimestamp = end.ToBinary() });
+            => await _chatClient.TempbanDiscordUserAsync(new ReqTempbanDiscordUser { Id = user.Id, UnbanTimestamp = end.ToBinary(), StateKey = _stateKey });
 
         public async Task KickUserAsync(IGuildUser user)
-            => await _chatClient.KickDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
+            => await _chatClient.KickDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task MuteUserAsync(IGuildUser user)
-            => await _chatClient.MuteDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
+            => await _chatClient.MuteDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task UnmuteUserAsync(IGuildUser user)
-            => await _chatClient.UnmuteDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id });
+            => await _chatClient.UnmuteDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task DiscordMessageReceivedAsync(SocketMessage rawMessage)
         {

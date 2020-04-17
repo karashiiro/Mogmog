@@ -61,6 +61,15 @@ namespace Mogmog {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 400 Bad Request.
+        /// </summary>
+        public static string BadRequest {
+            get {
+                return ResourceManager.GetString("BadRequest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 401 Unauthorized.
         /// </summary>
         public static string Unauthorized {

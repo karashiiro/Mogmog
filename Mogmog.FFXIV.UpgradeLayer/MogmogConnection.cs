@@ -16,6 +16,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
         private readonly AsyncDuplexStreamingCall<ChatMessage, ChatMessage> chatStream;
         private readonly CancellationTokenSource tokenSource;
         private readonly ChatServiceClient chatClient;
+        private readonly DiscordOAuth2 oAuth2;
         private readonly GrpcChannel channel;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
@@ -37,12 +38,11 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 .WithWaitForReady();
             if (flags.HasFlag(ServerFlags.RequiresDiscordOAuth2))
             {
-                var oAuth2 = new DiscordOAuth2();
+                oAuth2 = new DiscordOAuth2();
                 oAuth2.Authenticate(serverInfo.ServerId);
-                var oAuth2Code = oAuth2.OAuth2Code;
                 var headers = new Metadata
                 {
-                    new Entry("code", oAuth2Code),
+                    new Entry("code", oAuth2.OAuth2Code),
                 };
                 callOptions = callOptions.WithHeaders(headers);
             }
@@ -70,22 +70,22 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         #region Moderation Commands
         public async Task BanUser(string name, int worldId)
-            => await this.chatClient.BanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+            => await this.chatClient.BanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
 
         public async Task UnbanUser(string name, int worldId)
-            => await this.chatClient.UnbanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+            => await this.chatClient.UnbanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
 
         public async Task TempbanUser(string name, int worldId, DateTime end)
-            => await this.chatClient.TempbanUserAsync(new ReqTempbanUser { UserName = name, UserWorldId = worldId, UnbanTimestamp = end.ToBinary() });
+            => await this.chatClient.TempbanUserAsync(new ReqTempbanUser { UserName = name, UserWorldId = worldId, UnbanTimestamp = end.ToBinary(), OAuth2Code = oAuth2.OAuth2Code });
 
         public async Task KickUser(string name, int worldId)
-            => await this.chatClient.KickUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+            => await this.chatClient.KickUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
 
         public async Task MuteUser(string name, int worldId)
-            => await this.chatClient.MuteUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+            => await this.chatClient.MuteUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
 
         public async Task UnmuteUser(string name, int worldId)
-            => await this.chatClient.UnmuteUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId });
+            => await this.chatClient.UnmuteUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
         #endregion
 
         #region IDisposable Support

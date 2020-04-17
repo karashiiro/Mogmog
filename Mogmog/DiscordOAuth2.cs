@@ -30,7 +30,16 @@ namespace Mogmog
             if (!res.IsSuccessStatusCode)
                 throw new HttpRequestException(res.ReasonPhrase);
             return JsonConvert.DeserializeObject<UserObjectResponse>(await res.Content.ReadAsStringAsync());
+        }
 
+        public static async Task<UserObjectResponse> GetUserInfo(AccessCodeResponse authInfo)
+        {
+            using var http = new HttpClient();
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authInfo.TokenType, authInfo.AccessToken);
+            var res = await http.GetAsync(new Uri("https://discordapp.com/api/users/@me"));
+            if (!res.IsSuccessStatusCode)
+                throw new HttpRequestException(res.ReasonPhrase);
+            return JsonConvert.DeserializeObject<UserObjectResponse>(await res.Content.ReadAsStringAsync());
         }
 
         public static async Task<AccessCodeResponse> Authorize(string accessCode)

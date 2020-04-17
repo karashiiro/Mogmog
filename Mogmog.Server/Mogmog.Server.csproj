@@ -11,6 +11,10 @@
     <PathMap>$(AppOutputBase)=K:\arashiiro\</PathMap>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <None Remove="Services\UserManagerService.cs~RF384abbb4.TMP" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="..\Resources\world.json" Link="world.json">
