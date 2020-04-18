@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="FailedToParseCommand" xml:space="preserve">
+    <value>Failed to parse command. Please enter that command in one of the following formats:</value>
+  </data>
   <data name="TargetUserCommandFailed" xml:space="preserve">
     <value>One or more arguments failed to parse. Please enter that command in the format {0} &lt;Channel ID&gt; &lt;World Name&gt; &lt;Character Name&gt; {1}</value>
   </data>

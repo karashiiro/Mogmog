@@ -7,6 +7,7 @@ using Mogmog.Logging;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
@@ -16,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace Mogmog.FFXIV
 {
-    static class MogmogResources
+    internal static class MogmogResources
     {
         public static readonly string CrossWorldIcon = Encoding.UTF8.GetString(new byte[] {
             0x02, 0x12, 0x02, 0x59, 0x03
@@ -60,7 +61,7 @@ namespace Mogmog.FFXIV
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void RemoveHost(string command, string hostname)
         {
-            if (int.TryParse(hostname, out int i))
+            if (int.TryParse(hostname, out var i))
                 hostname = this.Config.Hostnames[i - 1];
             var idx = this.Config.Hostnames.IndexOf(hostname);
             this.CommandHandler.RemoveChatHandler(idx + 1);
@@ -72,10 +73,92 @@ namespace Mogmog.FFXIV
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void ReloadHost(string command, string hostname)
         {
-            if (int.TryParse(hostname, out int i))
+            if (int.TryParse(hostname, out var i))
                 hostname = this.Config.Hostnames[i - 1];
             this.ConnectionManager.ReloadHost(hostname);
             PrintLogMessage($"Reloaded connection {hostname}");
+        }
+
+        [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
+        public void BlockUser(string command, string args)
+        {
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
+            var splitArgs = args.Split(' ');
+            if (splitArgs.Length == 3)
+            {
+                var name = Capitalize(splitArgs[0]) + " " + Capitalize(splitArgs[1]);
+                var world = this.Dalamud.Data.GetExcelSheet<World>()
+                    .GetRows()
+                    .FirstOrDefault(w => w.Name == Capitalize(splitArgs[2]));
+                if (world != null)
+                {
+                    var worldId = world.RowId;
+                    Config.BlockedUsers.Add(new TinyUser
+                    {
+                        Name = name,
+                        WorldId = worldId,
+                    });
+                    PrintLogMessage($"Blocked user {name}{MogmogResources.CrossWorldIcon}{world.Name}");
+                    return;
+                }
+            }
+            if (splitArgs.Length == 1)
+            {
+                if (ulong.TryParse(splitArgs[0], out var userId))
+                {
+                    Config.BlockedUsers.Add(new TinyUser
+                    {
+                        Id = userId.ToString(CultureInfo.CurrentCulture),
+                    });
+                    PrintLogMessage($"Blocked user {userId}");
+                    return;
+                }
+            }
+            PrintLogMessage(LogMessages.FailedToParseCommand + "\n" +
+                            $"{command} <Character Name> <World Name>\n" +
+                            $"{command} <Discord ID>\n");
+        }
+
+        [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
+        public void UnblockUser(string command, string args)
+        {
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
+            var splitArgs = args.Split(' ');
+            if (splitArgs.Length == 3)
+            {
+                var name = Capitalize(splitArgs[0]) + " " + Capitalize(splitArgs[1]);
+                var world = this.Dalamud.Data.GetExcelSheet<World>()
+                    .GetRows()
+                    .FirstOrDefault(w => w.Name == Capitalize(splitArgs[2]));
+                if (world != null)
+                {
+                    var worldId = world.RowId;
+                    Config.BlockedUsers.Remove(new TinyUser
+                    {
+                        Name = name,
+                        WorldId = worldId,
+                    });
+                    PrintLogMessage($"Unblocked user {name}{MogmogResources.CrossWorldIcon}{world.Name}");
+                    return;
+                }
+            }
+            if (splitArgs.Length == 1)
+            {
+                if (ulong.TryParse(splitArgs[0], out var userId))
+                {
+                    Config.BlockedUsers.Remove(new TinyUser
+                    {
+                        Id = userId.ToString(CultureInfo.CurrentCulture),
+                    });
+                    PrintLogMessage($"Unblocked user {userId}");
+                    return;
+                }
+            }
+            PrintLogMessage(LogMessages.FailedToParseCommand + "\n" +
+                            $"{command} <Character Name> <World Name>\n" +
+                            $"{command} <Discord ID>\n");
         }
 
         #region Moderation Commands
@@ -136,7 +219,7 @@ namespace Mogmog.FFXIV
             if (rawArgs == null)
                 throw new ArgumentNullException(rawArgs);
             var args = rawArgs.Split(' ');
-            if (args.Length >= 4 && int.TryParse(args[0], out int channelId))
+            if (args.Length >= 4 && int.TryParse(args[0], out var channelId))
             {
                 var name = $"{args[2]} {args[3]}";
                 var worldName = args[1];
@@ -197,6 +280,17 @@ namespace Mogmog.FFXIV
         {
             if (e.Message.AuthorId == this.Dalamud.ClientState.LocalContentId)
                 return;
+            if (Config.BlockedUsers.Contains(new TinyUser
+            {
+                Id = e.Message.AuthorId.ToString(CultureInfo.CurrentCulture),
+            }))
+                return;
+            if (Config.BlockedUsers.Contains(new TinyUser
+            {
+                Name = e.Message.Author,
+                WorldId = e.Message.WorldId,
+            }))
+                return;
             PrintChatMessage(e);
         }
 
@@ -218,9 +312,10 @@ namespace Mogmog.FFXIV
         }
 
         private void PrintLogMessage(string message)
-        {
-            this.Dalamud?.Framework.Gui.Chat.Print(message);
-        }
+            => this.Dalamud?.Framework.Gui.Chat.Print(message);
+
+        private string Capitalize(string input)
+            => char.ToUpper(input[0], CultureInfo.CurrentCulture) + input[1..].ToLower(CultureInfo.CurrentCulture);
         
         private async Task LoadAvatar(PlayerCharacter player)
         {

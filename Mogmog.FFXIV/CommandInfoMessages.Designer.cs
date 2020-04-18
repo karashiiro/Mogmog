@@ -79,6 +79,15 @@ namespace Mogmog.FFXIV {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Block a user by name and world or external service ID..
+        /// </summary>
+        internal static string Block {
+            get {
+                return ResourceManager.GetString("Block", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Kick a user from a Mogmog server..
         /// </summary>
         internal static string Kick {
@@ -138,6 +147,15 @@ namespace Mogmog.FFXIV {
         internal static string Unban {
             get {
                 return ResourceManager.GetString("Unban", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unblock a user by name and world or external service ID..
+        /// </summary>
+        internal static string Unblock {
+            get {
+                return ResourceManager.GetString("Unblock", resourceCulture);
             }
         }
         

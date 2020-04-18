@@ -61,6 +61,15 @@ namespace Mogmog.FFXIV {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to parse command. Please enter that command in one of the following formats:.
+        /// </summary>
+        internal static string FailedToParseCommand {
+            get {
+                return ResourceManager.GetString("FailedToParseCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to One or more arguments failed to parse. Please enter that command in the format {0} &lt;Channel ID&gt; &lt;World Name&gt; &lt;Character Name&gt; {1}.
         /// </summary>
         internal static string TargetUserCommandFailed {

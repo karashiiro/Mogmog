@@ -123,6 +123,9 @@
   <data name="Ban" xml:space="preserve">
     <value>Ban a user from a Mogmog server.</value>
   </data>
+  <data name="Block" xml:space="preserve">
+    <value>Block a user by name and world or external service ID.</value>
+  </data>
   <data name="Kick" xml:space="preserve">
     <value>Kick a user from a Mogmog server.</value>
   </data>
@@ -143,6 +146,9 @@
   </data>
   <data name="Unban" xml:space="preserve">
     <value>Unban a user from a Mogmog server.</value>
+  </data>
+  <data name="Unblock" xml:space="preserve">
+    <value>Unblock a user by name and world or external service ID.</value>
   </data>
   <data name="Unmute" xml:space="preserve">
     <value>Unmute a user in a Mogmog server.</value>

@@ -25,6 +25,8 @@ namespace Mogmog.FFXIV
             AddCommand("/mgadd", this.parent.AddHost, CommandInfoMessages.Add);
             AddCommand("/mgremove", this.parent.RemoveHost, CommandInfoMessages.Remove);
             AddCommand("/mgreload", this.parent.ReloadHost, CommandInfoMessages.Reload);
+            AddCommand("/mgblock", this.parent.BlockUser, CommandInfoMessages.Block);
+            AddCommand("/mgunblock", this.parent.UnblockUser, CommandInfoMessages.Unblock);
             AddCommand("/mgban", this.parent.BanUser, CommandInfoMessages.Ban + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgban"));
             AddCommand("/mgunban", this.parent.UnbanUser, CommandInfoMessages.Unban + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgunban"));
             AddCommand("/mgtempban", this.parent.TempbanUser, CommandInfoMessages.Tempban + " " + string.Format(CultureInfo.InvariantCulture, CommandInfoMessages.TargetUserUsage, "/mgtempban"));
