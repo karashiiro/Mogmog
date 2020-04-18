@@ -112,91 +112,22 @@ namespace Mogmog.Server.Services
         }
 
         public override async Task<GeneralResult> OpUser(UserActionRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
-            if (isOp)
-            {
-                var name = req.UserName;
-                var worldId = req.UserWorldId;
-                result = await _userManager.OpUser(name, worldId);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOp(req, _userManager.OpUser));
 
         public override async Task<GeneralResult> BotOpUser(UserActionBotRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.StateKey);
-            if (isOp)
-            {
-                User user;
-                (user, result) = await _userManager.GetUser(req.Id);
-                if (result == MogmogOperationResult.Success)
-                    result = await _userManager.OpUser(user);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOpThroughBot(req, _userManager.OpUser));
 
         public override async Task<GeneralResult> BanUser(UserActionRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
-            if (isOp)
-            {
-                var name = req.UserName;
-                var worldId = req.UserWorldId;
-                result = await _userManager.BanUser(name, worldId);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOp(req, _userManager.BanUser));
 
         public override async Task<GeneralResult> BotBanUser(UserActionBotRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.StateKey);
-            if (isOp)
-            {
-                User user;
-                (user, result) = await _userManager.GetUser(req.Id);
-                if (result == MogmogOperationResult.Success)
-                    result = await _userManager.BanUser(user);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOpThroughBot(req, _userManager.BanUser));
 
         public override async Task<GeneralResult> UnbanUser(UserActionRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
-            if (isOp)
-            {
-                var name = req.UserName;
-                var worldId = req.UserWorldId;
-                result = await _userManager.UnbanUser(name, worldId);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOp(req, _userManager.UnbanUser));
 
         public override async Task<GeneralResult> BotUnbanUser(UserActionBotRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.StateKey);
-            if (isOp)
-            {
-                User user;
-                (user, result) = await _userManager.GetUser(req.Id);
-                if (result == MogmogOperationResult.Success)
-                    result = await _userManager.UnbanUser(user);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOpThroughBot(req, _userManager.UnbanUser));
 
         public override async Task<GeneralResult> TempbanUser(TempbanUserRequest req, ServerCallContext context)
         {
@@ -228,91 +159,22 @@ namespace Mogmog.Server.Services
         }
 
         public override async Task<GeneralResult> KickUser(UserActionRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
-            if (isOp)
-            {
-                var name = req.UserName;
-                var worldId = req.UserWorldId;
-                result = await _userManager.KickUser(name, worldId);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOp(req, _userManager.KickUser));
 
         public override async Task<GeneralResult> BotKickUser(UserActionBotRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.StateKey);
-            if (isOp)
-            {
-                User user;
-                (user, result) = await _userManager.GetUser(req.Id);
-                if (result == MogmogOperationResult.Success)
-                    result = await _userManager.UnmuteUser(user);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOpThroughBot(req, _userManager.KickUser));
 
         public override async Task<GeneralResult> MuteUser(UserActionRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
-            if (isOp)
-            {
-                var name = req.UserName;
-                var worldId = req.UserWorldId;
-                result = await _userManager.MuteUser(name, worldId);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOp(req, _userManager.MuteUser));
 
         public override async Task<GeneralResult> BotMuteUser(UserActionBotRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.StateKey);
-            if (isOp)
-            {
-                User user;
-                (user, result) = await _userManager.GetUser(req.Id);
-                if (result == MogmogOperationResult.Success)
-                    result = await _userManager.MuteUser(user);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOpThroughBot(req, _userManager.MuteUser));
 
         public override async Task<GeneralResult> UnmuteUser(UserActionRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
-            if (isOp)
-            {
-                var name = req.UserName;
-                var worldId = req.UserWorldId;
-                result = await _userManager.UnmuteUser(name, worldId);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOp(req, _userManager.UnmuteUser));
 
         public override async Task<GeneralResult> BotUnmuteUser(UserActionBotRequest req, ServerCallContext context)
-        {
-            if (req == null)
-                throw new ArgumentNullException(nameof(req));
-            var (isOp, result) = await _userManager.IsOp(req.StateKey);
-            if (isOp)
-            {
-                User user;
-                (user, result) = await _userManager.GetUser(req.Id);
-                if (result == MogmogOperationResult.Success)
-                    result = await _userManager.UnmuteUser(user);
-            }
-            return BuildResult(result);
-        }
+            => BuildResult(await IfOpThroughBot(req, _userManager.UnmuteUser));
 
         private void SendToClient(object sender, MessageEventArgs e)
         {
@@ -362,6 +224,37 @@ namespace Mogmog.Server.Services
                 },
             };
             return user;
+        }
+
+        private async Task<MogmogOperationResult> IfOp(UserActionRequest req, Func<string, int, Task<MogmogOperationResult>> ifIsOp)
+        {
+            if (req == null)
+                throw new ArgumentNullException(nameof(req));
+
+            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            if (isOp)
+            {
+                var name = req.UserName;
+                var worldId = req.UserWorldId;
+                result = await ifIsOp(name, worldId);
+            }
+
+            return result;
+        }
+
+        private async Task<MogmogOperationResult> IfOpThroughBot(UserActionBotRequest req, Func<User, Task<MogmogOperationResult>> ifIsOp)
+        {
+            if (req == null)
+                throw new ArgumentNullException(nameof(req));
+            var (isOp, result) = await _userManager.IsOp(req.StateKey);
+            if (isOp)
+            {
+                User user;
+                (user, result) = await _userManager.GetUser(req.Id);
+                if (result == MogmogOperationResult.Success)
+                    result = await ifIsOp(user);
+            }
+            return result;
         }
 
         private void Stop()

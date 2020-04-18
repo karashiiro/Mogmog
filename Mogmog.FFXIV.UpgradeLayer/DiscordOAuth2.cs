@@ -28,7 +28,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.handlerCompleted = false;
             var stateString = OAuth2Utils.GenerateStateString(20);
             HttpServer authServer = null;
-            for (int i = 0; i < reservedPorts.Length && authServer == null; i++)
+            for (var i = 0; i < reservedPorts.Length && authServer == null; i++)
             {
                 try
                 {
@@ -41,6 +41,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         throw;
                 }
             }
+            // ReSharper disable once PossibleNullReferenceException
             authServer.AddHtmlDocumentHandler((processor, stream) => OAuth2RedirectHandler(processor, authServer.Port, stateString));
             OpenUrl(GetOAuth2Url(serverAccountId, authServer.Port, stateString));
             while (!this.handlerCompleted)
