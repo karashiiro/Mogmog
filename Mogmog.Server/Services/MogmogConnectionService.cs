@@ -50,13 +50,16 @@ namespace Mogmog.Server.Services
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
             _currentUser = await Authenticate(context.RequestHeaders);
-            _currentUser.ForcedDisconnect += (sender, e) => this.Dispose();
+            _currentUser.ForcedDisconnect += OnForcedDisconnect;
             _userManager.AddUser(_currentUser);
             Log.Information("Added user {StreamName} to user list.", _currentUser.Name);
             
             _tokenSource = new CancellationTokenSource();
             await ChatLoop(requestStream, _tokenSource.Token);
         }
+
+        private void OnForcedDisconnect(object sender, EventArgs e)
+            => this.Dispose();
 
         private async Task ChatLoop(IAsyncStreamReader<ChatMessage> requestStream, CancellationToken cancellationToken)
         {
@@ -112,9 +115,8 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.OAuth2Code);
-            var result = isOp.Item2;
-            if (isOp.Item1)
+            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            if (isOp)
             {
                 var name = req.UserName;
                 var worldId = req.UserWorldId;
@@ -127,13 +129,11 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.StateKey);
-            var result = isOp.Item2;
-            if (result == MogmogOperationResult.Success)
+            var (isOp, result) = await _userManager.IsOp(req.StateKey);
+            if (isOp)
             {
-                var getUserResult = await _userManager.GetUser(req.Id);
-                var user = getUserResult.Item1;
-                result = getUserResult.Item2;
+                User user;
+                (user, result) = await _userManager.GetUser(req.Id);
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.OpUser(user);
             }
@@ -144,9 +144,8 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.OAuth2Code);
-            var result = isOp.Item2;
-            if (isOp.Item1)
+            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            if (isOp)
             {
                 var name = req.UserName;
                 var worldId = req.UserWorldId;
@@ -159,13 +158,11 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.StateKey);
-            var result = isOp.Item2;
-            if (result == MogmogOperationResult.Success)
+            var (isOp, result) = await _userManager.IsOp(req.StateKey);
+            if (isOp)
             {
-                var getUserResult = await _userManager.GetUser(req.Id);
-                var user = getUserResult.Item1;
-                result = getUserResult.Item2;
+                User user;
+                (user, result) = await _userManager.GetUser(req.Id);
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.BanUser(user);
             }
@@ -176,9 +173,8 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.OAuth2Code);
-            var result = isOp.Item2;
-            if (isOp.Item1)
+            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            if (isOp)
             {
                 var name = req.UserName;
                 var worldId = req.UserWorldId;
@@ -191,15 +187,13 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.StateKey);
-            var result = isOp.Item2;
-            if (result == MogmogOperationResult.Success)
+            var (isOp, result) = await _userManager.IsOp(req.StateKey);
+            if (isOp)
             {
-                var getUserResult = await _userManager.GetUser(req.Id);
-                var user = getUserResult.Item1;
-                result = getUserResult.Item2;
+                User user;
+                (user, result) = await _userManager.GetUser(req.Id);
                 if (result == MogmogOperationResult.Success)
-                    result = await _userManager.BanUser(user);
+                    result = await _userManager.UnbanUser(user);
             }
             return BuildResult(result);
         }
@@ -208,9 +202,8 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.OAuth2Code);
-            var result = isOp.Item2;
-            if (isOp.Item1)
+            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            if (isOp)
             {
                 var name = req.UserName;
                 var worldId = req.UserWorldId;
@@ -223,13 +216,11 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.StateKey);
-            var result = isOp.Item2;
-            if (result == MogmogOperationResult.Success)
+            var (isOp, result) = await _userManager.IsOp(req.StateKey);
+            if (isOp)
             {
-                var getUserResult = await _userManager.GetUser(req.Id);
-                var user = getUserResult.Item1;
-                result = getUserResult.Item2;
+                User user;
+                (user, result) = await _userManager.GetUser(req.Id);
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.TempbanUser(user, DateTime.FromBinary(req.UnbanTimestamp));
             }
@@ -240,9 +231,8 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.OAuth2Code);
-            var result = isOp.Item2;
-            if (isOp.Item1)
+            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            if (isOp)
             {
                 var name = req.UserName;
                 var worldId = req.UserWorldId;
@@ -255,15 +245,13 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.StateKey);
-            var result = isOp.Item2;
-            if (result == MogmogOperationResult.Success)
+            var (isOp, result) = await _userManager.IsOp(req.StateKey);
+            if (isOp)
             {
-                var getUserResult = await _userManager.GetUser(req.Id);
-                var user = getUserResult.Item1;
-                result = getUserResult.Item2;
+                User user;
+                (user, result) = await _userManager.GetUser(req.Id);
                 if (result == MogmogOperationResult.Success)
-                    result = await _userManager.KickUser(user);
+                    result = await _userManager.UnmuteUser(user);
             }
             return BuildResult(result);
         }
@@ -272,9 +260,8 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.OAuth2Code);
-            var result = isOp.Item2;
-            if (isOp.Item1)
+            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            if (isOp)
             {
                 var name = req.UserName;
                 var worldId = req.UserWorldId;
@@ -287,13 +274,11 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.StateKey);
-            var result = isOp.Item2;
-            if (result == MogmogOperationResult.Success)
+            var (isOp, result) = await _userManager.IsOp(req.StateKey);
+            if (isOp)
             {
-                var getUserResult = await _userManager.GetUser(req.Id);
-                var user = getUserResult.Item1;
-                result = getUserResult.Item2;
+                User user;
+                (user, result) = await _userManager.GetUser(req.Id);
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.MuteUser(user);
             }
@@ -304,9 +289,8 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.OAuth2Code);
-            var result = isOp.Item2;
-            if (isOp.Item1)
+            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            if (isOp)
             {
                 var name = req.UserName;
                 var worldId = req.UserWorldId;
@@ -319,13 +303,11 @@ namespace Mogmog.Server.Services
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
-            var isOp = await _userManager.IsOp(req.StateKey);
-            var result = isOp.Item2;
-            if (result == MogmogOperationResult.Success)
+            var (isOp, result) = await _userManager.IsOp(req.StateKey);
+            if (isOp)
             {
-                var getUserResult = await _userManager.GetUser(req.Id);
-                var user = getUserResult.Item1;
-                result = getUserResult.Item2;
+                User user;
+                (user, result) = await _userManager.GetUser(req.Id);
                 if (result == MogmogOperationResult.Success)
                     result = await _userManager.UnmuteUser(user);
             }
@@ -408,7 +390,7 @@ namespace Mogmog.Server.Services
                     _tokenSource?.Dispose();
                     if (_currentUser != null)
                     {
-                        _currentUser.ForcedDisconnect -= (sender, e) => this.Dispose();
+                        _currentUser.ForcedDisconnect -= OnForcedDisconnect;
                         _userManager.RemoveUser(_currentUser);
                     }
                     _transmitter.MessageSent -= SendToClient;
