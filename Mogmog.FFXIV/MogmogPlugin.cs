@@ -48,11 +48,19 @@ namespace Mogmog.FFXIV
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
-        public void AddHost(string command, string hostname)
+        public void AddHost(string command, string args)
         {
-            this.Config.Hostnames.Add(hostname);
-            this.ConnectionManager.AddHost(hostname);
-            var idx = this.Config.Hostnames.IndexOf(hostname);
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
+            var splitArgs = args.Split(' ');
+            var hostname = splitArgs[0];
+            var saveAccessCode = false;
+            if (splitArgs.Length >= 2)
+                saveAccessCode = bool.Parse(splitArgs[1]);
+            var host = new Host { Hostname = hostname, SaveAccessCode = saveAccessCode };
+            this.Config.Hosts.Add(host);
+            this.ConnectionManager.AddHost(hostname, saveAccessCode);
+            var idx = this.Config.Hosts.IndexOf(host);
             this.CommandHandler.AddChatHandler(idx + 1);
             PrintLogMessage($"Added connection {hostname}");
         }
@@ -60,11 +68,15 @@ namespace Mogmog.FFXIV
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
         public void RemoveHost(string command, string hostname)
         {
+            Host host;
             if (int.TryParse(hostname, out var i))
-                hostname = this.Config.Hostnames[i - 1];
-            var idx = this.Config.Hostnames.IndexOf(hostname);
+                host = this.Config.Hosts[i - 1];
+            else
+                return; // Should eventually print error message
+            hostname = host.Hostname;
+            var idx = this.Config.Hosts.IndexOf(host);
             this.CommandHandler.RemoveChatHandler(idx + 1);
-            this.Config.Hostnames.Remove(hostname);
+            this.Config.Hosts.Remove(host);
             this.ConnectionManager.RemoveHost(hostname);
             PrintLogMessage($"Removed connection {hostname}");
         }
@@ -73,7 +85,9 @@ namespace Mogmog.FFXIV
         public void ReloadHost(string command, string hostname)
         {
             if (int.TryParse(hostname, out var i))
-                hostname = this.Config.Hostnames[i - 1];
+                hostname = this.Config.Hosts[i - 1].Hostname;
+            else
+                return;
             this.ConnectionManager.ReloadHost(hostname);
             PrintLogMessage($"Reloaded connection {hostname}");
         }

@@ -10,7 +10,7 @@ namespace Mogmog
 
         void MessageSend(ChatMessage message, int channelId);
 
-        void AddHost(string hostname);
+        void AddHost(string hostname, bool saveAccessCode);
 
         void RemoveHost(string hostname);
 

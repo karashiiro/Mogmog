@@ -48,9 +48,9 @@ namespace Mogmog.FFXIV
         public void MessageSend(ChatMessage message, int channelId)
             => _ = SendToUpgradeLayer(message, channelId);
 
-        public void AddHost(string hostname)
+        public void AddHost(string hostname, bool saveAccessCode)
         {
-            _ = SendToUpgradeLayer("AddHost", hostname);
+            _ = SendToUpgradeLayer("AddHost", $"{hostname} {saveAccessCode}");
         }
 
         public void RemoveHost(string hostname)

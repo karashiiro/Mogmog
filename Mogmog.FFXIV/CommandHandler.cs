@@ -59,7 +59,7 @@ namespace Mogmog.FFXIV
 
         private void AddChatHandlers()
         {
-            for (int i = 1; i <= this.config.Hostnames.Count; i++)
+            for (var i = 1; i <= this.config.Hosts.Count; i++)
             {
                 AddChatHandler(i);
             }
@@ -71,7 +71,7 @@ namespace Mogmog.FFXIV
 
         private void RemoveChatHandlers()
         {
-            for (int i = 1; i <= this.config.Hostnames.Count; i++)
+            for (var i = 1; i <= this.config.Hosts.Count; i++)
             {
                 RemoveChatHandler(i);
             }

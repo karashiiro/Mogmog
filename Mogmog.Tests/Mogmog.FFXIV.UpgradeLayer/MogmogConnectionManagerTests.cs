@@ -26,24 +26,24 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public void AddHost_IsInSyncWithConfig()
         {
             string testHost = "http://localhost:5001";
-            connectionManager.AddHost(testHost);
-            Assert.AreEqual(config.Hostnames[0], testHost);
-            Assert.IsTrue(config.Hostnames.Count == 1);
+            connectionManager.AddHost(testHost, false);
+            Assert.AreEqual(config.Hosts[0].Hostname, testHost);
+            Assert.IsTrue(config.Hosts.Count == 1);
         }
 
         [Test]
         public void RemoveHost_IsInSyncWithConfig()
         {
-            connectionManager.AddHost("http://localhost:5001");
+            connectionManager.AddHost("http://localhost:5001", false);
             connectionManager.RemoveHost("http://localhost:5001");
-            Assert.IsTrue(config.Hostnames.Count == 0);
+            Assert.IsTrue(config.Hosts.Count == 0);
         }
 
         [Test]
         public void RemoveHost_DoesNotChangeIfEmpty()
         {
             connectionManager.RemoveHost("http://localhost:5001");
-            Assert.IsTrue(config.Hostnames.Count == 0);
+            Assert.IsTrue(config.Hosts.Count == 0);
         }
     }
 }

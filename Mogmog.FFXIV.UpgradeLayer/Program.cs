@@ -63,7 +63,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                     switch (command)
                     {
                         case "addhost":
-                            connectionManager.AddHost(args[0]);
+                            connectionManager.AddHost(args[0], false);
                             break;
                         case "removehost":
                             connectionManager.RemoveHost(args[0]);
@@ -105,7 +105,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             using var memoryStream = new MemoryStream();
             stream.CopyTo(memoryStream);
 
-            string input = Encoding.UTF8.GetString(memoryStream.GetBuffer());
+            var input = Encoding.UTF8.GetString(memoryStream.GetBuffer());
 
             #if DEBUG
             Console.WriteLine(input);
@@ -124,7 +124,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 switch (genericInterop.Command)
                 {
                     case "AddHost":
-                        connectionManager.AddHost(genericInterop.Arg);
+                        connectionManager.AddHost(args[0], bool.Parse(args[1]));
                         break;
                     case "RemoveHost":
                         connectionManager.RemoveHost(genericInterop.Arg);

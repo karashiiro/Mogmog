@@ -23,15 +23,15 @@ namespace Mogmog.FFXIV.UpgradeLayer
             this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.connections = new DisposableStrongIndexedList<MogmogConnection>();
 
-            foreach (string hostname in config.Hostnames)
+            foreach (var host in config.Hosts)
             {
-                if (string.IsNullOrEmpty(hostname))
+                if (string.IsNullOrEmpty(host.Hostname))
                 {
                     this.connections.Append(null);
                 }
                 else
                 {
-                    var connection = new MogmogConnection(hostname, this.connections.Count);
+                    var connection = new MogmogConnection(host.Hostname, this.connections.Count, host.SaveAccessCode);
                     connection.MessageReceivedEvent += MessageReceived;
                     this.connections.Append(connection);
                 }
@@ -39,22 +39,23 @@ namespace Mogmog.FFXIV.UpgradeLayer
         }
 
         [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Disposal responsibility belongs to the connection manager.")]
-        public void AddHost(string hostname)
+        public void AddHost(string hostname, bool saveAccessCode)
         {
-            if (this.config.Hostnames.Contains(hostname))
+            if (this.config.Hosts.FirstOrDefault(h => h.Hostname == hostname) == null)
             {
                 Mogger.LogError(LogMessages.HostExists);
                 return;
             }
-            this.config.Hostnames.Add(hostname);
+            var host = new Host { Hostname = hostname, SaveAccessCode = saveAccessCode };
+            this.config.Hosts.Add(host);
             MogmogConnection connection;
             try
             {
-                connection = new MogmogConnection(hostname, this.config.Hostnames.IndexOf(hostname));
+                connection = new MogmogConnection(hostname, this.config.Hosts.IndexOf(host), saveAccessCode);
             }
             catch (RpcException e)
             {
-                this.config.Hostnames.Remove(hostname);
+                this.config.Hosts.Remove(host);
                 if (e.Status.Detail == "Error starting gRPC call: No connection could be made because the target machine actively refused it.")
                     Mogger.LogError(LogMessages.HostOffline); // A more user-friendly error
                 else
@@ -67,28 +68,33 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         public void RemoveHost(string hostname)
         {
-            int i = this.config.Hostnames.IndexOf(hostname);
-            if (i == -1)
+            var host = this.config.Hosts.FirstOrDefault(h => h.Hostname == hostname);
+            var i = this.config.Hosts.IndexOf(host);
+            if (host == null || i == -1)
             {
                 Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
-            this.config.Hostnames.RemoveAt(i);
+
+            this.config.Hosts.RemoveAt(i);
             this.connections[i].MessageReceivedEvent -= MessageReceived;
             this.connections.RemoveAt(i);
         }
 
         public void ReloadHost(string hostname)
         {
-            int i = this.config.Hostnames.IndexOf(hostname);
-            if (i == -1)
+            var host = this.config.Hosts.FirstOrDefault(h => h.Hostname == hostname);
+            var i = this.config.Hosts.IndexOf(host);
+            if (host == null || i == -1)
             {
                 Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
+
+            var saveAccessCode = this.connections[i].SaveAccessCode;
             var channelId = this.connections[i].ChannelId;
             this.connections[i].Dispose();
-            this.connections[i] = new MogmogConnection(hostname, channelId);
+            this.connections[i] = new MogmogConnection(hostname, channelId, saveAccessCode);
         }
 
         #region Moderation Commands

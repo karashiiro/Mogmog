@@ -22,10 +22,12 @@ namespace Mogmog.FFXIV.UpgradeLayer
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
 
         public int ChannelId { get; set; }
+        public bool SaveAccessCode { get; set; }
 
-        public MogmogConnection(string hostname, int channelId)
+        public MogmogConnection(string hostname, int channelId, bool saveAccessCode)
         {
             this.ChannelId = channelId;
+            this.SaveAccessCode = saveAccessCode;
             this.tokenSource = new CancellationTokenSource();
             this.channel = GrpcChannel.ForAddress(hostname);
             this.chatClient = new ChatServiceClient(channel);

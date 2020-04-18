@@ -73,7 +73,7 @@ namespace Mogmog.FFXIV
         [Test]
         public void AddHost_DoesNotThrowExceptions()
         {
-            connectionManager.AddHost("https://localhost:5001");
+            connectionManager.AddHost("https://localhost:5001", false);
             Assert.Pass();
         }
 

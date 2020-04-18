@@ -1,7 +1,7 @@
-﻿using Mogmog.OAuth2;
-using Mogmog.Tests.Stubs;
+﻿using Mogmog.Tests.Stubs;
 using Moq;
 using NUnit.Framework;
+using System.Linq;
 
 namespace Mogmog.FFXIV
 {
@@ -36,7 +36,7 @@ namespace Mogmog.FFXIV
         {
             var hostname = "https://localhost:5001";
             mogmog.AddHost("/mgaddhost", hostname);
-            Assert.IsTrue(config.Hostnames.Contains(hostname));
+            Assert.IsTrue(config.Hosts.Any(h => h.Hostname == hostname));
         }
 
         [Test]
@@ -46,9 +46,9 @@ namespace Mogmog.FFXIV
         {
             var hostname = "https://localhost:5001";
             mogmog.AddHost("/mgaddhost", hostname);
-            Assert.IsTrue(config.Hostnames.Contains(hostname));
+            Assert.IsTrue(config.Hosts.Any(h => h.Hostname == hostname));
             mogmog.RemoveHost("/mgmgremovehost", input);
-            Assert.IsFalse(config.Hostnames.Contains(hostname));
+            Assert.IsFalse(config.Hosts.Any(h => h.Hostname == hostname));
         }
 
         [Test]
@@ -57,7 +57,7 @@ namespace Mogmog.FFXIV
             var hostname = "https://localhost:5001";
             mogmog.AddHost("/mgaddhost", hostname);
             mogmog.ReloadHost("/mgreload", hostname);
-            Assert.IsTrue(config.Hostnames.Contains(hostname));
+            Assert.IsTrue(config.Hosts.Any(h => h.Hostname == hostname));
         }
     }
 }
