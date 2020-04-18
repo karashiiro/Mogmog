@@ -133,22 +133,22 @@ namespace Mogmog.FFXIV.UpgradeLayer
                         connectionManager.ReloadHost(genericInterop.Arg);
                         break;
                     case "BanUser":
-                        connectionManager.BanUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        connectionManager.BanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
                     case "UnbanUser":
-                        connectionManager.UnbanUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        connectionManager.UnbanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
                     case "TempbanUser":
-                        connectionManager.TempbanUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture), DateTime.FromBinary(long.Parse(args[4], CultureInfo.CurrentCulture)));
+                        connectionManager.TempbanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), DateTime.FromBinary(long.Parse(args[2], CultureInfo.InvariantCulture)), args[3], int.Parse(args[4], CultureInfo.InvariantCulture), int.Parse(args[5], CultureInfo.InvariantCulture));
                         break;
                     case "KickUser":
-                        connectionManager.KickUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        connectionManager.KickUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
                     case "MuteUser":
-                        connectionManager.MuteUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        connectionManager.MuteUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
                     case "UnmuteUser":
-                        connectionManager.UnmuteUser(args[0], int.Parse(args[1], CultureInfo.CurrentCulture), int.Parse(args[2], CultureInfo.CurrentCulture));
+                        connectionManager.UnmuteUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
                     default:
                         throw new NotSupportedException();

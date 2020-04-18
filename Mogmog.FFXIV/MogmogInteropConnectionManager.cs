@@ -59,23 +59,23 @@ namespace Mogmog.FFXIV
         public void ReloadHost(string hostname)
             => _ = SendToUpgradeLayer("ReloadHost", hostname);
 
-        public void BanUser(string name, int worldId, int channelId)
-            => _ = SendToUpgradeLayer("BanUser", $"{channelId} {name} {worldId}");
+        public void BanUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
+            => _ = SendToUpgradeLayer("BanUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
-        public void UnbanUser(string name, int worldId, int channelId)
-            => _ = SendToUpgradeLayer("UnbanUser", $"{channelId} {name} {worldId}");
+        public void UnbanUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
+            => _ = SendToUpgradeLayer("UnbanUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
-        public void TempbanUser(string name, int worldId, int channelId, DateTime end)
-            => _ = SendToUpgradeLayer("TempbanUser", $"{channelId} {name} {worldId} {end.ToBinary()}");
+        public void TempbanUser(string name, int worldId, DateTime end, string senderName, int senderWorldId, int channelId)
+            => _ = SendToUpgradeLayer("TempbanUser", $"{name} {worldId} {end.ToBinary()} {senderName} {senderWorldId} {channelId}");
 
-        public void KickUser(string name, int worldId, int channelId)
-            => _ = SendToUpgradeLayer("KickUser", $"{channelId} {name} {worldId}");
+        public void KickUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
+            => _ = SendToUpgradeLayer("KickUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
-        public void MuteUser(string name, int worldId, int channelId)
-            => _ = SendToUpgradeLayer("MuteUser", $"{channelId} {name} {worldId}");
+        public void MuteUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
+            => _ = SendToUpgradeLayer("MuteUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
-        public void UnmuteUser(string name, int worldId, int channelId)
-            => _ = SendToUpgradeLayer("UnmuteUser", $"{channelId} {name} {worldId}");
+        public void UnmuteUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
+            => _ = SendToUpgradeLayer("UnmuteUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
         #region Interop Interface Methods
         public byte[] UpgradeLayerMessageReceived(Stream stream)

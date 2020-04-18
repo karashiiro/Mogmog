@@ -16,16 +16,16 @@ namespace Mogmog
 
         void ReloadHost(string hostname);
 
-        void BanUser(string name, int worldId, int channelId);
+        void BanUser(string name, int worldId, string senderName, int senderWorldId, int channelId);
 
-        void UnbanUser(string name, int worldId, int channelId);
+        void UnbanUser(string name, int worldId, string senderName, int senderWorldId, int channelId);
 
-        void TempbanUser(string name, int worldId, int channelId, DateTime end);
+        void TempbanUser(string name, int worldId, DateTime end, string senderName, int senderWorldId, int channelId);
 
-        void KickUser(string name, int worldId, int channelId);
+        void KickUser(string name, int worldId, string senderName, int senderWorldId, int channelId);
 
-        void MuteUser(string name, int worldId, int channelId);
+        void MuteUser(string name, int worldId, string senderName, int senderWorldId, int channelId);
 
-        void UnmuteUser(string name, int worldId, int channelId);
+        void UnmuteUser(string name, int worldId, string senderName, int senderWorldId, int channelId);
     }
 }

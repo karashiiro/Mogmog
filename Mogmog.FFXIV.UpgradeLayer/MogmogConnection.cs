@@ -69,23 +69,35 @@ namespace Mogmog.FFXIV.UpgradeLayer
         }
 
         #region Moderation Commands
-        public async Task BanUser(string name, int worldId)
-            => await this.chatClient.BanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
+        public async Task BanUser(string name, int worldId, string thisUserName, int thisUserWorldId)
+            => await this.chatClient.BanUserAsync(BuildActionRequest(name, worldId, thisUserName, thisUserWorldId));
 
-        public async Task UnbanUser(string name, int worldId)
-            => await this.chatClient.UnbanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
+        public async Task UnbanUser(string name, int worldId, string thisUserName, int thisUserWorldId)
+            => await this.chatClient.UnbanUserAsync(BuildActionRequest(name, worldId, thisUserName, thisUserWorldId));
 
-        public async Task TempbanUser(string name, int worldId, DateTime end)
-            => await this.chatClient.TempbanUserAsync(new TempbanUserRequest { UserName = name, UserWorldId = worldId, UnbanTimestamp = end.ToBinary(), OAuth2Code = oAuth2.OAuth2Code });
+        public async Task TempbanUser(string name, int worldId, DateTime end, string thisUserName, int thisUserWorldId)
+            => await this.chatClient.TempbanUserAsync(new TempbanUserRequest { UserName = name, UserWorldId = worldId, UnbanTimestamp = end.ToBinary(), OAuth2Code = oAuth2.OAuth2Code ?? string.Empty, ThisUserName = thisUserName, ThisUserWorldId = thisUserWorldId });
 
-        public async Task KickUser(string name, int worldId)
-            => await this.chatClient.KickUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
+        public async Task KickUser(string name, int worldId, string thisUserName, int thisUserWorldId)
+            => await this.chatClient.KickUserAsync(BuildActionRequest(name, worldId, thisUserName, thisUserWorldId));
 
-        public async Task MuteUser(string name, int worldId)
-            => await this.chatClient.MuteUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
+        public async Task MuteUser(string name, int worldId, string thisUserName, int thisUserWorldId)
+            => await this.chatClient.MuteUserAsync(BuildActionRequest(name, worldId, thisUserName, thisUserWorldId));
 
-        public async Task UnmuteUser(string name, int worldId)
-            => await this.chatClient.UnmuteUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
+        public async Task UnmuteUser(string name, int worldId, string thisUserName, int thisUserWorldId)
+            => await this.chatClient.UnmuteUserAsync(BuildActionRequest(name, worldId, thisUserName, thisUserWorldId));
+
+        private UserActionRequest BuildActionRequest(string name, int worldId, string thisUserName, int thisUserWorldId)
+        {
+            return new UserActionRequest
+            {
+                UserName = name,
+                UserWorldId = worldId,
+                OAuth2Code = oAuth2.OAuth2Code ?? string.Empty,
+                ThisUserName = thisUserName,
+                ThisUserWorldId = thisUserWorldId,
+            };
+        }
         #endregion
 
         #region IDisposable Support

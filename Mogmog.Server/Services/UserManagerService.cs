@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -9,7 +11,7 @@ namespace Mogmog.Server.Services
 {
     public class TempbanEntry
     {
-        public ulong UserId { get; set; }
+        public string Id { get; set; }
 
         public string Name { get; set; }
 
@@ -29,34 +31,27 @@ namespace Mogmog.Server.Services
     {
         private readonly CancellationTokenSource _tokenSource;
         private readonly ConcurrentList<User> _userList;
-        private readonly ConcurrentList<ulong> _opList;
-        private readonly ConcurrentList<ulong> _bannedUserList;
-        private readonly ConcurrentList<ulong> _mutedUserList;
+        private readonly ConcurrentList<UserFragment> _opList;
+        private readonly ConcurrentList<UserFragment> _bannedUserList;
+        private readonly ConcurrentList<UserFragment> _mutedUserList;
         private readonly ConcurrentList<TempbanEntry> _tempbanList;
 
         public UserManagerService()
         {
             _userList = new ConcurrentList<User>();
 
-            if (File.Exists("op_targetUsers"))
-                _opList = JsonConvert.DeserializeObject<ConcurrentList<ulong>>(File.ReadAllText("op_targetUsers"));
-            else
-                _opList = new ConcurrentList<ulong>();
-
-            if (File.Exists("banned_targetUsers"))
-                _bannedUserList = JsonConvert.DeserializeObject<ConcurrentList<ulong>>(File.ReadAllText("banned_targetUsers"));
-            else
-                _bannedUserList = new ConcurrentList<ulong>();
-
-            if (File.Exists("tempbanned_targetUsers"))
-                _tempbanList = JsonConvert.DeserializeObject<ConcurrentList<TempbanEntry>>(File.ReadAllText("tempbanned_targetUsers"));
-            else
-                _tempbanList = new ConcurrentList<TempbanEntry>();
-
-            if (File.Exists("muted_targetUsers"))
-                _mutedUserList = JsonConvert.DeserializeObject<ConcurrentList<ulong>>(File.ReadAllText("muted_targetUsers"));
-            else
-                _mutedUserList = new ConcurrentList<ulong>();
+            _opList = File.Exists("op_targetUsers")
+                ? JsonConvert.DeserializeObject<ConcurrentList<UserFragment>>(File.ReadAllText("op_targetUsers"))
+                : new ConcurrentList<UserFragment>();
+            _bannedUserList = File.Exists("banned_targetUsers")
+                ? JsonConvert.DeserializeObject<ConcurrentList<UserFragment>>(File.ReadAllText("banned_targetUsers"))
+                : new ConcurrentList<UserFragment>();
+            _tempbanList = File.Exists("tempbanned_targetUsers")
+                ? JsonConvert.DeserializeObject<ConcurrentList<TempbanEntry>>(File.ReadAllText("tempbanned_targetUsers"))
+                : new ConcurrentList<TempbanEntry>();
+            _mutedUserList = File.Exists("muted_targetUsers")
+                ? JsonConvert.DeserializeObject<ConcurrentList<UserFragment>>(File.ReadAllText("muted_targetUsers"))
+                : new ConcurrentList<UserFragment>();
 
             _tokenSource = new CancellationTokenSource();
             _ = CheckTempBans(_tokenSource.Token);
@@ -86,13 +81,9 @@ namespace Mogmog.Server.Services
                 return new Tuple<User, MogmogOperationResult>(null, MogmogOperationResult.NoAuthentication);
             User result = null;
             foreach (var user in _userList)
-            {
                 if (await user.GetId() == id)
                     result = user;
-            }
-            if (result == null)
-                return new Tuple<User, MogmogOperationResult>(null, MogmogOperationResult.Failed);
-            return new Tuple<User, MogmogOperationResult>(result, MogmogOperationResult.Success);
+            return new Tuple<User, MogmogOperationResult>(result, result == null ? MogmogOperationResult.Failed : MogmogOperationResult.Success);
         }
 
         public async Task<Tuple<User, MogmogOperationResult>> GetUser(string oAuth2Code)
@@ -105,25 +96,23 @@ namespace Mogmog.Server.Services
             return await GetUser(id);
         }
 
-        public async Task<MogmogOperationResult> OpUser(string name, int worldId)
+        public Task<MogmogOperationResult> OpUser(string name, int worldId)
         {
             var targetUser = GetUser(name, worldId);
-            return await OpUser(targetUser);
+            return OpUser(targetUser);
         }
 
         public async Task<MogmogOperationResult> OpUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            if (targetUser.AuthState == null)
-                return MogmogOperationResult.NoAuthentication;
-            var result = _opList.TryAdd((await targetUser.GetId()).GetValueOrDefault());
-            if (result)
-                return MogmogOperationResult.Success;
-            return MogmogOperationResult.Failed;
+            var result = _opList.TryAdd(targetUser.AuthState != null
+                ? new UserFragment { Id = (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture) }
+                : new UserFragment { Name = targetUser.Name, WorldId = targetUser.WorldId });
+            return result ? MogmogOperationResult.Success : MogmogOperationResult.Failed;
         }
 
-        public bool IsOp(ulong targetUserId)
-            => _opList.Contains(targetUserId);
+        public bool IsOp(string name, int worldId)
+            => _opList.FirstOrDefault(user => user.Name == name && user.WorldId == worldId) != null;
 
         public async Task<Tuple<bool, MogmogOperationResult>> IsOp(string oAuth2Code)
         {
@@ -136,16 +125,16 @@ namespace Mogmog.Server.Services
                 var result = await IsOp(user.Item1);
                 return new Tuple<bool, MogmogOperationResult>(result, MogmogOperationResult.Success);
             }
-            else
-            {
-                return new Tuple<bool, MogmogOperationResult>(true, MogmogOperationResult.Success);
-            }
+            return new Tuple<bool, MogmogOperationResult>(true, MogmogOperationResult.Success);
         }
 
         public async Task<bool> IsOp(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            return _opList.Contains((await targetUser.GetId()).GetValueOrDefault());
+            foreach (var user in _opList)
+                if (user.Id == (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture))
+                    return true;
+            return false;
         }
 
         public async Task<MogmogOperationResult> KickUser(string name, int worldId)
@@ -154,7 +143,7 @@ namespace Mogmog.Server.Services
             return await KickUser(targetUser);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "For API consistency")]
+        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "For API consistency")]
         public Task<MogmogOperationResult> KickUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
@@ -162,140 +151,193 @@ namespace Mogmog.Server.Services
             return Task.FromResult(MogmogOperationResult.Success);
         }
 
-        public async Task<MogmogOperationResult> MuteUser(string name, int worldId)
+        public Task<MogmogOperationResult> MuteUser(string name, int worldId)
         {
             var targetUser = GetUser(name, worldId);
-            return await MuteUser(targetUser);
+            return MuteUser(targetUser);
         }
 
         public async Task<MogmogOperationResult> MuteUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            if (targetUser.AuthState == null)
-                return MogmogOperationResult.NoAuthentication;
-            var result = _mutedUserList.TryAdd((await targetUser.GetId()).GetValueOrDefault());
-            if (result)
-                return MogmogOperationResult.Success;
-            return MogmogOperationResult.Failed;
+            var result = _mutedUserList.TryAdd(targetUser.AuthState != null
+                ? new UserFragment { Id = (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture) }
+                : new UserFragment { Name = targetUser.Name, WorldId = targetUser.WorldId });
+            return result ? MogmogOperationResult.Success : MogmogOperationResult.Failed;
         }
 
-        public async Task<MogmogOperationResult> UnmuteUser(string name, int worldId)
+        public Task<MogmogOperationResult> UnmuteUser(string name, int worldId)
         {
             var targetUser = GetUser(name, worldId);
-            return await UnmuteUser(targetUser);
+            return UnmuteUser(targetUser);
         }
 
         public async Task<MogmogOperationResult> UnmuteUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            if (targetUser.AuthState == null)
-                return MogmogOperationResult.NoAuthentication;
-            _mutedUserList.Remove((await targetUser.GetId()).GetValueOrDefault(), out _);
-            return MogmogOperationResult.Success;
+            var result = false;
+            if (targetUser.AuthState != null)
+            {
+                foreach (var user in _mutedUserList)
+                    if (user.Id == (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture))
+                        result = _mutedUserList.Remove(user, out _);
+            }
+            else
+            {
+                foreach (var user in _mutedUserList)
+                    if (user.Name == targetUser.Name && user.WorldId == targetUser.WorldId)
+                        result = _mutedUserList.Remove(user, out _);
+            }
+            return result ? MogmogOperationResult.Success : MogmogOperationResult.Failed;
         }
 
-        public async Task<Tuple<bool, MogmogOperationResult>> HasMutedUser(string name, int worldId)
+        public Task<Tuple<bool, MogmogOperationResult>> HasMutedUser(string name, int worldId)
         {
             var targetUser = GetUser(name, worldId);
-            return await HasMutedUser(targetUser);
+            return HasMutedUser(targetUser);
         }
 
         public async Task<Tuple<bool, MogmogOperationResult>> HasMutedUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            if (targetUser.AuthState == null)
-                return new Tuple<bool, MogmogOperationResult>(false, MogmogOperationResult.NoAuthentication);
-            return new Tuple<bool, MogmogOperationResult>(_mutedUserList.Contains((await targetUser.GetId()).GetValueOrDefault()), MogmogOperationResult.Success);
+            if (targetUser.AuthState != null)
+            {
+                foreach (var user in _mutedUserList)
+                    if (user.Id == (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture))
+                        return new Tuple<bool, MogmogOperationResult>(true, MogmogOperationResult.Success);
+            }
+            else
+            if (_mutedUserList.Any(user => user.Name == targetUser.Name && user.WorldId == targetUser.WorldId))
+                return new Tuple<bool, MogmogOperationResult>(true, MogmogOperationResult.Success);
+            return new Tuple<bool, MogmogOperationResult>(false, MogmogOperationResult.Success);
         }
 
-        public async Task<MogmogOperationResult> BanUser(string name, int worldId)
+        public Task<MogmogOperationResult> BanUser(string name, int worldId)
         {
             var targetUser = GetUser(name, worldId);
-            return await BanUser(targetUser);
+            return BanUser(targetUser);
         }
 
         public async Task<MogmogOperationResult> BanUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            if (targetUser.AuthState == null)
-                return MogmogOperationResult.NoAuthentication;
-            var result = _bannedUserList.TryAdd((await targetUser.GetId()).GetValueOrDefault());
-            if (result)
+            var result = false;
+            if (targetUser.AuthState != null)
             {
-                targetUser.Disconnect();
-                return MogmogOperationResult.Success;
+                foreach (var user in _bannedUserList)
+                    if (user.Id == (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture))
+                    {
+                        result = _bannedUserList.Remove(user, out _);
+                        result = result && await KickUser(targetUser) == MogmogOperationResult.Success;
+                    }
             }
-            return MogmogOperationResult.Failed;
+            else
+            {
+                foreach (var user in _bannedUserList)
+                    if (user.Name == targetUser.Name && user.WorldId == targetUser.WorldId)
+                    {
+                        result = _bannedUserList.Remove(user, out _);
+                        result = result && await KickUser(targetUser) == MogmogOperationResult.Success;
+                    }
+            }
+            return result ? MogmogOperationResult.Success : MogmogOperationResult.Failed;
         }
 
-        public async Task<Tuple<bool, MogmogOperationResult>> HasBannedUser(string name, int worldId)
+        public Task<Tuple<bool, MogmogOperationResult>> HasBannedUser(string name, int worldId)
         {
             var targetUser = GetUser(name, worldId);
-            return await HasBannedUser(targetUser);
+            return HasBannedUser(targetUser);
         }
 
         public async Task<Tuple<bool, MogmogOperationResult>> HasBannedUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            if (targetUser.AuthState == null)
-                return new Tuple<bool, MogmogOperationResult>(false, MogmogOperationResult.NoAuthentication);
-            return new Tuple<bool, MogmogOperationResult>(_bannedUserList.Contains((await targetUser.GetId()).GetValueOrDefault()), MogmogOperationResult.Success);
+            if (targetUser.AuthState != null)
+            {
+                foreach (var user in _bannedUserList)
+                    if (user.Id == (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture))
+                        return new Tuple<bool, MogmogOperationResult>(true, MogmogOperationResult.Success);
+            }
+            else
+                if (_bannedUserList.Any(user => user.Name == targetUser.Name && user.WorldId == targetUser.WorldId))
+                    return new Tuple<bool, MogmogOperationResult>(true, MogmogOperationResult.Success);
+            return new Tuple<bool, MogmogOperationResult>(false, MogmogOperationResult.Success);
         }
 
-        public async Task<MogmogOperationResult> UnbanUser(string name, int worldId)
+        public Task<MogmogOperationResult> UnbanUser(string name, int worldId)
         {
             var targetUser = GetUser(name, worldId);
-            return await UnbanUser(targetUser);
+            return UnbanUser(targetUser);
         }
 
         public async Task<MogmogOperationResult> UnbanUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            if (targetUser.AuthState == null)
-                return MogmogOperationResult.NoAuthentication;
-            _bannedUserList.Remove((await targetUser.GetId()).GetValueOrDefault(), out _);
-            await UnTempbanUser(targetUser);
-            return MogmogOperationResult.Success;
+            var result = false;
+            if (targetUser.AuthState != null)
+            {
+                foreach (var user in _bannedUserList)
+                    if (user.Id == (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture))
+                    {
+                        result = _bannedUserList.Remove(user, out _);
+                        result = result && await UnTempbanUser(targetUser) == MogmogOperationResult.Success;
+                    }
+            }
+            else
+            {
+                foreach (var user in _bannedUserList)
+                    if (user.Name == targetUser.Name && user.WorldId == targetUser.WorldId)
+                    {
+                        result = _bannedUserList.Remove(user, out _);
+                        result = result && await UnTempbanUser(targetUser) == MogmogOperationResult.Success;
+                    }
+            }
+            return result ? MogmogOperationResult.Success : MogmogOperationResult.Failed;
         }
 
-        public async Task<MogmogOperationResult> TempbanUser(string name, int worldId, DateTime end)
+        public Task<MogmogOperationResult> TempbanUser(string name, int worldId, DateTime end)
         {
             var targetUser = GetUser(name, worldId);
-            return await TempbanUser(targetUser, end);
+            return TempbanUser(targetUser, end);
         }
 
         public async Task<MogmogOperationResult> TempbanUser(User targetUser, DateTime end)
         {
             ThrowIfUserNull(targetUser);
-            if (targetUser.AuthState == null)
-                return MogmogOperationResult.NoAuthentication;
             await BanUser(targetUser);
             var result = _tempbanList.TryAdd(new TempbanEntry
             {
-                UserId = (await targetUser.GetId()).GetValueOrDefault(),
+                Id = (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture),
                 Name = targetUser.Name,
                 WorldId = targetUser.WorldId,
                 EndTime = end,
             });
-            if (result)
-                return MogmogOperationResult.Success;
-            return MogmogOperationResult.Failed;
+            return result ? MogmogOperationResult.Success : MogmogOperationResult.Failed;
         }
 
-        public async Task<MogmogOperationResult> UnTempbanUser(string name, int worldId)
+        public Task<MogmogOperationResult> UnTempbanUser(string name, int worldId)
         {
             var targetUser = GetUser(name, worldId);
-            return await UnTempbanUser(targetUser);
+            return UnTempbanUser(targetUser);
         }
 
         public async Task<MogmogOperationResult> UnTempbanUser(User targetUser)
         {
             ThrowIfUserNull(targetUser);
-            var id = await targetUser.GetId();
-            var tempbanEntry = _tempbanList.FirstOrDefault((entry) => entry.UserId == id.GetValueOrDefault());
-            if (tempbanEntry != null)
-                _tempbanList.Remove(tempbanEntry, out _);
-            return MogmogOperationResult.Success;
+            var result = false;
+            if (targetUser.AuthState != null)
+            {
+                foreach (var user in _tempbanList)
+                    if (user.Id == (await targetUser.GetId()).GetValueOrDefault().ToString(CultureInfo.InvariantCulture))
+                        result = _tempbanList.Remove(user, out _);
+            }
+            else
+            {
+                foreach (var user in _tempbanList)
+                    if (user.Name == targetUser.Name && user.WorldId == targetUser.WorldId)
+                        result = _tempbanList.Remove(user, out _);
+            }
+            return result ? MogmogOperationResult.Success : MogmogOperationResult.Failed;
         }
 
         private async Task CheckTempBans(CancellationToken token)
@@ -308,7 +350,7 @@ namespace Mogmog.Server.Services
                         token.ThrowIfCancellationRequested();
                     if (DateTime.Now > tempban.EndTime)
                     {
-                        _bannedUserList.Remove(tempban.UserId, out _);
+                        await UnbanUser(tempban.Name, tempban.WorldId);
                         _tempbanList.Remove(tempban, out _);
                     }
                 }

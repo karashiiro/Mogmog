@@ -52,7 +52,17 @@ namespace Mogmog.Server.Services
             _currentUser = await Authenticate(context.RequestHeaders);
             _currentUser.ForcedDisconnect += OnForcedDisconnect;
             _userManager.AddUser(_currentUser);
-            Log.Information("Added user {StreamName} to user list.", _currentUser.Name);
+            var (isBanned, result) = await _userManager.HasBannedUser(_currentUser);
+            if (result != MogmogOperationResult.Success || isBanned)
+            {
+                if (result != MogmogOperationResult.Success)
+                    Log.Information("Unable to determine user ban state for {UserName}.", _currentUser.Name);
+                if (isBanned)
+                    Log.Information("User {UserName} is banned and attempted to connect, kicking...", _currentUser.Name);
+                await _userManager.KickUser(_currentUser);
+                return;
+            }
+            Log.Information("Added user {UserName} to user list.", _currentUser.Name);
             
             _tokenSource = new CancellationTokenSource();
             await ChatLoop(requestStream, _tokenSource.Token);
@@ -231,7 +241,9 @@ namespace Mogmog.Server.Services
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
 
-            var (isOp, result) = await _userManager.IsOp(req.OAuth2Code);
+            var (isOp, result) = !string.IsNullOrEmpty(req.OAuth2Code)
+                ? await _userManager.IsOp(req.OAuth2Code)
+                : new Tuple<bool, MogmogOperationResult>(_userManager.IsOp(req.ThisUserName, req.ThisUserWorldId), MogmogOperationResult.Failed);
             if (isOp)
             {
                 var name = req.UserName;

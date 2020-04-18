@@ -92,64 +92,64 @@ namespace Mogmog.FFXIV.UpgradeLayer
         }
 
         #region Moderation Commands
-        public void BanUser(string name, int worldId, int channelId)
+        public void BanUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
         {
             if (this.connections[channelId] == null)
             {
                 Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
-            _ = this.connections[channelId].BanUser(name, worldId);
+            _ = this.connections[channelId].BanUser(name, worldId, senderName, senderWorldId);
         }
 
-        public void UnbanUser(string name, int worldId, int channelId)
+        public void UnbanUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
         {
             if (this.connections[channelId] == null)
             {
                 Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
-            _ = this.connections[channelId].UnbanUser(name, worldId);
+            _ = this.connections[channelId].UnbanUser(name, worldId, senderName, senderWorldId);
         }
 
-        public void TempbanUser(string name, int worldId, int channelId, DateTime end)
+        public void TempbanUser(string name, int worldId, DateTime end, string senderName, int senderWorldId, int channelId)
         {
             if (this.connections[channelId] == null)
             {
                 Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
-            _ = this.connections[channelId].TempbanUser(name, worldId, end);
+            _ = this.connections[channelId].TempbanUser(name, worldId, end, senderName, senderWorldId);
         }
 
-        public void KickUser(string name, int worldId, int channelId)
+        public void KickUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
         {
             if (this.connections[channelId] == null)
             {
                 Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
-            _ = this.connections[channelId].KickUser(name, worldId);
+            _ = this.connections[channelId].KickUser(name, worldId, senderName, senderWorldId);
         }
 
-        public void MuteUser(string name, int worldId, int channelId)
+        public void MuteUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
         {
             if (this.connections[channelId] == null)
             {
                 Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
-            _ = this.connections[channelId].MuteUser(name, worldId);
+            _ = this.connections[channelId].MuteUser(name, worldId, senderName, senderWorldId);
         }
 
-        public void UnmuteUser(string name, int worldId, int channelId)
+        public void UnmuteUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
         {
             if (this.connections[channelId] == null)
             {
                 Mogger.LogError(LogMessages.HostNotFound);
                 return;
             }
-            _ = this.connections[channelId].UnmuteUser(name, worldId);
+            _ = this.connections[channelId].UnmuteUser(name, worldId, senderName, senderWorldId);
         }
         #endregion
 

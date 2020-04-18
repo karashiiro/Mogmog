@@ -163,52 +163,39 @@ namespace Mogmog.FFXIV
 
         #region Moderation Commands
         public void BanUser(string command, string args)
-        {
-            var parsedArgs = ProcessTargetUserArgs(command, args);
-            if (parsedArgs == null)
-                return;
-            this.ConnectionManager.BanUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
-        }
+            => ProcessThenRun(command, args, this.ConnectionManager.BanUser);
 
         public void UnbanUser(string command, string args)
-        {
-            var parsedArgs = ProcessTargetUserArgs(command, args);
-            if (parsedArgs == null)
-                return;
-            this.ConnectionManager.UnbanUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
-        }
+            => ProcessThenRun(command, args, this.ConnectionManager.UnbanUser);
 
         public void TempbanUser(string command, string args)
         {
+            var player = this.Dalamud.ClientState.LocalPlayer;
             var parsedArgs = ProcessTargetUserArgs(command, args, "<Unban Date and/or Time>");
             if (parsedArgs == null)
                 return;
+            var (name, worldId, channelId) = parsedArgs;
             var end = DateTimeUtils.GetDateTime(args);
-            this.ConnectionManager.TempbanUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3, end);
+            this.ConnectionManager.TempbanUser(name, worldId, end, player.Name, player.HomeWorld.Id, channelId);
         }
 
         public void KickUser(string command, string args)
-        {
-            var parsedArgs = ProcessTargetUserArgs(command, args);
-            if (parsedArgs == null)
-                return;
-            this.ConnectionManager.KickUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
-        }
+            => ProcessThenRun(command, args, this.ConnectionManager.KickUser);
 
         public void MuteUser(string command, string args)
-        {
-            var parsedArgs = ProcessTargetUserArgs(command, args);
-            if (parsedArgs == null)
-                return;
-            this.ConnectionManager.MuteUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
-        }
+            => ProcessThenRun(command, args, this.ConnectionManager.MuteUser);
 
         public void UnmuteUser(string command, string args)
+            => ProcessThenRun(command, args, this.ConnectionManager.UnmuteUser);
+
+        private void ProcessThenRun(string command, string args, Action<string, int, string, int, int> fnToRun)
         {
+            var player = this.Dalamud.ClientState.LocalPlayer;
             var parsedArgs = ProcessTargetUserArgs(command, args);
             if (parsedArgs == null)
                 return;
-            this.ConnectionManager.UnmuteUser(parsedArgs.Item1, parsedArgs.Item2, parsedArgs.Item3);
+            var (name, worldId, channelId) = parsedArgs;
+            fnToRun(name, worldId, player.Name, player.HomeWorld.Id, channelId);
         }
 
         private Tuple<string, int, int> ProcessTargetUserArgs(string command, string rawArgs)

@@ -88,6 +88,8 @@ message UserActionRequest {
     string UserName = 1;
     int32 UserWorldId = 2;
     string OAuth2Code = 3;
+    string ThisUserName = 4; // For unauthenticated connections only
+    int32 ThisUserWorldId = 5; // For unauthenticated connections only
 }
 
 message UserActionBotRequest {
@@ -100,6 +102,8 @@ message TempbanUserRequest {
     int32 UserWorldId = 2;
     int64 UnbanTimestamp = 3;
     string OAuth2Code = 4;
+    string ThisUserName = 5; // For unauthenticated connections only
+    int32 ThisUserWorldId = 6; // For unauthenticated connections only
 }
 
 message TempbanUserBotRequest {
