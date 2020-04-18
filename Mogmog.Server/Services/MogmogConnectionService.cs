@@ -125,7 +125,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public override async Task<GeneralResult> OpDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
+        public override async Task<GeneralResult> BotOpUser(UserActionBotRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
@@ -154,7 +154,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public override async Task<GeneralResult> BanDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
+        public override async Task<GeneralResult> BotBanUser(UserActionBotRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
@@ -183,7 +183,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public override async Task<GeneralResult> UnbanDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
+        public override async Task<GeneralResult> BotUnbanUser(UserActionBotRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
@@ -198,7 +198,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public override async Task<GeneralResult> TempbanUser(ReqTempbanUser req, ServerCallContext context)
+        public override async Task<GeneralResult> TempbanUser(TempbanUserRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
@@ -212,7 +212,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public override async Task<GeneralResult> TempbanDiscordUser(ReqTempbanDiscordUser req, ServerCallContext context)
+        public override async Task<GeneralResult> BotTempbanUser(TempbanUserBotRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
@@ -241,7 +241,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public override async Task<GeneralResult> KickDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
+        public override async Task<GeneralResult> BotKickUser(UserActionBotRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
@@ -270,7 +270,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public override async Task<GeneralResult> MuteDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
+        public override async Task<GeneralResult> BotMuteUser(UserActionBotRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
@@ -299,7 +299,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public override async Task<GeneralResult> UnmuteDiscordUser(UserDiscordActionRequest req, ServerCallContext context)
+        public override async Task<GeneralResult> BotUnmuteUser(UserActionBotRequest req, ServerCallContext context)
         {
             if (req == null)
                 throw new ArgumentNullException(nameof(req));
@@ -314,7 +314,7 @@ namespace Mogmog.Server.Services
             return BuildResult(result);
         }
 
-        public void SendToClient(object sender, MessageEventArgs e)
+        private void SendToClient(object sender, MessageEventArgs e)
         {
             if (e == null)
                 return;
@@ -343,7 +343,7 @@ namespace Mogmog.Server.Services
             }
             var nameEntry = headers.FirstOrDefault((kvp) => kvp.Key == "name");
             var worldIdEntry = headers.FirstOrDefault((kvp) => kvp.Key == "worldId");
-            if (nameEntry == null || worldIdEntry == null || !int.TryParse(worldIdEntry.Value, out int worldId))
+            if (nameEntry == null || worldIdEntry == null || !int.TryParse(worldIdEntry.Value, out var worldId))
                 throw new HttpRequestException(HttpStatusCodes.BadRequest);
             var name = nameEntry.Value;
             try

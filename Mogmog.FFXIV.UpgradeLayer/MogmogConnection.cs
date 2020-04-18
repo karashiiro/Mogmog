@@ -76,7 +76,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             => await this.chatClient.UnbanUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });
 
         public async Task TempbanUser(string name, int worldId, DateTime end)
-            => await this.chatClient.TempbanUserAsync(new ReqTempbanUser { UserName = name, UserWorldId = worldId, UnbanTimestamp = end.ToBinary(), OAuth2Code = oAuth2.OAuth2Code });
+            => await this.chatClient.TempbanUserAsync(new TempbanUserRequest { UserName = name, UserWorldId = worldId, UnbanTimestamp = end.ToBinary(), OAuth2Code = oAuth2.OAuth2Code });
 
         public async Task KickUser(string name, int worldId)
             => await this.chatClient.KickUserAsync(new UserActionRequest { UserName = name, UserWorldId = worldId, OAuth2Code = oAuth2.OAuth2Code });

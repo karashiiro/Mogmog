@@ -20,7 +20,6 @@ namespace Mogmog.FFXIV.UpgradeLayer
 
         private bool handlerCompleted;
 
-        public bool IsAuthenticated { get; private set; }
         public string OAuth2Code { get; private set; }
 
         public void Authenticate(string serverAccountId)

@@ -13,7 +13,7 @@ using static Mogmog.Protos.ChatService;
 
 namespace Mogmog.Discord.Services
 {
-    public class MogmogConnectionService : IDisposable
+    public class MogmogConnectionService : IAsyncDisposable
     {
         private const string hostname = "https://localhost:5001";
 
@@ -54,25 +54,25 @@ namespace Mogmog.Discord.Services
         }
 
         public async Task OpUserAsync(IGuildUser user)
-            => await _chatClient.OpDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
+            => await _chatClient.BotOpUserAsync(new UserActionBotRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task BanUserAsync(IGuildUser user)
-            => await _chatClient.BanDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
+            => await _chatClient.BotBanUserAsync(new UserActionBotRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task UnbanUserAsync(IGuildUser user)
-            => await _chatClient.UnbanDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
+            => await _chatClient.BotUnbanUserAsync(new UserActionBotRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task TempbanUserAsync(IGuildUser user, DateTime end)
-            => await _chatClient.TempbanDiscordUserAsync(new ReqTempbanDiscordUser { Id = user.Id, UnbanTimestamp = end.ToBinary(), StateKey = _stateKey });
+            => await _chatClient.BotTempbanUserAsync(new TempbanUserBotRequest { Id = user.Id, UnbanTimestamp = end.ToBinary(), StateKey = _stateKey });
 
         public async Task KickUserAsync(IGuildUser user)
-            => await _chatClient.KickDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
+            => await _chatClient.BotKickUserAsync(new UserActionBotRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task MuteUserAsync(IGuildUser user)
-            => await _chatClient.MuteDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
+            => await _chatClient.BotMuteUserAsync(new UserActionBotRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task UnmuteUserAsync(IGuildUser user)
-            => await _chatClient.UnmuteDiscordUserAsync(new UserDiscordActionRequest { Id = user.Id, StateKey = _stateKey });
+            => await _chatClient.BotUnmuteUserAsync(new UserActionBotRequest { Id = user.Id, StateKey = _stateKey });
 
         public async Task DiscordMessageReceivedAsync(SocketMessage rawMessage)
         {
@@ -101,7 +101,7 @@ namespace Mogmog.Discord.Services
             await _chatStream.RequestStream.WriteAsync(chatMessage);
         }
 
-        public async Task GrpcMessageReceivedAsync(ChatMessage chatMessage)
+        private async Task GrpcMessageReceivedAsync(ChatMessage chatMessage)
         {
             if (chatMessage.AuthorId2 == _client.CurrentUser.Id)
                 return;
@@ -128,9 +128,9 @@ namespace Mogmog.Discord.Services
         }
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool disposedValue; // To detect redundant calls
 
-        protected virtual void Dispose(bool disposing)
+        protected virtual async ValueTask DisposeAsync(bool disposing)
         {
             if (!disposedValue)
             {
@@ -138,17 +138,17 @@ namespace Mogmog.Discord.Services
                 {
                     _tokenSource.Cancel();
                     _tokenSource.Dispose();
-                    _chatStream.RequestStream.CompleteAsync().Wait();
-                    _channel.ShutdownAsync().Wait();
+                    await _chatStream.RequestStream.CompleteAsync();
+                    await _channel.ShutdownAsync();
                 }
 
                 disposedValue = true;
             }
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
-            Dispose(true);
+            await DisposeAsync(true);
             GC.SuppressFinalize(this);
         }
         #endregion

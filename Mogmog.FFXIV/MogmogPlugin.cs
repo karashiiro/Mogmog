@@ -7,7 +7,6 @@ using Mogmog.Logging;
 using Mogmog.Protos;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
@@ -85,39 +84,40 @@ namespace Mogmog.FFXIV
             if (args == null)
                 throw new ArgumentNullException(nameof(args));
             var splitArgs = args.Split(' ');
-            if (splitArgs.Length == 3)
+            switch (splitArgs.Length)
             {
-                var name = Capitalize(splitArgs[0]) + " " + Capitalize(splitArgs[1]);
-                var world = this.Dalamud.Data.GetExcelSheet<World>()
-                    .GetRows()
-                    .FirstOrDefault(w => w.Name == Capitalize(splitArgs[2]));
-                if (world != null)
-                {
-                    var worldId = world.RowId;
-                    Config.BlockedUsers.Add(new TinyUser
+                case 3: // <Character Name> <World Name>
+                    var name = Capitalize(splitArgs[0]) + " " + Capitalize(splitArgs[1]);
+                    var world = this.Dalamud.Data.GetExcelSheet<World>()
+                        .GetRows()
+                        .FirstOrDefault(w => w.Name == Capitalize(splitArgs[2]));
+                    if (world != null)
                     {
-                        Name = name,
-                        WorldId = worldId,
-                    });
-                    PrintLogMessage($"Blocked user {name}{MogmogResources.CrossWorldIcon}{world.Name}");
-                    return;
-                }
-            }
-            if (splitArgs.Length == 1)
-            {
-                if (ulong.TryParse(splitArgs[0], out var userId))
-                {
-                    Config.BlockedUsers.Add(new TinyUser
+                        var worldId = world.RowId;
+                        Config.BlockedUsers.Add(new UserFragment
+                        {
+                            Name = name,
+                            WorldId = worldId,
+                        });
+                        PrintLogMessage($"Blocked user {name}{MogmogResources.CrossWorldIcon}{world.Name}");
+                    }
+                    break;
+                case 1: // <Discord ID>
+                    if (ulong.TryParse(splitArgs[0], out var userId))
                     {
-                        Id = userId.ToString(CultureInfo.CurrentCulture),
-                    });
-                    PrintLogMessage($"Blocked user {userId}");
-                    return;
-                }
+                        Config.BlockedUsers.Add(new UserFragment
+                        {
+                            Id = userId.ToString(CultureInfo.CurrentCulture),
+                        });
+                        PrintLogMessage($"Blocked user {userId}");
+                    }
+                    break;
+                default:
+                    PrintLogMessage(LogMessages.FailedToParseCommand + "\n" +
+                                    $"{command} <Character Name> <World Name>\n" +
+                                    $"{command} <Discord ID>\n");
+                    break;
             }
-            PrintLogMessage(LogMessages.FailedToParseCommand + "\n" +
-                            $"{command} <Character Name> <World Name>\n" +
-                            $"{command} <Discord ID>\n");
         }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "The parameter is required for the HandlerDelegate type.")]
@@ -135,7 +135,7 @@ namespace Mogmog.FFXIV
                 if (world != null)
                 {
                     var worldId = world.RowId;
-                    Config.BlockedUsers.Remove(new TinyUser
+                    Config.BlockedUsers.Remove(new UserFragment
                     {
                         Name = name,
                         WorldId = worldId,
@@ -148,7 +148,7 @@ namespace Mogmog.FFXIV
             {
                 if (ulong.TryParse(splitArgs[0], out var userId))
                 {
-                    Config.BlockedUsers.Remove(new TinyUser
+                    Config.BlockedUsers.Remove(new UserFragment
                     {
                         Id = userId.ToString(CultureInfo.CurrentCulture),
                     });
@@ -217,7 +217,7 @@ namespace Mogmog.FFXIV
         private Tuple<string, int, int> ProcessTargetUserArgs(string command, string rawArgs, string additionalArgHints)
         {
             if (rawArgs == null)
-                throw new ArgumentNullException(rawArgs);
+                throw new ArgumentNullException(nameof(rawArgs));
             var args = rawArgs.Split(' ');
             if (args.Length >= 4 && int.TryParse(args[0], out var channelId))
             {
@@ -235,11 +235,8 @@ namespace Mogmog.FFXIV
                 var worldId = world.RowId;
                 return new Tuple<string, int, int>(name, worldId, channelId);
             }
-            else
-            {
-                PrintLogMessage(string.Format(CultureInfo.InvariantCulture, LogMessages.TargetUserCommandFailed, command, additionalArgHints));
-                return null;
-            }
+            PrintLogMessage(string.Format(CultureInfo.InvariantCulture, LogMessages.TargetUserCommandFailed, command, additionalArgHints));
+            return null;
         }
         #endregion
 
@@ -259,7 +256,7 @@ namespace Mogmog.FFXIV
                 await LoadAvatar(player);
 
             // 7 if /global, 3 if /gl
-            int channelId = int.Parse(command.Substring(command.StartsWith("/global", StringComparison.InvariantCultureIgnoreCase) ? 7 : 3), CultureInfo.InvariantCulture);
+            var channelId = int.Parse(command.Substring(command.StartsWith("/global", StringComparison.InvariantCultureIgnoreCase) ? 7 : 3), CultureInfo.InvariantCulture);
 
             PrintChatMessage(channelId, player, message);
 
@@ -280,12 +277,12 @@ namespace Mogmog.FFXIV
         {
             if (e.Message.AuthorId == this.Dalamud.ClientState.LocalContentId)
                 return;
-            if (Config.BlockedUsers.Contains(new TinyUser
+            if (Config.BlockedUsers.Contains(new UserFragment
             {
                 Id = e.Message.AuthorId.ToString(CultureInfo.CurrentCulture),
             }))
                 return;
-            if (Config.BlockedUsers.Contains(new TinyUser
+            if (Config.BlockedUsers.Contains(new UserFragment
             {
                 Name = e.Message.Author,
                 WorldId = e.Message.WorldId,
@@ -314,7 +311,7 @@ namespace Mogmog.FFXIV
         private void PrintLogMessage(string message)
             => this.Dalamud?.Framework.Gui.Chat.Print(message);
 
-        private string Capitalize(string input)
+        private static string Capitalize(string input)
             => char.ToUpper(input[0], CultureInfo.CurrentCulture) + input[1..].ToLower(CultureInfo.CurrentCulture);
         
         private async Task LoadAvatar(PlayerCharacter player)

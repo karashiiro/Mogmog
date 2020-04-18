@@ -1,6 +1,6 @@
 ﻿namespace Mogmog
 {
-    public class TinyUser
+    public class UserFragment
     {
         public string Id { get; set; }
 

@@ -13,31 +13,31 @@ service ChatService {
 
     rpc OpUser (UserActionRequest) returns (GeneralResult);
 
-    rpc OpDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+    rpc BotOpUser (UserActionBotRequest) returns (GeneralResult);
 
     rpc BanUser (UserActionRequest) returns (GeneralResult);
 
-    rpc BanDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+    rpc BotBanUser (UserActionBotRequest) returns (GeneralResult);
 
     rpc UnbanUser (UserActionRequest) returns (GeneralResult);
 
-    rpc UnbanDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+    rpc BotUnbanUser (UserActionBotRequest) returns (GeneralResult);
 
-    rpc TempbanUser (ReqTempbanUser) returns (GeneralResult);
+    rpc TempbanUser (TempbanUserRequest) returns (GeneralResult);
 
-    rpc TempbanDiscordUser (ReqTempbanDiscordUser) returns (GeneralResult);
+    rpc BotTempbanUser (TempbanUserBotRequest) returns (GeneralResult);
 
     rpc KickUser (UserActionRequest) returns (GeneralResult);
 
-    rpc KickDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+    rpc BotKickUser (UserActionBotRequest) returns (GeneralResult);
 
     rpc MuteUser (UserActionRequest) returns (GeneralResult);
 
-    rpc MuteDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+    rpc BotMuteUser (UserActionBotRequest) returns (GeneralResult);
 
     rpc UnmuteUser (UserActionRequest) returns (GeneralResult);
 
-    rpc UnmuteDiscordUser (UserDiscordActionRequest) returns (GeneralResult);
+    rpc BotUnmuteUser (UserActionBotRequest) returns (GeneralResult);
 }
 
 /*
@@ -90,19 +90,19 @@ message UserActionRequest {
     string OAuth2Code = 3;
 }
 
-message UserDiscordActionRequest {
+message UserActionBotRequest {
     uint64 Id = 1;
     string StateKey = 2;
 }
 
-message ReqTempbanUser {
+message TempbanUserRequest {
     string UserName = 1;
     int32 UserWorldId = 2;
     int64 UnbanTimestamp = 3;
     string OAuth2Code = 4;
 }
 
-message ReqTempbanDiscordUser {
+message TempbanUserBotRequest {
     uint64 Id = 1;
     int64 UnbanTimestamp = 2;
     string StateKey = 3;

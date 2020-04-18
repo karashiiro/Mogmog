@@ -35,7 +35,15 @@ namespace Mogmog.Discord.Modules
         [RequireBotPermission(GuildPermission.BanMembers)]
         public async Task UnbanUserAsync(IGuildUser user)
         {
-            // TODO
+            var ban = await Context.Guild.GetBanAsync(user);
+            if (ban == null)
+            {
+                await ReplyAsync("No ban matching the provided user was found.");
+                return;
+            }
+
+            await Mogmog.UnbanUserAsync(user);
+            await Context.Guild.RemoveBanAsync(user);
             await Context.User.SendMessageAsync($"Successfully unbanned user {user} from {user.Guild.Name}.");
         }
 
@@ -43,10 +51,12 @@ namespace Mogmog.Discord.Modules
         [RequireContext(ContextType.Guild)]
         [RequireUserPermission(GuildPermission.BanMembers)]
         [RequireBotPermission(GuildPermission.BanMembers)]
-        public async Task UnbanUserAsync(IGuildUser user, [Remainder] string parameters = null)
+        public async Task TempbanUserAsync(IGuildUser user, [Remainder] string parameters = null)
         {
-            // TODO
-            await Context.User.SendMessageAsync($"Successfully tempbanned user {user} from {user.Guild.Name} for [time period].");
+            var endTime = DateTimeUtils.GetDateTime(parameters);
+            await Mogmog.TempbanUserAsync(user, endTime);
+            await user.BanAsync(reason: $"Should be unbanned at {endTime.ToLongDateString()}");
+            await Context.User.SendMessageAsync($"Successfully tempbanned user {user} from {user.Guild.Name} until {endTime.ToLongDateString()}.");
         }
 
         [Command("kick")]
@@ -66,7 +76,7 @@ namespace Mogmog.Discord.Modules
         [RequireBotPermission(GuildPermission.ManageMessages)]
         public async Task MuteUserAsync(IGuildUser user, [Remainder] string reason = null)
         {
-            // TODO
+            await Mogmog.MuteUserAsync(user);
             await Context.User.SendMessageAsync($"Successfully muted user {user} in {user.Guild.Name}." + (reason != null ? $" Reason: {reason}" : string.Empty));
         }
 
@@ -76,7 +86,7 @@ namespace Mogmog.Discord.Modules
         [RequireBotPermission(GuildPermission.ManageMessages)]
         public async Task UnmuteUserAsync(IGuildUser user)
         {
-            // TODO
+            await Mogmog.UnmuteUserAsync(user);
             await Context.User.SendMessageAsync($"Successfully unmuted user {user} in {user.Guild.Name}.");
         }
     }

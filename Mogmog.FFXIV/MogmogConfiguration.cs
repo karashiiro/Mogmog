@@ -11,12 +11,12 @@ namespace Mogmog.FFXIV
 
         public IList<string> Hostnames { get; private set; }
 
-        public IList<TinyUser> BlockedUsers { get; private set; }
+        public IList<UserFragment> BlockedUsers { get; private set; }
 
         public MogmogConfiguration()
         {
             Hostnames = new StrongIndexedList<string>();
-            BlockedUsers = new List<TinyUser>();
+            BlockedUsers = new List<UserFragment>();
         }
     }
 }
