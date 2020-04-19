@@ -121,7 +121,7 @@ namespace Mogmog.FFXIV.UpgradeLayer
             {
                 var genericInterop = message.ToObject<GenericInterop>();
                 var args = genericInterop.Arg.Split(' ');
-                switch (genericInterop.Command)
+                switch (Enum.Parse<ClientOpcode>(genericInterop.Command))
                 {
                     case ClientOpcode.AddHost:
                         connectionManager.AddHost(args[0], bool.Parse(args[1]));

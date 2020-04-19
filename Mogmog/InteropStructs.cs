@@ -16,7 +16,7 @@ namespace Mogmog
 
     public struct GenericInterop : IEquatable<GenericInterop>
     {
-        public ClientOpcode Command { get; set; }
+        public string Command { get; set; }
         public string Arg { get; set; }
 
         public bool Equals(GenericInterop other)

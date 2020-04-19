@@ -121,7 +121,7 @@ namespace Mogmog.FFXIV
         {
             var pack = new GenericInterop
             {
-                Command = command,
+                Command = command.ToString(),
                 Arg = arg,
             };
             using var messageBytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(pack)));
