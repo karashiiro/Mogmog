@@ -50,32 +50,32 @@ namespace Mogmog.FFXIV
 
         public void AddHost(string hostname, bool saveAccessCode)
         {
-            _ = SendToUpgradeLayer("AddHost", $"{hostname} {saveAccessCode}");
+            _ = SendToUpgradeLayer(ClientOpcode.AddHost, $"{hostname} {saveAccessCode}");
         }
 
         public void RemoveHost(string hostname)
-            => _ = SendToUpgradeLayer("RemoveHost", hostname);
+            => _ = SendToUpgradeLayer(ClientOpcode.RemoveHost, hostname);
 
         public void ReloadHost(string hostname)
-            => _ = SendToUpgradeLayer("ReloadHost", hostname);
+            => _ = SendToUpgradeLayer(ClientOpcode.ReloadHost, hostname);
 
         public void BanUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
-            => _ = SendToUpgradeLayer("BanUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
+            => _ = SendToUpgradeLayer(ClientOpcode.BanUser, $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
         public void UnbanUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
-            => _ = SendToUpgradeLayer("UnbanUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
+            => _ = SendToUpgradeLayer(ClientOpcode.UnbanUser, $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
         public void TempbanUser(string name, int worldId, DateTime end, string senderName, int senderWorldId, int channelId)
-            => _ = SendToUpgradeLayer("TempbanUser", $"{name} {worldId} {end.ToBinary()} {senderName} {senderWorldId} {channelId}");
+            => _ = SendToUpgradeLayer(ClientOpcode.TempbanUser, $"{name} {worldId} {end.ToBinary()} {senderName} {senderWorldId} {channelId}");
 
         public void KickUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
-            => _ = SendToUpgradeLayer("KickUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
+            => _ = SendToUpgradeLayer(ClientOpcode.KickUser, $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
         public void MuteUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
-            => _ = SendToUpgradeLayer("MuteUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
+            => _ = SendToUpgradeLayer(ClientOpcode.MuteUser, $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
         public void UnmuteUser(string name, int worldId, string senderName, int senderWorldId, int channelId)
-            => _ = SendToUpgradeLayer("UnmuteUser", $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
+            => _ = SendToUpgradeLayer(ClientOpcode.UnmuteUser, $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
         #region Interop Interface Methods
         public byte[] UpgradeLayerMessageReceived(Stream stream)
@@ -109,15 +109,15 @@ namespace Mogmog.FFXIV
             {
                 var logInfo = messageInterop.ToObject<GenericInterop>();
                 if (bool.Parse(logInfo.Arg))
-                    Mogger.LogError(logInfo.Command);
+                    Mogger.LogError(logInfo.Command.ToString());
                 else
-                    Mogger.Log(logInfo.Command);
+                    Mogger.Log(logInfo.Command.ToString());
             }
 
             return Array.Empty<byte>();
         }
 
-        public async Task SendToUpgradeLayer(string command, string arg)
+        public async Task SendToUpgradeLayer(ClientOpcode command, string arg)
         {
             var pack = new GenericInterop
             {

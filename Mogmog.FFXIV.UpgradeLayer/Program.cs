@@ -123,31 +123,31 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 var args = genericInterop.Arg.Split(' ');
                 switch (genericInterop.Command)
                 {
-                    case "AddHost":
+                    case ClientOpcode.AddHost:
                         connectionManager.AddHost(args[0], bool.Parse(args[1]));
                         break;
-                    case "RemoveHost":
+                    case ClientOpcode.RemoveHost:
                         connectionManager.RemoveHost(genericInterop.Arg);
                         break;
-                    case "ReloadHost":
+                    case ClientOpcode.ReloadHost:
                         connectionManager.ReloadHost(genericInterop.Arg);
                         break;
-                    case "BanUser":
+                    case ClientOpcode.BanUser:
                         connectionManager.BanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
-                    case "UnbanUser":
+                    case ClientOpcode.UnbanUser:
                         connectionManager.UnbanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
-                    case "TempbanUser":
+                    case ClientOpcode.TempbanUser:
                         connectionManager.TempbanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), DateTime.FromBinary(long.Parse(args[2], CultureInfo.InvariantCulture)), args[3], int.Parse(args[4], CultureInfo.InvariantCulture), int.Parse(args[5], CultureInfo.InvariantCulture));
                         break;
-                    case "KickUser":
+                    case ClientOpcode.KickUser:
                         connectionManager.KickUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
-                    case "MuteUser":
+                    case ClientOpcode.MuteUser:
                         connectionManager.MuteUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
-                    case "UnmuteUser":
+                    case ClientOpcode.UnmuteUser:
                         connectionManager.UnmuteUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
                         break;
                     default:
