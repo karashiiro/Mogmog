@@ -2,40 +2,35 @@
 using Mogmog.Logging;
 using Mogmog.Protos;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using PeanutButter.SimpleHTTPServer;
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
+using SimpleIPCHttp;
 
 namespace Mogmog.FFXIV
 {
     public class MogmogInteropConnectionManager : IConnectionManager, IDisposable
     {
+        private readonly IpcInterface ipc;
         private readonly HttpClient client;
-        private readonly HttpServer server;
         private readonly Process upgradeLayer;
-        private readonly Uri localhost;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceivedEvent;
 
         public MogmogInteropConnectionManager(MogmogConfiguration config, HttpClient client)
         {
             this.client = client;
-            this.server = new HttpServer();
+            this.ipc = new IpcInterface(client);
 
-            this.server.AddJsonDocumentHandler((processor, stream) => UpgradeLayerMessageReceived(stream));
-
-            this.localhost = new Uri($"http://localhost:{this.server.Port + 1}");
+            this.ipc.On<ChatMessageInterop>(ChatMessageReceived);
+            this.ipc.On<GenericInterop>(LogMessageReceived);
 
             var filePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "Mogmog.FFXIV.UpgradeLayer.exe");
             var serializedConfig = JsonConvert.SerializeObject(config).Replace("\"", "\\\"");
-            var args = new string[] { serializedConfig, this.server.Port.ToString(CultureInfo.InvariantCulture) };
+            var args = $"{serializedConfig} {this.ipc.PartnerPort} {this.ipc.Port}";
             var startInfo = new ProcessStartInfo(filePath, string.Join(" ", args))
             {
                 CreateNoWindow = true,
@@ -49,9 +44,7 @@ namespace Mogmog.FFXIV
             => _ = SendToUpgradeLayer(message, channelId);
 
         public void AddHost(string hostname, bool saveAccessCode)
-        {
-            _ = SendToUpgradeLayer(ClientOpcode.AddHost, $"{hostname} {saveAccessCode}");
-        }
+            => _ = SendToUpgradeLayer(ClientOpcode.AddHost, $"{hostname} {saveAccessCode}");
 
         public void RemoveHost(string hostname)
             => _ = SendToUpgradeLayer(ClientOpcode.RemoveHost, hostname);
@@ -78,65 +71,40 @@ namespace Mogmog.FFXIV
             => _ = SendToUpgradeLayer(ClientOpcode.UnmuteUser, $"{name} {worldId} {senderName} {senderWorldId} {channelId}");
 
         #region Interop Interface Methods
-        public byte[] UpgradeLayerMessageReceived(Stream stream)
+        public void ChatMessageReceived(ChatMessageInterop chatMessage)
         {
-            if (stream == null)
-                throw new ArgumentNullException(nameof(stream));
-
-            using var memoryStream = new MemoryStream();
-            stream.CopyTo(memoryStream);
-            var data = Encoding.UTF8.GetString(memoryStream.GetBuffer());
-
-            JToken messageInterop;
-            try
-            {
-                messageInterop = JObject.Parse(data);
-            }
-            catch (JsonReaderException e)
-            {
-                return Encoding.UTF8.GetBytes(e.Message);
-            }
-
-            if (messageInterop["Message"] != null) // Jank but whatever, ripping all this out once Dalamud on .NET Core is released
-            {
-                var chatMessage = messageInterop.ToObject<ChatMessageInterop>();
-                var message = chatMessage.Message;
-                var channelId = chatMessage.ChannelId;
-                var handler = MessageReceivedEvent;
-                handler?.Invoke(this, new MessageReceivedEventArgs { Message = message, ChannelId = channelId });
-            }
-            else
-            {
-                var logInfo = messageInterop.ToObject<GenericInterop>();
-                if (bool.Parse(logInfo.Arg))
-                    Mogger.LogError(logInfo.Command.ToString());
-                else
-                    Mogger.Log(logInfo.Command.ToString());
-            }
-
-            return Array.Empty<byte>();
+            var message = chatMessage.Message;
+            var channelId = chatMessage.ChannelId;
+            var handler = MessageReceivedEvent;
+            handler?.Invoke(this, new MessageReceivedEventArgs { Message = message, ChannelId = channelId });
         }
 
-        public async Task SendToUpgradeLayer(ClientOpcode command, string arg)
+        public static void LogMessageReceived(GenericInterop logInfo)
+        {
+            if (bool.Parse(logInfo.Arg))
+                Mogger.LogError(logInfo.Command);
+            else
+                Mogger.Log(logInfo.Command);
+        }
+
+        public Task SendToUpgradeLayer(ClientOpcode command, string arg)
         {
             var pack = new GenericInterop
             {
                 Command = command.ToString(),
                 Arg = arg,
             };
-            using var messageBytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(pack)));
-            await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid disposing the byte array.
+            return this.ipc.SendMessage(pack);
         }
 
-        private async Task SendToUpgradeLayer(ChatMessage message, int channelId)
+        private Task SendToUpgradeLayer(ChatMessage message, int channelId)
         {
             var pack = new ChatMessageInterop
             {
                 Message = message,
                 ChannelId = channelId,
             };
-            using var messageBytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(pack)));
-            await this.client.PostAsync(localhost, messageBytes); // Call must be awaited to avoid disposing the byte array.
+            return this.ipc.SendMessage(pack);
         }
 
         #if DEBUG
@@ -156,8 +124,7 @@ namespace Mogmog.FFXIV
             {
                 if (disposing)
                 {
-                    this.server.Stop();
-                    this.server.Dispose();
+                    this.ipc.Dispose();
                     
                     this.upgradeLayer.WaitForExit();
                     this.upgradeLayer.Dispose();

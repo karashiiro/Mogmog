@@ -91,42 +91,6 @@ namespace Mogmog.FFXIV
             connectionManager.MessageSend(message, 0);
             Assert.Pass();
         }
-
-        [Test]
-        [TestCase(0)]
-        [TestCase(1)]
-        [TestCase(2)]
-        [TestCase(3)]
-        [TestCase(4)]
-        [Parallelizable]
-        public void MessageReceived_CallsMessageReceivedEventAppropriately(int idx)
-        {
-            bool messageIsChatMessageInterop = callbackTestArgs[idx] is ChatMessageInterop;
-            bool messageReceivedCalled = false;
-            connectionManager.MessageReceivedEvent += (sender, e) =>
-            {
-                messageReceivedCalled = true;
-            };
-            var messageBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(callbackTestArgs[idx]));
-            using var messageStream = new MemoryStream(messageBytes);
-            connectionManager.UpgradeLayerMessageReceived(messageStream);
-            Assert.IsTrue(messageReceivedCalled && messageIsChatMessageInterop || !messageReceivedCalled && !messageIsChatMessageInterop, "Expected both true or both false, got {0} and {1}.", messageReceivedCalled, messageIsChatMessageInterop);
-        }
-
-        [Test]
-        [TestCase(0)]
-        [TestCase(1)]
-        [TestCase(2)]
-        [TestCase(3)]
-        [TestCase(4)]
-        public void MessageReceived_CallsLogEventAppropriately(int idx)
-        {
-            bool messageIsGenericInterop = callbackTestArgs[idx] is GenericInterop;
-            var messageBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(callbackTestArgs[idx]));
-            using var messageStream = new MemoryStream(messageBytes);
-            connectionManager.UpgradeLayerMessageReceived(messageStream);
-            Assert.IsTrue(logger.LogCalledTimes == 1 && messageIsGenericInterop || logger.LogCalledTimes == 0 && !messageIsGenericInterop, "Expected both true or both false, got {0} and {1}.", logger.LogCalledTimes == 1, messageIsGenericInterop);
-        }
     }
 
     [TestFixture]

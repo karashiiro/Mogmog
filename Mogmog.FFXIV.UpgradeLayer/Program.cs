@@ -2,52 +2,47 @@
 using Mogmog.Logging;
 using Mogmog.Protos;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using PeanutButter.SimpleHTTPServer;
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
+using SimpleIPCHttp;
 
 namespace Mogmog.FFXIV.UpgradeLayer
 {
-    static class Program
+    public static class Program
     {
-        static HttpClient client;
-        static IConnectionManager connectionManager;
-        static Uri localhost;
+        private static HttpClient client;
+        private static IConnectionManager connectionManager;
+        private static IpcInterface ipc;
 
-        static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
+        public static void Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
 
-        static async Task MainAsync(string[] args)
+        public static async Task MainAsync(string[] args)
         {
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
+
             Mogger.Logger = new ProgramLogger();
 
             var traceListener = new ProgramTraceListener();
             Trace.Listeners.Add(traceListener);
 
-            client = new HttpClient();
             #if !DEBUGSTANDALONE
-            using var server = new HttpServer(int.Parse(args[1], CultureInfo.InvariantCulture) + 1, true, (line) =>
-            {
-                #if DEBUG
-                Console.WriteLine(line);
-                #endif
-            });
-
-            localhost = new Uri($"http://localhost:{args[1]}");
-
-            server.AddJsonDocumentHandler((processor, stream) => ReadInput(stream));
-
             var config = JsonConvert.DeserializeObject<MogmogConfiguration>(args[0]);
             #else
             var config = new MogmogConfiguration();
             #endif
             connectionManager = new MogmogConnectionManager(config);
-            connectionManager.MessageReceivedEvent += MessageReceived;
+            connectionManager.MessageReceivedEvent += GrpcMessageReceived;
+
+            var thisPort = int.Parse(args[^2], CultureInfo.InvariantCulture);
+            var parentPort = int.Parse(args[^1], CultureInfo.InvariantCulture);
+            client = new HttpClient();
+            ipc = new IpcInterface(client, thisPort, parentPort);
+            ipc.On<ChatMessageInterop>(ChatMessageReceived);
+            ipc.On<GenericInterop>(CommandReceived);
 
             #if DEBUGSTANDALONE
             await Task.Run(() =>
@@ -100,70 +95,52 @@ namespace Mogmog.FFXIV.UpgradeLayer
             #endif
         }
 
-        static byte[] ReadInput(Stream stream)
+        private static void ChatMessageReceived(ChatMessageInterop chatMessage)
+            => connectionManager.MessageSend(chatMessage.Message, chatMessage.ChannelId);
+
+        private static void CommandReceived(GenericInterop genericInterop)
         {
-            using var memoryStream = new MemoryStream();
-            stream.CopyTo(memoryStream);
-
-            var input = Encoding.UTF8.GetString(memoryStream.GetBuffer());
-
-            #if DEBUG
-            Console.WriteLine(input);
-            #endif
-
-            JToken message = JObject.Parse(input);
-            if (message["Message"] != null) // Jank but whatever, ripping all this out once Dalamud on .NET Core is released
+            var args = genericInterop.Arg.Split(' ');
+            switch (Enum.Parse<ClientOpcode>(genericInterop.Command))
             {
-                var chatMessage = message.ToObject<ChatMessageInterop>();
-                connectionManager.MessageSend(chatMessage.Message, chatMessage.ChannelId);
+                case ClientOpcode.AddHost:
+                    connectionManager.AddHost(args[0], bool.Parse(args[1]));
+                    break;
+                case ClientOpcode.RemoveHost:
+                    connectionManager.RemoveHost(genericInterop.Arg);
+                    break;
+                case ClientOpcode.ReloadHost:
+                    connectionManager.ReloadHost(genericInterop.Arg);
+                    break;
+                case ClientOpcode.BanUser:
+                    connectionManager.BanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
+                    break;
+                case ClientOpcode.UnbanUser:
+                    connectionManager.UnbanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
+                    break;
+                case ClientOpcode.TempbanUser:
+                    connectionManager.TempbanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), DateTime.FromBinary(long.Parse(args[2], CultureInfo.InvariantCulture)), args[3], int.Parse(args[4], CultureInfo.InvariantCulture), int.Parse(args[5], CultureInfo.InvariantCulture));
+                    break;
+                case ClientOpcode.KickUser:
+                    connectionManager.KickUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
+                    break;
+                case ClientOpcode.MuteUser:
+                    connectionManager.MuteUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
+                    break;
+                case ClientOpcode.UnmuteUser:
+                    connectionManager.UnmuteUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
+                    break;
+                default:
+                    throw new NotSupportedException();
             }
-            else
-            {
-                var genericInterop = message.ToObject<GenericInterop>();
-                var args = genericInterop.Arg.Split(' ');
-                switch (Enum.Parse<ClientOpcode>(genericInterop.Command))
-                {
-                    case ClientOpcode.AddHost:
-                        connectionManager.AddHost(args[0], bool.Parse(args[1]));
-                        break;
-                    case ClientOpcode.RemoveHost:
-                        connectionManager.RemoveHost(genericInterop.Arg);
-                        break;
-                    case ClientOpcode.ReloadHost:
-                        connectionManager.ReloadHost(genericInterop.Arg);
-                        break;
-                    case ClientOpcode.BanUser:
-                        connectionManager.BanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
-                        break;
-                    case ClientOpcode.UnbanUser:
-                        connectionManager.UnbanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
-                        break;
-                    case ClientOpcode.TempbanUser:
-                        connectionManager.TempbanUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), DateTime.FromBinary(long.Parse(args[2], CultureInfo.InvariantCulture)), args[3], int.Parse(args[4], CultureInfo.InvariantCulture), int.Parse(args[5], CultureInfo.InvariantCulture));
-                        break;
-                    case ClientOpcode.KickUser:
-                        connectionManager.KickUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
-                        break;
-                    case ClientOpcode.MuteUser:
-                        connectionManager.MuteUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
-                        break;
-                    case ClientOpcode.UnmuteUser:
-                        connectionManager.UnmuteUser(args[0], int.Parse(args[1], CultureInfo.InvariantCulture), args[2], int.Parse(args[3], CultureInfo.CurrentCulture), int.Parse(args[4], CultureInfo.InvariantCulture));
-                        break;
-                    default:
-                        throw new NotSupportedException();
-                }
-            }
-
-            return Array.Empty<byte>();
+        }
+        
+        private static void GrpcMessageReceived(object sender, MessageReceivedEventArgs e)
+        {
+            _ = GrpcMessageReceivedAsync(e.Message, e.ChannelId);
         }
 
-        static void MessageReceived(object sender, MessageReceivedEventArgs e)
-        {
-            _ = MessageReceivedAsync(e.Message, e.ChannelId);
-        }
-
-        static async Task MessageReceivedAsync(ChatMessage message, int channelId)
+        private static Task GrpcMessageReceivedAsync(ChatMessage message, int channelId)
         {
             var interopMessage = new ChatMessageInterop
             {
@@ -171,20 +148,14 @@ namespace Mogmog.FFXIV.UpgradeLayer
                 ChannelId = channelId,
             };
             #if DEBUG
-            Console.WriteLine($"Making request to {localhost.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
+            Console.WriteLine($"Making request to {ipc.PartnerAddress.AbsoluteUri}:\n({message.Author} * {message.World}) {message.Content}");
             #endif
-            await SendToParent(interopMessage);
+            return SendToParent(interopMessage);
         }
 
-        public static async Task SendToParent(object obj)
+        public static Task SendToParent<T>(T obj)
         {
-            #if !DEBUGSTANDALONE
-            using var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj)));
-            await client.PostAsync(localhost, bytes);
-            #else
-            Console.WriteLine(JsonConvert.SerializeObject(obj));
-            await Task.CompletedTask;
-            #endif
+            return ipc.SendMessage(obj);
         }
     }
 }
